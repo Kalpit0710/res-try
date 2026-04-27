@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(ADMIN)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+model Class {
+  id        String         @id @default(uuid()) @db.Uuid
+  name      String         @unique
+  sections  Section[]
+  students  Student[]
+  subjects  ClassSubject[]
+  results   Result[]
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  @@map("classes")
+}
+
+model Section {
+  id               String    @id @default(uuid()) @db.Uuid
+  classId          String    @map("class_id") @db.Uuid
+  name             String
+  classTeacherName String    @default("") @map("class_teacher_name")
+  class            Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  students         Student[]
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@unique([classId, name])
+  @@index([classId])
+  @@map("sections")
+}
+
+model Student {
+  id              String    @id @default(uuid()) @db.Uuid
+  admissionNumber String    @unique @map("admission_number")
+  name            String
+  classId         String    @map("class_id") @db.Uuid
+  sectionId       String    @map("section_id") @db.Uuid
+  dateOfBirth     DateTime? @map("date_of_birth")
+  parentName      String?   @map("parent_name")
+  contact         String?
+  class           Class     @relation(fields: [classId], references: [id], onDelete: Restrict)
+  section         Section   @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  marks           Mark[]
+  results         Result[]
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([classId])
+  @@index([sectionId])
+  @@index([admissionNumber])
+  @@map("students")
+}
+
+model Subject {
+  id        String         @id @default(uuid()) @db.Uuid
+  name      String         @unique
+  classes   ClassSubject[]
+  marks     Mark[]
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  @@map("subjects")
+}
+
+model ClassSubject {
+  id        String   @id @default(uuid()) @db.Uuid
+  classId   String   @map("class_id") @db.Uuid
+  subjectId String   @map("subject_id") @db.Uuid
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([classId, subjectId])
+  @@index([classId])
+  @@index([subjectId])
+  @@map("class_subjects")
+}
+
+model Mark {
+  id              String   @id @default(uuid()) @db.Uuid
+  studentId       String   @map("student_id") @db.Uuid
+  subjectId       String   @map("subject_id") @db.Uuid
+  halfYearlyMarks Float    @default(0) @map("half_yearly_marks")
+  finalTermMarks  Float    @default(0) @map("final_term_marks")
+  totalMarks      Float    @default(0) @map("total_marks")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, subjectId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@map("marks")
+}
+
+model Result {
+  id         String   @id @default(uuid()) @db.Uuid
+  studentId  String   @map("student_id") @db.Uuid
+  classId    String   @map("class_id") @db.Uuid
+  grandTotal Float    @default(0) @map("grand_total")
+  maxTotal   Float    @default(0) @map("max_total")
+  percentage Float    @default(0)
+  grade      String   @default("N/A")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, classId])
+  @@index([studentId])
+  @@index([classId])
+  @@map("results")
+}
+
+model GradeRange {
+  id        String   @id @default(uuid()) @db.Uuid
+  min       Float
+  max       Float
+  grade     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([min, max, grade])
+  @@map("grade_ranges")
+}
