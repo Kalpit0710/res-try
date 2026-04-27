@@ -14,7 +14,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
-        {/* Prevent flash of wrong theme */}
+        {/*
+         * Inline script to prevent flash of wrong theme (FOUC).
+         * dangerouslySetInnerHTML is safe here: the content is a hardcoded
+         * string literal with no user input — it only reads from localStorage
+         * and sets an HTML attribute on the root element.
+         */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();`,
