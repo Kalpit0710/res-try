@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { normalizeMongoUri } from './mongoUri';
 
 export async function connectDB(): Promise<void> {
   const uri = process.env.MONGO_URI;
@@ -11,7 +12,7 @@ export async function connectDB(): Promise<void> {
   }
 
   try {
-    await mongoose.connect(uri);
+    await mongoose.connect(normalizeMongoUri(uri));
     console.log('✅  MongoDB connected');
   } catch (err) {
     console.error('❌  MongoDB connection failed:', err);
