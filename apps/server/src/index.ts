@@ -24,7 +24,23 @@ const app = express();
 
 // ── Security middleware ────────────────────────────────────────────────────────
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL ?? 'http://localhost:5173', credentials: true }));
+const allowedClientOrigin = process.env.CLIENT_URL ?? 'http://localhost:5173';
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const isLocalVite = /^http:\/\/localhost:\d+$/.test(origin);
+      if (origin === allowedClientOrigin || isLocalVite) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin ${origin}`));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(apiLimiter);
