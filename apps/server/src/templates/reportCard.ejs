@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Report Card</title>
+    <style>
+      @page { size: A4 portrait; margin: 12mm; }
+      * { box-sizing: border-box; }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        color: #111;
+      }
+      .row { display: flex; justify-content: space-between; }
+      .center { text-align: center; }
+      .mt-8 { margin-top: 8px; }
+      .mt-12 { margin-top: 12px; }
+      .title { font-size: 16px; font-weight: 700; letter-spacing: 0.4px; }
+      .subtitle { font-size: 12px; font-weight: 700; }
+      .box { border: 1px solid #111; padding: 8px; }
+      .label { font-weight: 700; }
+
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border: 1px solid #111; padding: 4px; vertical-align: middle; }
+      th { background: #f3f3f3; font-weight: 700; }
+      .no-break { page-break-inside: avoid; }
+      .small { font-size: 10px; }
+      .bold { font-weight: 700; }
+      .right { text-align: right; }
+
+      .sign { height: 38px; }
+
+      .scale td { padding: 2px 4px; }
+    </style>
+  </head>
+  <body>
+    <div class="center">
+      <div class="title"><%= schoolName %></div>
+      <div class="subtitle">PROGRESS REPORT</div>
+      <div class="small">Academic Session: <%= academicSession %></div>
+    </div>
+
+    <div class="box mt-12">
+      <div class="row">
+        <div><span class="label">Student Name:</span> <%= student.name %></div>
+        <div><span class="label">Class:</span> <%= className %></div>
+      </div>
+      <div class="row mt-8">
+        <div><span class="label">Admission No.:</span> <%= student.regNo %></div>
+        <div><span class="label">Roll No.:</span> <%= student.rollNo ?? '-' %></div>
+      </div>
+      <div class="row mt-8">
+        <div><span class="label">Father's Name:</span> <%= student.fatherName ?? '-' %></div>
+        <div><span class="label">Mother's Name:</span> <%= student.motherName ?? '-' %></div>
+      </div>
+      <div class="row mt-8">
+        <div><span class="label">DOB:</span> <%= student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '-' %></div>
+        <div><span class="label">Generated:</span> <%= generatedAt.toLocaleString('en-GB') %></div>
+      </div>
+    </div>
+
+    <div class="mt-12 no-break">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">Subject</th>
+            <th colspan="5">Term 1</th>
+            <th colspan="5">Term 2</th>
+            <th rowspan="2">Grand Total</th>
+            <th rowspan="2">Grade</th>
+          </tr>
+          <tr>
+            <th>PerTest</th>
+            <th>NB</th>
+            <th>Sub Enrich</th>
+            <th>Half Yearly</th>
+            <th>Total</th>
+            <th>PerTest</th>
+            <th>NB</th>
+            <th>Sub Enrich</th>
+            <th>Yearly</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% subjectResults.forEach(({ subject, marks, result }) => { %>
+            <tr>
+              <td><%= subject.name %></td>
+              <td class="right"><%= marks?.term1?.periodicTest ?? '' %></td>
+              <td class="right"><%= marks?.term1?.notebook ?? '' %></td>
+              <td class="right"><%= marks?.term1?.subEnrichment ?? '' %></td>
+              <td class="right"><%= marks?.term1?.halfYearlyExam ?? '' %></td>
+              <td class="right bold"><%= result.term1Total %></td>
+              <td class="right"><%= marks?.term2?.periodicTest ?? '' %></td>
+              <td class="right"><%= marks?.term2?.notebook ?? '' %></td>
+              <td class="right"><%= marks?.term2?.subEnrichment ?? '' %></td>
+              <td class="right"><%= marks?.term2?.yearlyExam ?? '' %></td>
+              <td class="right bold"><%= result.term2Total %></td>
+              <td class="right bold"><%= result.grandTotal %></td>
+              <td class="center bold"><%= result.grade %></td>
+            </tr>
+          <% }) %>
+          <tr>
+            <td class="bold">TOTAL</td>
+            <td colspan="10"></td>
+            <td class="right bold"><%= overall.totalObtained %></td>
+            <td class="center bold"><%= overall.overallGrade %></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="box mt-12">
+        <div class="row">
+          <div><span class="label">Total Marks:</span> <%= overall.totalObtained %> / <%= overall.totalMax %></div>
+          <div><span class="label">Percentage:</span> <%= overall.percentage %>%</div>
+          <div><span class="label">Grade:</span> <%= overall.overallGrade %></div>
+        </div>
+      </div>
+
+      <div class="box mt-12">
+        <div class="label">Remarks</div>
+        <div style="height: 44px;"></div>
+      </div>
+
+      <table class="mt-12">
+        <tr>
+          <td class="sign"><div class="center">Class Teacher</div></td>
+          <td class="sign"><div class="center">Exam Cell</div></td>
+          <td class="sign"><div class="center">Principal</div></td>
+        </tr>
+      </table>
+
+      <div class="mt-12">
+        <div class="label">Grading Scale</div>
+        <table class="scale mt-8" style="width: 60%;">
+          <tr><td>91–100</td><td class="bold">A1</td></tr>
+          <tr><td>81–90</td><td class="bold">A2</td></tr>
+          <tr><td>71–80</td><td class="bold">B1</td></tr>
+          <tr><td>61–70</td><td class="bold">B2</td></tr>
+          <tr><td>51–60</td><td class="bold">C1</td></tr>
+          <tr><td>41–50</td><td class="bold">C2</td></tr>
+          <tr><td>33–40</td><td class="bold">D</td></tr>
+          <tr><td>≤ 32</td><td class="bold">E (Need Improvement)</td></tr>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

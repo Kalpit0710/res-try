@@ -1,0 +1,64 @@
+############################################
+# Dependencies
+############################################
+node_modules/
+
+############################################
+# Build outputs
+############################################
+dist/
+dist-ssr/
+build/
+out/
+
+# Vite
+.vite/
+
+############################################
+# Runtime / logs
+############################################
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+############################################
+# Environment files (never commit secrets)
+############################################
+.env
+.env.*
+.env.*.local
+
+# Allow sharing templates
+!.env.example
+!.env.sample
+!.env.template
+
+############################################
+# Caches / tooling
+############################################
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.turbo/
+.nx/
+coverage/
+.nyc_output/
+
+############################################
+# Editor / OS
+############################################
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+############################################
+# Misc
+############################################
+*.tgz
