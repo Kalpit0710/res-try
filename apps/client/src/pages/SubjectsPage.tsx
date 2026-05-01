@@ -67,30 +67,60 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
       <div className="bg-white rounded-md p-6 w-full max-w-2xl">
         <h3 className="text-lg font-semibold">{subject._id ? 'Edit' : 'Add'} Subject</h3>
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <input value={name} onChange={e=>setName(e.target.value)} placeholder="Enter subject name like Mathematics" className="border px-2 py-2 rounded" />
-          <select value={classId} onChange={e=>setClassId(e.target.value)} className="border px-2 py-2 rounded" title="Choose the class this subject belongs to">
-            <option value="">Select class</option>
-            {classes.map(c=> <option key={c._id} value={c._id}>{c.name}</option>)}
-          </select>
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+            <span>Subject Name</span>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Enter subject name like Mathematics" className="border px-2 py-2 rounded font-normal" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+            <span>Class</span>
+            <select value={classId} onChange={e=>setClassId(e.target.value)} className="border px-2 py-2 rounded font-normal" title="Choose the class this subject belongs to">
+              <option value="">Select class</option>
+              {classes.map(c=> <option key={c._id} value={c._id}>{c.name}</option>)}
+            </select>
+          </label>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div>
             <div className="font-semibold">Term 1 Max Marks</div>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <input type="number" value={maxT1.periodicTest} onChange={e=>setMaxT1(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
-              <input type="number" value={maxT1.notebook} onChange={e=>setMaxT1(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
-              <input type="number" value={maxT1.subEnrichment} onChange={e=>setMaxT1(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
-              <input type="number" value={maxT1.halfYearlyExam} onChange={e=>setMaxT1(s=>({...s, halfYearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Periodic Test</span>
+                <input type="number" value={maxT1.periodicTest} onChange={e=>setMaxT1(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Notebook</span>
+                <input type="number" value={maxT1.notebook} onChange={e=>setMaxT1(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Sub Enrichment</span>
+                <input type="number" value={maxT1.subEnrichment} onChange={e=>setMaxT1(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Half Yearly Exam</span>
+                <input type="number" value={maxT1.halfYearlyExam} onChange={e=>setMaxT1(s=>({...s, halfYearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
             </div>
           </div>
           <div>
             <div className="font-semibold">Term 2 Max Marks</div>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <input type="number" value={maxT2.periodicTest} onChange={e=>setMaxT2(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
-              <input type="number" value={maxT2.notebook} onChange={e=>setMaxT2(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
-              <input type="number" value={maxT2.subEnrichment} onChange={e=>setMaxT2(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
-              <input type="number" value={maxT2.yearlyExam} onChange={e=>setMaxT2(s=>({...s, yearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded" />
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Periodic Test</span>
+                <input type="number" value={maxT2.periodicTest} onChange={e=>setMaxT2(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Notebook</span>
+                <input type="number" value={maxT2.notebook} onChange={e=>setMaxT2(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Sub Enrichment</span>
+                <input type="number" value={maxT2.subEnrichment} onChange={e=>setMaxT2(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                <span>Yearly Exam</span>
+                <input type="number" value={maxT2.yearlyExam} onChange={e=>setMaxT2(s=>({...s, yearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+              </label>
             </div>
           </div>
         </div>

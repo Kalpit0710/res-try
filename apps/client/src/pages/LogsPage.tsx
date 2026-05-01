@@ -35,11 +35,26 @@ export function LogsPage() {
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-5">
-        <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="Filter by teacher name" className="rounded-md border border-black/15 px-3 py-2" />
-        <input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Filter by student ID" className="rounded-md border border-black/15 px-3 py-2" />
-        <input value={subjectId} onChange={(e) => setSubjectId(e.target.value)} placeholder="Filter by subject ID" className="rounded-md border border-black/15 px-3 py-2" />
-        <input value={from} onChange={(e) => setFrom(e.target.value)} type="date" className="rounded-md border border-black/15 px-3 py-2" />
-        <input value={to} onChange={(e) => setTo(e.target.value)} type="date" className="rounded-md border border-black/15 px-3 py-2" />
+        <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>Teacher Name</span>
+          <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="Filter by teacher name" className="rounded-md border border-black/15 px-3 py-2 font-normal" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>Student ID</span>
+          <input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="Filter by student ID" className="rounded-md border border-black/15 px-3 py-2 font-normal" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>Subject ID</span>
+          <input value={subjectId} onChange={(e) => setSubjectId(e.target.value)} placeholder="Filter by subject ID" className="rounded-md border border-black/15 px-3 py-2 font-normal" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>From Date</span>
+          <input value={from} onChange={(e) => setFrom(e.target.value)} type="date" className="rounded-md border border-black/15 px-3 py-2 font-normal" />
+        </label>
+        <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>To Date</span>
+          <input value={to} onChange={(e) => setTo(e.target.value)} type="date" className="rounded-md border border-black/15 px-3 py-2 font-normal" />
+        </label>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-black/10">

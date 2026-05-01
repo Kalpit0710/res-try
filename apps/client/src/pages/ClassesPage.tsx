@@ -89,7 +89,10 @@ function ClassForm({ cls = {}, onClose }: { cls?: any; onClose: () => void }) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
       <div className="bg-white rounded-md p-6 w-full max-w-md">
         <h3 className="text-lg font-semibold">{cls._id ? 'Edit' : 'Add'} Class</h3>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter class name like 10-A" className="mt-3 w-full border px-2 py-2 rounded" />
+        <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>Class Name</span>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter class name like 10-A" className="w-full border px-2 py-2 rounded font-normal" />
+        </label>
         <div className="mt-3 flex justify-end gap-2">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={save} disabled={loading} className="px-3 py-1 bg-orange-500 text-white rounded">Save</button>
@@ -117,15 +120,18 @@ function AssignSubjectModal({ cls, subjects, onClose }: { cls: any; subjects: an
         <div className="mt-3 text-sm text-black/60">
           {availableSubjects.length ? 'Select a subject that is not already assigned.' : 'All available subjects are already assigned to this class.'}
         </div>
-        <select
-          className="mt-3 w-full border px-2 py-2 rounded"
-          value={subjectId}
-          onChange={e=>setSubjectId(e.target.value)}
-          disabled={!availableSubjects.length}
-        >
-          <option value="">Select subject</option>
-          {availableSubjects.map(s=> <option key={s._id} value={s._id}>{s.name}</option>)}
-        </select>
+        <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>Available Subject</span>
+          <select
+            className="w-full border px-2 py-2 rounded font-normal"
+            value={subjectId}
+            onChange={e=>setSubjectId(e.target.value)}
+            disabled={!availableSubjects.length}
+          >
+            <option value="">Select subject</option>
+            {availableSubjects.map(s=> <option key={s._id} value={s._id}>{s.name}</option>)}
+          </select>
+        </label>
         <div className="mt-3 flex justify-end gap-2">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={add} className="px-3 py-1 bg-orange-500 text-white rounded">Assign</button>

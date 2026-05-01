@@ -63,7 +63,10 @@ function TeacherForm({ teacher = {}, onClose }: { teacher?: any; onClose: () => 
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
       <div className="bg-white rounded-md p-6 w-full max-w-md">
         <h3 className="text-lg font-semibold">{teacher._id ? 'Edit' : 'Add'} Teacher</h3>
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter teacher name" className="mt-3 w-full border px-2 py-2 rounded" />
+        <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-black/80">
+          <span>Teacher Name</span>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter teacher name" className="w-full border px-2 py-2 rounded font-normal" />
+        </label>
         <div className="mt-3 flex justify-end gap-2">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={save} disabled={loading} className="px-3 py-1 bg-orange-500 text-white rounded">Save</button>

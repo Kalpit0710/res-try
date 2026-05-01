@@ -23,7 +23,10 @@ export function BulkUpload({ onClose }: { onClose: () => void }) {
       <div className="bg-white rounded-md p-6 w-full max-w-lg">
         <h3 className="text-lg font-semibold mb-2">Bulk Upload Students (Excel)</h3>
         <div className="space-y-3">
-          <input ref={fileRef} type="file" accept=".xls,.xlsx" />
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+            <span>Excel File</span>
+            <input ref={fileRef} type="file" accept=".xls,.xlsx" className="text-sm" />
+          </label>
           <div className="flex justify-end gap-2">
             <button onClick={onClose} className="px-3 py-1 border rounded">Close</button>
             <button onClick={submit} disabled={loading} className="px-3 py-1 bg-orange-500 text-white rounded">{loading ? 'Uploading…' : 'Upload'}</button>

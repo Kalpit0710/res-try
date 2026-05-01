@@ -28,8 +28,11 @@ export function StudentsPage() {
           <p className="text-sm text-black/60">Manage student master data</p>
         </div>
 
-        <div className="flex gap-2">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search students by name or regNo" className="rounded-md border px-3 py-2" />
+        <div className="flex gap-2 items-end">
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+            <span>Search Students</span>
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search students by name or regNo" className="rounded-md border px-3 py-2 font-normal" />
+          </label>
           <button onClick={() => setShowBulk(true)} className="rounded-md bg-orange-500 text-white px-3 py-2">Bulk Upload</button>
           <button onClick={() => setEditing({})} className="rounded-md border px-3 py-2">Add Student</button>
         </div>

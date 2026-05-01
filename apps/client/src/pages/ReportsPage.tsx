@@ -43,13 +43,16 @@ export function ReportsPage() {
           <p className="text-sm text-black/60">Search a student and preview or download the PDF report card.</p>
         </div>
 
-        <div className="flex gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by student name or regNo"
-            className="rounded-md border border-black/15 px-3 py-2 min-w-64"
-          />
+        <div className="flex gap-2 items-end">
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+            <span>Search Student</span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by student name or regNo"
+              className="rounded-md border border-black/15 px-3 py-2 min-w-64 font-normal"
+            />
+          </label>
           <button onClick={searchStudents} className="rounded-md bg-orange-500 text-white px-4 py-2">
             {loading ? 'Searching…' : 'Search'}
           </button>
