@@ -13,9 +13,7 @@ services:
       - key: PUPPETEER_EXECUTABLE_PATH
         value: /usr/bin/chromium-browser
       - key: MONGO_URI
-        fromDatabase:
-          name: srms-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_USERNAME
@@ -28,8 +26,3 @@ services:
         value: 2025-26
       - key: CLIENT_URL
         value: https://client-jade-iota.vercel.app
-
-  - type: mongodb
-    name: srms-db
-    plan: free
-    region: oregon
