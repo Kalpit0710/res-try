@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: srms-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "5000"
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium-browser
+      - key: MONGO_URI
+        fromDatabase:
+          name: srms-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: Admin@1234
+      - key: SCHOOL_NAME
+        value: J. R. Preparatory School
+      - key: ACADEMIC_SESSION
+        value: 2025-26
+      - key: CLIENT_URL
+        value: https://client-jade-iota.vercel.app
+
+  - type: mongodb
+    name: srms-db
+    plan: free
+    region: oregon
