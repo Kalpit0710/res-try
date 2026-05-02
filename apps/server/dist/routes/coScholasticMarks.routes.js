@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const coScholasticMarks_controller_1 = require("../controllers/coScholasticMarks.controller");
+const router = (0, express_1.Router)();
+router.get('/', auth_1.authenticate, coScholasticMarks_controller_1.getCoScholasticMarks);
+router.get('/student/:studentId', auth_1.authenticate, coScholasticMarks_controller_1.getCoScholasticMarksByStudent);
+router.post('/', auth_1.authenticate, coScholasticMarks_controller_1.createOrUpdateCoScholasticMarks);
+router.delete('/:id', auth_1.authenticate, coScholasticMarks_controller_1.deleteCoScholasticMarks);
+exports.default = router;
