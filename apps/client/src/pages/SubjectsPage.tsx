@@ -5,40 +5,124 @@ export function SubjectsPage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
   const [classes, setClasses] = useState<any[]>([]);
+  const [activeClassId, setActiveClassId] = useState('all');
 
   async function load() { const res = await apiClient.getSubjects(); setSubjects(res.data ?? res); }
   useEffect(()=>{ load(); apiClient.getClasses().then(r=>setClasses(r.data??r)); }, []);
 
   async function remove(id: string) { if (!confirm('Delete subject?')) return; await apiClient.deleteSubject(id); load(); }
 
+  function subjectClassId(subject: any) {
+    return subject.classId?._id ?? subject.classId ?? '';
+  }
+
+  function subjectClassName(subject: any) {
+    return subject.classId?.name ?? classes.find((c) => c._id === subject.classId?._id || c._id === subject.classId)?.name ?? 'Unlinked';
+  }
+
+  const groupedSubjects = classes
+    .map((cls) => ({
+      classId: cls._id,
+      className: cls.name,
+      items: subjects.filter((subject) => subjectClassId(subject) === cls._id),
+    }))
+    .filter((group) => activeClassId === 'all' || group.classId === activeClassId);
+
+  const unlinkedSubjects = subjects.filter((subject) => !subjectClassId(subject));
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Subjects</h2>
-          <p className="text-sm text-black/60">Manage subjects and max marks</p>
+          <p className="text-sm text-black/60">Manage subjects and max marks, grouped by linked class</p>
         </div>
         <div>
           <button onClick={() => setEditing({})} className="rounded-md bg-orange-500 text-white px-3 py-2">Add Subject</button>
         </div>
       </div>
 
-      <div className="mt-4 space-y-3">
-        {subjects.map(s => (
-          <div key={s._id} className="border p-3">
-            <div className="flex justify-between items-center">
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          onClick={() => setActiveClassId('all')}
+          className={['rounded-full px-3 py-1.5 text-sm border', activeClassId === 'all' ? 'bg-black text-white border-black' : 'bg-white border-black/10'].join(' ')}
+        >
+          All Classes
+        </button>
+        {classes.map((cls) => (
+          <button
+            key={cls._id}
+            onClick={() => setActiveClassId(cls._id)}
+            className={['rounded-full px-3 py-1.5 text-sm border', activeClassId === cls._id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white border-black/10'].join(' ')}
+          >
+            {cls.name}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 space-y-6">
+        {groupedSubjects.map((group) => (
+          <div key={group.classId} className="rounded-lg border border-black/10 bg-white overflow-hidden">
+            <div className="border-b border-black/10 bg-black/[0.02] px-4 py-3 flex items-center justify-between">
               <div>
-                <div className="font-semibold">{s.name} <span className="text-sm text-black/60">({s.classId?.name ?? '—'})</span></div>
-                <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
-                <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                <h3 className="font-semibold">{group.className}</h3>
+                <p className="text-xs text-black/55">{group.items.length} subject{group.items.length === 1 ? '' : 's'} linked</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
-                <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
-              </div>
+              <span className="text-xs rounded-full bg-orange-50 text-orange-700 px-2 py-1">Linked</span>
+            </div>
+
+            <div className="divide-y divide-black/5">
+              {group.items.length === 0 ? (
+                <div className="px-4 py-6 text-sm text-black/50">No subjects linked to this class yet.</div>
+              ) : (
+                group.items.map((s) => (
+                  <div key={s._id} className="p-4">
+                    <div className="flex justify-between items-center gap-4">
+                      <div>
+                        <div className="font-semibold">{s.name} <span className="text-sm text-black/60">({subjectClassName(s)})</span></div>
+                        <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
+                        <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
+                        <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         ))}
+
+        {unlinkedSubjects.length > 0 && (activeClassId === 'all' || activeClassId === '') && (
+          <div className="rounded-lg border border-dashed border-black/15 bg-white">
+            <div className="border-b border-black/10 bg-black/[0.02] px-4 py-3 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">Unlinked Subjects</h3>
+                <p className="text-xs text-black/55">Subjects without a class assignment</p>
+              </div>
+              <span className="text-xs rounded-full bg-black/5 text-black/65 px-2 py-1">Review</span>
+            </div>
+            <div className="divide-y divide-black/5">
+              {unlinkedSubjects.map((s) => (
+                <div key={s._id} className="p-4">
+                  <div className="flex justify-between items-center gap-4">
+                    <div>
+                      <div className="font-semibold">{s.name} <span className="text-sm text-black/60">(—)</span></div>
+                      <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
+                      <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
+                      <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {editing !== null && <SubjectForm subject={editing} classes={classes} onClose={() => { setEditing(null); load(); }} />}

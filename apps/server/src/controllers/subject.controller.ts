@@ -4,7 +4,7 @@ import { Subject } from '../models/Subject';
 export async function getSubjects(req: Request, res: Response): Promise<void> {
   const { classId } = req.query;
   const query = classId ? { classId } : {};
-  const subjects = await Subject.find(query).lean();
+  const subjects = await Subject.find(query).populate('classId', 'name').lean();
   res.json({ success: true, data: subjects });
 }
 

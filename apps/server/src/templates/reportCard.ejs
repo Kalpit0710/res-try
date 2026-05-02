@@ -276,6 +276,7 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 9.5px;
+        table-layout: fixed;
       }
       .grade-table th {
         background: #e8b84b;
@@ -289,9 +290,12 @@
         border: 1px solid #555;
         padding: 2.5px 8px;
         text-align: center;
+        vertical-align: middle;
+        white-space: normal;
       }
-      .grade-table td:first-child { text-align: right; width: 45%; }
-      .grade-table td:last-child  { text-align: center; width: 55%; font-weight: 700; }
+      .grade-table .range { width: 31%; text-align: center; }
+      .grade-table .grade { width: 19%; font-weight: 700; text-align: center; }
+      .grade-table .grade.long { font-size: 9px; line-height: 1.1; }
       /* ----------------- Layout refinements (overrides) ----------------- */
       /* Improve vertical rhythm between major sections and table cells for print (compact)
         Adjusted to keep entire report on one A4 page */
@@ -573,6 +577,12 @@
           Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.
         </div>
         <table class="grade-table">
+          <colgroup>
+            <col style="width:31%" />
+            <col style="width:19%" />
+            <col style="width:31%" />
+            <col style="width:19%" />
+          </colgroup>
           <thead>
             <tr>
               <th>Marks Range</th>
@@ -583,20 +593,20 @@
           </thead>
           <tbody>
             <tr>
-              <td>91 – 100</td><td>A1</td>
-              <td>51 – 60</td><td>C1</td>
+              <td class="range">91 – 100</td><td class="grade">A1</td>
+              <td class="range">51 – 60</td><td class="grade">C1</td>
             </tr>
             <tr>
-              <td>81 – 90</td><td>A2</td>
-              <td>41 – 50</td><td>C2</td>
+              <td class="range">81 – 90</td><td class="grade">A2</td>
+              <td class="range">41 – 50</td><td class="grade">C2</td>
             </tr>
             <tr>
-              <td>71 – 80</td><td>B1</td>
-              <td>33 – 40</td><td>D</td>
+              <td class="range">71 – 80</td><td class="grade">B1</td>
+              <td class="range">33 – 40</td><td class="grade">D</td>
             </tr>
             <tr>
-              <td>61 – 70</td><td>B2</td>
-              <td>32 &amp; Below</td><td>E (Need Improvement)</td>
+              <td class="range">61 – 70</td><td class="grade">B2</td>
+              <td class="range">32 &amp; Below</td><td class="grade long">E (Need Improvement)</td>
             </tr>
           </tbody>
         </table>

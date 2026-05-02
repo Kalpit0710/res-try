@@ -185,7 +185,29 @@ export function MarksEntryPage() {
       setRemarkState((p) => ({ ...p, saving: false, saved: true, error: null, text: res?.data?.text ?? res?.text ?? p.text }));
     } catch (err: any) {
       setRemarkState((p) => ({ ...p, saving: false, saved: false, error: err?.message ?? 'Failed to save' }));
+      throw err;
     }
+  }
+
+  async function saveAllMarks() {
+    if (!studentId) {
+      alert('Select a student first.');
+      return false;
+    }
+
+    if (teacherName.trim()) {
+      await Promise.all(subjectStates.map((_, idx) => saveSubject(idx, true)));
+    }
+
+    if (coScholasticStates.length > 0) {
+      await Promise.all(coScholasticStates.map((_, idx) => saveCoScholasticArea(idx, true)));
+    }
+
+    if (remarkState.text.trim() || remarkState.saved) {
+      await saveRemark();
+    }
+
+    return true;
   }
 
   function updateField(
@@ -206,7 +228,7 @@ export function MarksEntryPage() {
     });
   }
 
-  async function saveSubject(idx: number) {
+  async function saveSubject(idx: number, shouldThrow = false) {
     if (!teacherName.trim()) {
       alert('Please enter teacher name before saving.');
       return;
@@ -269,10 +291,11 @@ export function MarksEntryPage() {
         };
         return next;
       });
+      if (shouldThrow) throw err;
     }
   }
 
-  async function saveCoScholasticArea(idx: number) {
+  async function saveCoScholasticArea(idx: number, shouldThrow = false) {
     const s = coScholasticStates[idx];
     const body = {
       studentId,
@@ -311,6 +334,7 @@ export function MarksEntryPage() {
         };
         return next;
       });
+      if (shouldThrow) throw err;
     }
   }
 
@@ -330,6 +354,12 @@ export function MarksEntryPage() {
   async function generateReport() {
     if (!studentId) {
       alert('Select a student first.');
+      return;
+    }
+
+    try {
+      await saveAllMarks();
+    } catch {
       return;
     }
 
@@ -467,7 +497,7 @@ export function MarksEntryPage() {
           ))}
 
           <div className="flex items-center justify-end gap-3">
-            <button onClick={() => setCurrentStep(2)} className="rounded-md bg-black text-white px-4 py-2">Next: Co-Scholastic</button>
+            <button onClick={async () => { try { await saveAllMarks(); setCurrentStep(2); } catch { /* errors already surfaced */ } }} className="rounded-md bg-black text-white px-4 py-2">Save & Next</button>
           </div>
         </div>
       )}
@@ -487,7 +517,7 @@ export function MarksEntryPage() {
 
           <div className="flex items-center justify-between gap-3">
             <button onClick={() => setCurrentStep(1)} className="rounded-md border px-4 py-2">Previous</button>
-            <button onClick={() => setCurrentStep(3)} className="rounded-md bg-black text-white px-4 py-2">Next: Remarks</button>
+            <button onClick={async () => { try { await saveAllMarks(); setCurrentStep(3); } catch { /* errors already surfaced */ } }} className="rounded-md bg-black text-white px-4 py-2">Save & Next</button>
           </div>
         </div>
       )}
@@ -510,7 +540,7 @@ export function MarksEntryPage() {
               <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={saveRemark} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save Remark'}</button>
+              <button onClick={async () => { try { await saveAllMarks(); } catch { /* errors already surfaced */ } }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
               {studentId && (
                 <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
               )}

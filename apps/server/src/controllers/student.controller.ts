@@ -5,6 +5,53 @@ import { Class } from '../models/Class';
 
 type MulterRequest = Request & { file?: Express.Multer.File };
 
+function textValue(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  return String(value).trim();
+}
+
+function parseDob(value: unknown): Date | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? undefined : value;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    // Excel serial date support
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const ms = Math.round(value * 24 * 60 * 60 * 1000);
+    const date = new Date(excelEpoch.getTime() + ms);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return undefined;
+
+  const normalized = raw.replace(/[.\/]/g, '-');
+
+  // yyyy-mm-dd
+  const isoLike = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoLike) {
+    const [, yyyy, mm, dd] = isoLike;
+    const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }
+
+  // dd-mm-yyyy or dd-mm-yy
+  const dmyLike = normalized.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+  if (dmyLike) {
+    const [, dd, mm, yy] = dmyLike;
+    const yearNum = Number(yy);
+    const year = yy.length === 2 ? (yearNum <= 29 ? 2000 + yearNum : 1900 + yearNum) : yearNum;
+    const date = new Date(year, Number(mm) - 1, Number(dd));
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
 // GET /students?search=&classId=&page=&limit=
 export async function getStudents(req: Request, res: Response): Promise<void> {
   const { search, classId, page = '1', limit = '20' } = req.query as Record<string, string>;
@@ -42,7 +89,15 @@ export async function createStudent(req: Request, res: Response): Promise<void> 
   const existing = await Student.findOne({ regNo });
   if (existing) { res.status(409).json({ success: false, message: `regNo "${regNo}" already exists` }); return; }
 
-  const student = await Student.create({ regNo, name, fatherName, motherName, dob, classId, rollNo });
+  const student = await Student.create({
+    regNo,
+    name,
+    fatherName,
+    motherName,
+    dob: parseDob(dob),
+    classId,
+    rollNo,
+  });
   res.status(201).json({ success: true, data: student });
 }
 
@@ -50,7 +105,7 @@ export async function updateStudent(req: Request, res: Response): Promise<void> 
   const { regNo, name, fatherName, motherName, dob, classId, rollNo } = req.body;
   const student = await Student.findByIdAndUpdate(
     req.params.id,
-    { regNo, name, fatherName, motherName, dob, classId, rollNo },
+    { regNo, name, fatherName, motherName, dob: parseDob(dob), classId, rollNo },
     { new: true, runValidators: true }
   );
   if (!student) { res.status(404).json({ success: false, message: 'Student not found' }); return; }
@@ -82,9 +137,9 @@ export async function bulkUploadStudents(req: MulterRequest, res: Response): Pro
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const regNo = row.regNo?.trim();
-    const name = row.name?.trim();
-    const className = row.class?.trim();
+    const regNo = textValue(row.regNo);
+    const name = textValue(row.name);
+    const className = textValue(row.class);
 
     if (!regNo || !name || !className) {
       failed.push({ row: i + 2, regNo: regNo ?? '', reason: 'Missing required field (regNo, name, class)' });
@@ -106,11 +161,11 @@ export async function bulkUploadStudents(req: MulterRequest, res: Response): Pro
       await Student.create({
         regNo,
         name,
-        fatherName: row.fatherName?.trim(),
-        motherName: row.motherName?.trim(),
-        dob: row.dob ? new Date(row.dob) : undefined,
+        fatherName: textValue(row.fatherName) || undefined,
+        motherName: textValue(row.motherName) || undefined,
+        dob: parseDob(row.dob),
         classId,
-        rollNo: row.rollNo?.trim(),
+        rollNo: textValue(row.rollNo) || undefined,
       });
       succeeded.push(regNo);
     } catch (err: unknown) {
@@ -144,29 +199,38 @@ export async function parseBulkStudents(req: MulterRequest, res: Response): Prom
   const seenInFile = new Set<string>();
 
   // Also load existing regNos to flag duplicates in system
-  const existingRegs = await Student.find({ regNo: { $in: rows.map(r => r.regNo?.trim()).filter(Boolean) } }).lean();
+  const existingRegs = await Student.find({ regNo: { $in: rows.map(r => textValue(r.regNo)).filter(Boolean) } }).lean();
   const existingSet = new Set(existingRegs.map(e => e.regNo));
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const regNo = row.regNo?.trim();
-    const name = row.name?.trim();
-    const className = row.class?.trim();
+    const regNo = textValue(row.regNo);
+    const name = textValue(row.name);
+    const className = textValue(row.class);
 
     const resultRow: Record<string, any> = {
       __row: i + 2,
       regNo: regNo ?? '',
       name: name ?? '',
-      fatherName: row.fatherName?.trim() ?? '',
-      motherName: row.motherName?.trim() ?? '',
-      dob: row.dob ?? '',
+      fatherName: textValue(row.fatherName),
+      motherName: textValue(row.motherName),
+      dob: textValue(row.dob),
       class: className ?? '',
-      rollNo: row.rollNo?.trim() ?? '',
+      rollNo: textValue(row.rollNo),
     };
 
     // Basic validation
+    const dob = parseDob(row.dob);
+
     if (!regNo || !name || !className) {
       errors.push({ row: i + 2, regNo: regNo ?? '', reason: 'Missing required field (regNo, name, class)' });
+      resultRow.__valid = false;
+      parsed.push(resultRow);
+      continue;
+    }
+
+    if (row.dob && !dob) {
+      errors.push({ row: i + 2, regNo, reason: 'Invalid dob format. Use dd-mm-yyyy, dd/mm/yyyy, or yyyy-mm-dd.' });
       resultRow.__valid = false;
       parsed.push(resultRow);
       continue;
@@ -197,6 +261,7 @@ export async function parseBulkStudents(req: MulterRequest, res: Response): Prom
 
     resultRow.__valid = true;
     resultRow.classId = classId;
+    resultRow.dob = dob ? dob.toISOString() : '';
     parsed.push(resultRow);
   }
 
@@ -213,15 +278,15 @@ export async function commitBulkStudents(req: Request, res: Response): Promise<v
   const failed: { index: number; regNo: string; reason: string }[] = [];
 
   // Resolve classIds if passed as class name
-  const classNames = [...new Set(rows.map(r => r.class?.trim()).filter(Boolean))];
+  const classNames = [...new Set(rows.map(r => textValue(r.class)).filter(Boolean))];
   const classes = await Class.find({ name: { $in: classNames } }).lean();
   const classMap = Object.fromEntries(classes.map(c => [c.name, c._id.toString()]));
 
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
-    const regNo = (r.regNo ?? '').trim();
-    const name = (r.name ?? '').trim();
-    const className = (r.class ?? '').trim();
+    const regNo = textValue(r.regNo);
+    const name = textValue(r.name);
+    const className = textValue(r.class);
 
     if (!regNo || !name || !className) {
       failed.push({ index: i, regNo, reason: 'Missing required field' });
@@ -235,11 +300,11 @@ export async function commitBulkStudents(req: Request, res: Response): Promise<v
       await Student.create({
         regNo,
         name,
-        fatherName: r.fatherName?.trim(),
-        motherName: r.motherName?.trim(),
-        dob: r.dob ? new Date(r.dob) : undefined,
+        fatherName: textValue(r.fatherName) || undefined,
+        motherName: textValue(r.motherName) || undefined,
+        dob: parseDob(r.dob),
         classId,
-        rollNo: r.rollNo?.trim(),
+        rollNo: textValue(r.rollNo) || undefined,
       });
       succeeded.push(regNo);
     } catch (err: unknown) {
