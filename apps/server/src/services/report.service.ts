@@ -8,6 +8,7 @@ import { Class } from '../models/Class';
 import { Subject } from '../models/Subject';
 import { Marks } from '../models/Marks';
 import { CoScholasticMarks } from '../models/CoScholasticMarks';
+import { Remark } from '../models/Remarks';
 import { calcOverallResult, calcSubjectResult } from '@srms/shared';
 
 function resolveAssetDataUri(relativePath?: string): string | null {
@@ -120,6 +121,7 @@ export async function generateStudentReportPdf(studentId: string): Promise<Buffe
     schoolLogoDataUri: resolveAssetDataUri(branding?.logoUrl),
     principalSignatureDataUri: resolveAssetDataUri(branding?.principalSignatureUrl),
     teacherSignatureDataUri: resolveAssetDataUri(teacherSignature?.signatureUrl),
+    remark: (await Remark.findOne({ studentId: student._id }).lean()) ?? null,
     generatedAt: new Date(),
   });
 

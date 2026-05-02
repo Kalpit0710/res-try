@@ -164,6 +164,9 @@ export const apiClient = {
   },
   createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  // --- Remarks (class teacher) ---
+  getRemarkByStudent: (studentId: string) => request(`/remarks/student/${studentId}`, { headers: headers() }),
+  createOrUpdateRemark: (body: any) => request(`/remarks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   // --- Co-Scholastic Marks ---
   getCoScholasticMarks: (studentId?: string) => {
     const qs = studentId ? `?studentId=${studentId}` : '';

@@ -55,6 +55,16 @@ export function MarksEntryPage() {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+
+  interface RemarkState {
+    text: string;
+    teacherName?: string;
+    saving: boolean;
+    saved: boolean;
+    error: string | null;
+  }
+  const [remarkState, setRemarkState] = useState<RemarkState>({ text: '', teacherName: '', saving: false, saved: false, error: null });
   const initialTeacherName = searchParams.get('teacherName') ?? '';
   const initialClassId = searchParams.get('classId') ?? '';
   const initialStudentId = searchParams.get('studentId') ?? '';
@@ -107,8 +117,9 @@ export function MarksEntryPage() {
       apiClient.publicGetSubjects({ classId }),
       apiClient.getMarks({ studentId }),
       apiClient.getCoScholasticMarksByStudent(studentId),
+      apiClient.getRemarkByStudent(studentId),
     ])
-      .then(([subjectsRes, marksRes, coScholasticRes]) => {
+      .then(([subjectsRes, marksRes, coScholasticRes, remarkRes]) => {
         const subjects: any[] = subjectsRes.data ?? subjectsRes;
         const marks: any[] = marksRes.data ?? marksRes;
         const coScholasticMarks: any[] = coScholasticRes.data ?? coScholasticRes;
@@ -156,9 +167,26 @@ export function MarksEntryPage() {
 
         setSubjectStates(states);
         setCoScholasticStates(coScholasticStates);
+        setRemarkState({ text: remarkRes?.data?.text ?? remarkRes?.text ?? '', teacherName: remarkRes?.data?.teacherName ?? remarkRes?.teacherName ?? '', saving: false, saved: false, error: null });
       })
       .finally(() => setLoadingSubjects(false));
   }, [studentId, classId]);
+
+  function updateRemarkField(text: string) {
+    setRemarkState((p) => ({ ...p, text, saved: false, error: null }));
+  }
+
+  async function saveRemark() {
+    if (!studentId) { alert('Select a student first.'); return; }
+    setRemarkState((p) => ({ ...p, saving: true, error: null }));
+    try {
+      const payload = { studentId, teacherName: teacherName?.trim() ?? '', text: remarkState.text };
+      const res = await apiClient.createOrUpdateRemark(payload);
+      setRemarkState((p) => ({ ...p, saving: false, saved: true, error: null, text: res?.data?.text ?? res?.text ?? p.text }));
+    } catch (err: any) {
+      setRemarkState((p) => ({ ...p, saving: false, saved: false, error: err?.message ?? 'Failed to save' }));
+    }
+  }
 
   function updateField(
     idx: number,
@@ -400,6 +428,17 @@ export function MarksEntryPage() {
         </div>
       )}
 
+      {/* Progress steps */}
+      <div className="mt-4">
+        <div className="flex items-center gap-3">
+          <StepDot step={1} current={currentStep} onClick={() => setCurrentStep(1)}>Subject</StepDot>
+          <div className="flex-1 h-px bg-black/10" />
+          <StepDot step={2} current={currentStep} onClick={() => setCurrentStep(2)}>Co-Scholastic</StepDot>
+          <div className="flex-1 h-px bg-black/10" />
+          <StepDot step={3} current={currentStep} onClick={() => setCurrentStep(3)}>Remarks</StepDot>
+        </div>
+      </div>
+
       {/* Loading subjects */}
       {loadingSubjects && (
         <div className="mt-8 text-center text-black/50 text-sm">
@@ -414,8 +453,8 @@ export function MarksEntryPage() {
         </div>
       )}
 
-      {/* Subject cards — all at once */}
-      {subjectStates.length > 0 && (
+      {/* Subject cards — step 1 */}
+      {currentStep === 1 && subjectStates.length > 0 && (
         <div className="mt-6 space-y-4">
           <h3 className="text-base font-semibold">Scholastic Marks</h3>
           {subjectStates.map((s, idx) => (
@@ -426,11 +465,15 @@ export function MarksEntryPage() {
               onSave={() => saveSubject(idx)}
             />
           ))}
+
+          <div className="flex items-center justify-end gap-3">
+            <button onClick={() => setCurrentStep(2)} className="rounded-md bg-black text-white px-4 py-2">Next: Co-Scholastic</button>
+          </div>
         </div>
       )}
 
-      {/* Co-scholastic marks section */}
-      {coScholasticStates.length > 0 && (
+      {/* Co-scholastic marks — step 2 */}
+      {currentStep === 2 && coScholasticStates.length > 0 && (
         <div className="mt-8 space-y-4">
           <h3 className="text-base font-semibold">Co-Scholastic Marks</h3>
           {coScholasticStates.map((s, idx) => (
@@ -441,26 +484,40 @@ export function MarksEntryPage() {
               onSave={() => saveCoScholasticArea(idx)}
             />
           ))}
+
+          <div className="flex items-center justify-between gap-3">
+            <button onClick={() => setCurrentStep(1)} className="rounded-md border px-4 py-2">Previous</button>
+            <button onClick={() => setCurrentStep(3)} className="rounded-md bg-black text-white px-4 py-2">Next: Remarks</button>
+          </div>
         </div>
       )}
 
-      {studentId ? (
-        <div className="mt-8 rounded-2xl border border-black/10 bg-[linear-gradient(180deg,#fff,#fff8f1)] p-4 md:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Remarks — step 3 */}
+      {currentStep === 3 && (
+        <div className="mt-8 rounded-lg border border-black/10 p-4 bg-white">
+          <h3 className="text-base font-semibold">Class Teacher's Remarks</h3>
+          <p className="text-sm text-black/60 mb-3">Enter remarks that will appear on the report card.</p>
+          <textarea
+            value={remarkState.text}
+            onChange={(e) => updateRemarkField(e.target.value)}
+            rows={4}
+            className="w-full rounded-md border border-black/15 p-3"
+            placeholder="Write class teacher's remarks here..."
+          />
+
+          <div className="mt-3 flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold">Report</h3>
-              <p className="text-sm text-black/55">Generate the final PDF report card for the selected student.</p>
+              <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
             </div>
-            <button
-              onClick={generateReport}
-              disabled={reportLoading}
-              className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {reportLoading ? 'Generating…' : 'Generate Report'}
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={saveRemark} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save Remark'}</button>
+              {studentId && (
+                <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
+              )}
+            </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -697,5 +754,21 @@ function CoScholasticCard({
         </div>
       </div>
     </div>
+  );
+}
+
+function StepDot({ step, current, children, onClick }: { step: number; current: number; children: any; onClick?: () => void }) {
+  const active = step === current;
+  return (
+    <button onClick={onClick} className={[
+      'flex items-center gap-2 cursor-pointer',
+      active ? 'text-black font-semibold' : 'text-black/50'
+    ].join(' ')}>
+      <div className={[
+        'w-7 h-7 rounded-full flex items-center justify-center text-xs',
+        active ? 'bg-black text-white' : 'bg-white border border-black/10'
+      ].join(' ')}>{step}</div>
+      <div className="text-sm">{children}</div>
+    </button>
   );
 }
