@@ -45,7 +45,7 @@ export function LoginPage() {
         <h1 className="text-2xl font-semibold">SRMS Admin Login</h1>
         <p className="text-sm text-black/60 mt-1">Sign in to manage students, classes, and results.</p>
         <div className="mt-2 text-sm">
-          <Link to="/marks-entry" className="text-orange-600 hover:underline">
+          <Link to="/teacher-portal" className="text-orange-600 hover:underline">
             Open Teacher Marks Entry without admin login
           </Link>
         </div>

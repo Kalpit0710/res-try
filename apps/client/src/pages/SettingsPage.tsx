@@ -131,32 +131,58 @@ export function SettingsPage() {
         </p>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="space-y-1 text-sm rounded-lg border border-black/10 p-3">
+          <div className="space-y-3 text-sm rounded-lg border border-black/10 p-4">
             <div className="font-medium">School Logo</div>
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)} />
+            <div className="flex items-center gap-2">
+              <label className="relative cursor-pointer rounded border border-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/5">
+                Choose File
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <span className="text-xs text-black/60">{logoFile?.name || 'No file chosen'}</span>
+            </div>
             {assetUrl(branding?.logoUrl) ? (
-              <img src={assetUrl(branding?.logoUrl) ?? ''} alt="School Logo" className="h-20 w-20 rounded border border-black/10 object-contain bg-white p-1" />
+              <div className="space-y-2">
+                <img src={assetUrl(branding?.logoUrl) ?? ''} alt="School Logo" className="h-20 w-20 rounded border border-black/10 object-contain bg-white p-1" />
+                <div className="flex gap-2">
+                  <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs hover:bg-black/5 disabled:opacity-50">Replace</button>
+                  <button disabled={uploading} onClick={() => removeAsset('logo')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">Remove</button>
+                </div>
+              </div>
             ) : (
               <div className="text-xs text-black/45">No logo uploaded.</div>
             )}
-            <div className="flex gap-2 pt-1">
-              <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs">Replace</button>
-              <button disabled={!branding?.logoUrl} onClick={() => removeAsset('logo')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 disabled:opacity-50">Remove</button>
-            </div>
           </div>
 
-          <div className="space-y-1 text-sm rounded-lg border border-black/10 p-3">
+          <div className="space-y-3 text-sm rounded-lg border border-black/10 p-4">
             <div className="font-medium">Principal Signature</div>
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setPrincipalSignatureFile(e.target.files?.[0] ?? null)} />
+            <div className="flex items-center gap-2">
+              <label className="relative cursor-pointer rounded border border-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/5">
+                Choose File
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => setPrincipalSignatureFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
+              <span className="text-xs text-black/60">{principalSignatureFile?.name || 'No file chosen'}</span>
+            </div>
             {assetUrl(branding?.principalSignatureUrl) ? (
-              <img src={assetUrl(branding?.principalSignatureUrl) ?? ''} alt="Principal Signature" className="h-16 w-40 rounded border border-black/10 object-contain bg-white p-1" />
+              <div className="space-y-2">
+                <img src={assetUrl(branding?.principalSignatureUrl) ?? ''} alt="Principal Signature" className="h-16 w-40 rounded border border-black/10 object-contain bg-white p-1" />
+                <div className="flex gap-2">
+                  <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs hover:bg-black/5 disabled:opacity-50">Replace</button>
+                  <button disabled={uploading} onClick={() => removeAsset('principalSignature')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">Remove</button>
+                </div>
+              </div>
             ) : (
               <div className="text-xs text-black/45">No principal signature uploaded.</div>
             )}
-            <div className="flex gap-2 pt-1">
-              <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs">Replace</button>
-              <button disabled={!branding?.principalSignatureUrl} onClick={() => removeAsset('principalSignature')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 disabled:opacity-50">Remove</button>
-            </div>
           </div>
         </div>
 

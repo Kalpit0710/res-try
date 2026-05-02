@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
@@ -43,6 +43,7 @@ function numOrEmpty(v: number | undefined): number | '' {
 }
 
 export function MarksEntryPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [classes, setClasses] = useState<any[]>([]);
   const [classId, setClassId] = useState('');
@@ -382,6 +383,7 @@ export function MarksEntryPage() {
     <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
+        <button onClick={() => navigate(-1)} className="mb-3 text-sm text-orange-600 hover:underline">← Back</button>
         <h2 className="text-xl font-semibold">Marks Entry</h2>
         <p className="text-sm text-black/60">
           Select a class and student to enter marks for all subjects at once.
