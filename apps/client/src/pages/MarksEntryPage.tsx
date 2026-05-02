@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 
+// Co-scholastic areas (static) - module scope to keep stable reference
+const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
+
 interface TermMarks {
   periodicTest?: number | '';
   notebook?: number | '';
@@ -25,6 +28,16 @@ interface SubjectMarksState {
   error: string | null;
 }
 
+interface CoScholasticMarksState {
+  area: string;
+  existingId?: string;
+  term1: number | '';
+  term2: number | '';
+  saving: boolean;
+  saved: boolean;
+  error: string | null;
+}
+
 function numOrEmpty(v: number | undefined): number | '' {
   return v === undefined || v === null ? '' : v;
 }
@@ -38,12 +51,15 @@ export function MarksEntryPage() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [teacherName, setTeacherName] = useState('');
   const [subjectStates, setSubjectStates] = useState<SubjectMarksState[]>([]);
+  const [coScholasticStates, setCoScholasticStates] = useState<CoScholasticMarksState[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
   const initialTeacherName = searchParams.get('teacherName') ?? '';
   const initialClassId = searchParams.get('classId') ?? '';
   const initialStudentId = searchParams.get('studentId') ?? '';
+
+  // Co-scholastic areas (static) - moved outside component to avoid new reference each render
 
   // Load classes on mount
   useEffect(() => {
@@ -83,16 +99,19 @@ export function MarksEntryPage() {
   // Load subjects + existing marks when student changes
   useEffect(() => {
     setSubjectStates([]);
+    setCoScholasticStates([]);
     if (!studentId || !classId) return;
     setLoadingSubjects(true);
 
     Promise.all([
       apiClient.publicGetSubjects({ classId }),
       apiClient.getMarks({ studentId }),
+      apiClient.getCoScholasticMarksByStudent(studentId),
     ])
-      .then(([subjectsRes, marksRes]) => {
+      .then(([subjectsRes, marksRes, coScholasticRes]) => {
         const subjects: any[] = subjectsRes.data ?? subjectsRes;
         const marks: any[] = marksRes.data ?? marksRes;
+        const coScholasticMarks: any[] = coScholasticRes.data ?? coScholasticRes;
 
         const states: SubjectMarksState[] = subjects.map((sub) => {
           const existing = marks.find(
@@ -122,7 +141,21 @@ export function MarksEntryPage() {
           };
         });
 
+        const coScholasticStates: CoScholasticMarksState[] = CO_SCHOLASTIC_AREAS.map((area) => {
+          const existing = coScholasticMarks.find((m) => m.area === area);
+          return {
+            area,
+            existingId: existing?._id,
+            term1: numOrEmpty(existing?.term1),
+            term2: numOrEmpty(existing?.term2),
+            saving: false,
+            saved: false,
+            error: null,
+          };
+        });
+
         setSubjectStates(states);
+        setCoScholasticStates(coScholasticStates);
       })
       .finally(() => setLoadingSubjects(false));
   }, [studentId, classId]);
@@ -209,6 +242,61 @@ export function MarksEntryPage() {
         return next;
       });
     }
+  }
+
+  async function saveCoScholasticArea(idx: number) {
+    const s = coScholasticStates[idx];
+    const body = {
+      studentId,
+      area: s.area,
+      ...(s.term1 !== '' && { term1: Number(s.term1) }),
+      ...(s.term2 !== '' && { term2: Number(s.term2) }),
+    };
+
+    setCoScholasticStates((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], saving: true, error: null };
+      return next;
+    });
+
+    try {
+      const result = await apiClient.createOrUpdateCoScholasticMarks(body);
+      setCoScholasticStates((prev) => {
+        const next = [...prev];
+        next[idx] = {
+          ...next[idx],
+          saving: false,
+          saved: true,
+          error: null,
+          existingId: result?.data?._id ?? next[idx].existingId,
+        };
+        return next;
+      });
+    } catch (err: any) {
+      setCoScholasticStates((prev) => {
+        const next = [...prev];
+        next[idx] = {
+          ...next[idx],
+          saving: false,
+          saved: false,
+          error: err?.message ?? 'Failed to save',
+        };
+        return next;
+      });
+    }
+  }
+
+  function updateCoScholasticField(idx: number, term: 'term1' | 'term2', value: string) {
+    setCoScholasticStates((prev) => {
+      const next = [...prev];
+      const s = { ...next[idx] };
+      const parsed = value === '' ? '' : Number(value);
+      s[term] = parsed;
+      s.saved = false;
+      s.error = null;
+      next[idx] = s;
+      return next;
+    });
   }
 
   async function generateReport() {
@@ -329,12 +417,28 @@ export function MarksEntryPage() {
       {/* Subject cards — all at once */}
       {subjectStates.length > 0 && (
         <div className="mt-6 space-y-4">
+          <h3 className="text-base font-semibold">Scholastic Marks</h3>
           {subjectStates.map((s, idx) => (
             <SubjectCard
               key={s.subjectId}
               state={s}
               onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
               onSave={() => saveSubject(idx)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Co-scholastic marks section */}
+      {coScholasticStates.length > 0 && (
+        <div className="mt-8 space-y-4">
+          <h3 className="text-base font-semibold">Co-Scholastic Marks</h3>
+          {coScholasticStates.map((s, idx) => (
+            <CoScholasticCard
+              key={s.area}
+              state={s}
+              onFieldChange={(term, val) => updateCoScholasticField(idx, term, val)}
+              onSave={() => saveCoScholasticArea(idx)}
             />
           ))}
         </div>
@@ -516,4 +620,82 @@ function MarksInput({
   );
 }
 
-export default MarksEntryPage;
+// ────────────────────────────────────────────────────────────────────────────
+// CoScholasticCard component
+// ────────────────────────────────────────────────────────────────────────────
+function CoScholasticCard({
+  state,
+  onFieldChange,
+  onSave,
+}: {
+  state: CoScholasticMarksState;
+  onFieldChange: (term: 'term1' | 'term2', val: string) => void;
+  onSave: () => void;
+}) {
+  const { area, term1, term2, saving, saved, error } = state;
+
+  return (
+    <div className="rounded-lg border border-black/10 bg-white overflow-hidden">
+      {/* Card header */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-black/8 bg-black/[0.02]">
+        <div className="font-semibold text-sm">{area}</div>
+        <div className="flex items-center gap-3">
+          {saved && !saving && (
+            <span className="text-xs text-green-600 font-medium">✓ Saved</span>
+          )}
+          {error && (
+            <span className="text-xs text-red-600 font-medium">{error}</span>
+          )}
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-md bg-orange-500 text-white px-4 py-1.5 text-sm disabled:opacity-60 hover:bg-orange-600 transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      {/* Marks grid */}
+      <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-black/8">
+        {/* Term 1 */}
+        <div className="p-4">
+          <div className="text-xs font-semibold text-black/50 uppercase tracking-wider mb-3">
+            Term 1
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-black/70">Marks / 100</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={term1}
+              onChange={(e) => onFieldChange('term1', e.target.value)}
+              className="rounded-md border border-black/15 px-3 py-1.5 font-normal w-full bg-white"
+              placeholder="—"
+            />
+          </label>
+        </div>
+
+        {/* Term 2 */}
+        <div className="p-4">
+          <div className="text-xs font-semibold text-black/50 uppercase tracking-wider mb-3">
+            Term 2
+          </div>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-black/70">Marks / 100</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={term2}
+              onChange={(e) => onFieldChange('term2', e.target.value)}
+              className="rounded-md border border-black/15 px-3 py-1.5 font-normal w-full bg-white"
+              placeholder="—"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -20,6 +20,7 @@ import logRoutes from './routes/log.routes';
 import lockRoutes from './routes/lock.routes';
 import brandingRoutes from './routes/branding.routes';
 import publicRoutes from './routes/public.routes';
+import coScholasticMarksRoutes from './routes/coScholasticMarks.routes';
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use(`${API}/classes`, classRoutes);
 app.use(`${API}/subjects`, subjectRoutes);
 app.use(`${API}/teachers`, teacherRoutes);
 app.use(`${API}/marks`, marksRoutes);
+app.use(`${API}/co-scholastic-marks`, coScholasticMarksRoutes);
 app.use(`${API}/reports`, reportRoutes);
 app.use(`${API}/logs`, logRoutes);
 app.use(`${API}/locks`, lockRoutes);

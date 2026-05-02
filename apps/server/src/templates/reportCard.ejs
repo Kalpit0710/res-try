@@ -439,7 +439,36 @@
           </tbody>
         </table>
 
-        <!-- ─── SUMMARY BAR ─────────────────────────────────────────────────── -->
+        <!-- ─── CO-SCHOLASTIC AREA ────────────────────────────────────────── -->
+        <div class="section-label">Co-Scholastic Area</div>
+        <table class="marks-table">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding-left:4px; width:40%;">Co-Scholastic Area</th>
+              <th style="width:20%; background:#e8b84b;">TERM - 1 (Out of 100)</th>
+              <th style="width:20%; background:#e8b84b;">TERM - 2 (Out of 100)</th>
+              <th style="width:20%; background:#e8b84b;">Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% (coScholasticMarks || []).forEach(mark => { %>
+            <tr class="data-row">
+              <td style="text-align:left; padding-left:4px;"><%= mark.area %></td>
+              <td><%= mark.term1 ?? '—' %></td>
+              <td><%= mark.term2 ?? '—' %></td>
+              <td class="b"><%= mark.grade ?? '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+
+        <!-- ─── OVERALL ASSESSMENT ────────────────────────────────────────── -->
+        <div style="border:1px solid #555; border-top:none; padding:4px 8px 3px; font-size:10px;">
+          <span class="b">Overall Assessment (Out of 100):</span>&nbsp;
+          <span><%= overall.totalObtained %> / 100</span>
+        </div>
+
+        <!-- ─── SUMMARY BAR ─────────────────────────────────────────────────────────────────────── -->
         <table class="summary-table" style="margin-top:0; border-top:none;">
           <tr>
             <td class="s-label">Total Marks</td>

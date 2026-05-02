@@ -8,9 +8,15 @@
     "packages/shared"
   ],
   "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "npm run dev --workspace=apps/client",
     "dev:server": "npm run dev --workspace=apps/server",
+    "build": "npm run build:shared && npm run build:server && npm run build:client",
+    "build:server": "npm run build --workspace=apps/server",
     "build:client": "npm run build --workspace=apps/client",
     "build:shared": "npm run build --workspace=packages/shared"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

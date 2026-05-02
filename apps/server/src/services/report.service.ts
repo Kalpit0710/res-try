@@ -7,6 +7,7 @@ import { Student } from '../models/Student';
 import { Class } from '../models/Class';
 import { Subject } from '../models/Subject';
 import { Marks } from '../models/Marks';
+import { CoScholasticMarks } from '../models/CoScholasticMarks';
 import { calcOverallResult, calcSubjectResult } from '@srms/shared';
 
 function resolveAssetDataUri(relativePath?: string): string | null {
@@ -48,6 +49,18 @@ function resolveBrowserExecutablePath(): string {
   );
 }
 
+function getCoScholasticGrade(marks: number | undefined): string {
+  if (marks === undefined || marks === null) return '—';
+  if (marks >= 91) return 'A1';
+  if (marks >= 81) return 'A2';
+  if (marks >= 71) return 'B1';
+  if (marks >= 61) return 'B2';
+  if (marks >= 51) return 'C1';
+  if (marks >= 41) return 'C2';
+  if (marks >= 33) return 'D';
+  return 'E';
+}
+
 export async function generateStudentReportPdf(studentId: string): Promise<Buffer> {
   const student = await Student.findById(studentId).lean();
   if (!student) throw new Error('Student not found');
@@ -57,6 +70,7 @@ export async function generateStudentReportPdf(studentId: string): Promise<Buffe
 
   const subjects = await Subject.find({ classId: cls._id }).sort({ name: 1 }).lean();
   const marks = await Marks.find({ studentId: student._id }).lean();
+  const coScholasticMarks = await CoScholasticMarks.find({ studentId: student._id }).lean();
   const marksMap = new Map<string, any>(marks.map(m => [m.subjectId.toString(), m]));
 
   const subjectResults = subjects.map(s => {
@@ -80,6 +94,13 @@ export async function generateStudentReportPdf(studentId: string): Promise<Buffe
     ...calcOverallResult(subjectResults.map(r => r.result)),
   };
 
+  const coScholasticData = coScholasticMarks.map((m: any) => ({
+    area: m.area,
+    term1: m.term1,
+    term2: m.term2,
+    grade: m.term1 || m.term2 ? getCoScholasticGrade(m.term1 ?? m.term2) : '—',
+  }));
+
   const branding = await Branding.findOne({ key: 'singleton' }).lean();
   const firstMarkedTeacher = marks.find((m) => Boolean(m.teacherName))?.teacherName?.trim();
   const teacherSignature = branding?.teacherSignatures?.find((s) => {
@@ -95,6 +116,7 @@ export async function generateStudentReportPdf(studentId: string): Promise<Buffe
     className: cls.name,
     subjectResults,
     overall,
+    coScholasticMarks: coScholasticData,
     schoolLogoDataUri: resolveAssetDataUri(branding?.logoUrl),
     principalSignatureDataUri: resolveAssetDataUri(branding?.principalSignatureUrl),
     teacherSignatureDataUri: resolveAssetDataUri(teacherSignature?.signatureUrl),

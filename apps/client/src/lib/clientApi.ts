@@ -164,6 +164,17 @@ export const apiClient = {
   },
   createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  // --- Co-Scholastic Marks ---
+  getCoScholasticMarks: (studentId?: string) => {
+    const qs = studentId ? `?studentId=${studentId}` : '';
+    return request(`/co-scholastic-marks${qs}`, { headers: headers() });
+  },
+  getCoScholasticMarksByStudent: (studentId: string) =>
+    request(`/co-scholastic-marks/student/${studentId}`, { headers: headers() }),
+  createOrUpdateCoScholasticMarks: (body: any) =>
+    request(`/co-scholastic-marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  deleteCoScholasticMarks: (id: string) =>
+    request(`/co-scholastic-marks/${id}`, { method: 'DELETE', headers: headers() }),
 };
 
 export default apiClient;
