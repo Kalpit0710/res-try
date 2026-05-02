@@ -53,6 +53,20 @@ export const apiClient = {
     if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
     return res.json();
   },
+  // staged bulk upload: parse (validate) then commit selected rows
+  parseBulkStudents: async (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`${API_URL}/students/bulk-parse`, { method: 'POST', body: fd, headers: { ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) } });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.json();
+  },
+  commitBulkStudents: async (rows: any[]) => {
+    const token = getToken();
+    const res = await fetch(`${API_URL}/students/bulk-commit`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ rows }) });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.json();
+  },
   // --- Classes ---
   getClasses: () => request(`/classes`, { headers: headers() }),
   getClass: (id: string) => request(`/classes/${id}`, { headers: headers() }),
