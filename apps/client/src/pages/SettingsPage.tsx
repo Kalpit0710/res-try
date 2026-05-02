@@ -2,16 +2,33 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
 
 const LOCK_TYPES = ['system', 'class', 'student', 'teacher'] as const;
+const API_BASE = ((import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/api\/v1\/?$/, '') ?? 'http://localhost:5000').replace(/\/$/, '');
+
+function assetUrl(url?: string): string | null {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+}
 
 export function SettingsPage() {
   const [locks, setLocks] = useState<any[]>([]);
+  const [branding, setBranding] = useState<any | null>(null);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [type, setType] = useState<(typeof LOCK_TYPES)[number]>('system');
   const [referenceId, setReferenceId] = useState('global');
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [principalSignatureFile, setPrincipalSignatureFile] = useState<File | null>(null);
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
+  const [teacherSignatureFile, setTeacherSignatureFile] = useState<File | null>(null);
+  const [teacherUploading, setTeacherUploading] = useState(false);
 
   async function load() {
-    const res = await apiClient.getLocks();
-    setLocks(res.data ?? []);
+    const [locksRes, brandingRes, teachersRes] = await Promise.all([apiClient.getLocks(), apiClient.getBranding(), apiClient.getTeachers()]);
+    setLocks(locksRes.data ?? []);
+    setBranding(brandingRes.data ?? null);
+    setTeachers(teachersRes.data ?? []);
   }
 
   useEffect(() => { load(); }, []);
@@ -38,14 +55,192 @@ export function SettingsPage() {
     load();
   }
 
+  async function toggleRowLock(lock: any) {
+    setBusy(true);
+    try {
+      await apiClient.updateLock(lock._id, { isLocked: !lock.isLocked });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function uploadBranding() {
+    if (!logoFile && !principalSignatureFile) {
+      alert('Select logo and/or principal signature to upload.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await apiClient.uploadBrandingAssets({
+        logo: logoFile,
+        principalSignature: principalSignatureFile,
+      });
+      setLogoFile(null);
+      setPrincipalSignatureFile(null);
+      await load();
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function uploadTeacherSignature() {
+    if (!selectedTeacherId) {
+      alert('Select a teacher first.');
+      return;
+    }
+    if (!teacherSignatureFile) {
+      alert('Select a signature image file.');
+      return;
+    }
+
+    setTeacherUploading(true);
+    try {
+      await apiClient.uploadTeacherSignature(selectedTeacherId, teacherSignatureFile);
+      setTeacherSignatureFile(null);
+      await load();
+    } finally {
+      setTeacherUploading(false);
+    }
+  }
+
+  async function removeAsset(assetKey: 'logo' | 'principalSignature') {
+    if (!confirm('Remove this asset?')) return;
+    await apiClient.removeBrandingAsset(assetKey);
+    await load();
+  }
+
+  async function removeTeacherSignature(teacherId: string) {
+    if (!confirm('Remove this teacher signature?')) return;
+    await apiClient.removeTeacherSignature(teacherId);
+    await load();
+  }
+
   return (
     <div className="p-6">
       <div>
         <h2 className="text-xl font-semibold">Settings</h2>
-        <p className="text-sm text-black/60">Manage system/class/student/teacher locks.</p>
+        <p className="text-sm text-black/60">Manage locks and branding assets used in report PDFs.</p>
       </div>
 
-      <div className="mt-6 grid gap-4 rounded-lg border border-black/10 p-4 md:grid-cols-4">
+      <div className="mt-6 rounded-xl border border-black/10 bg-white p-4">
+        <h3 className="text-base font-semibold">School Branding</h3>
+        <p className="mt-1 text-sm text-black/60">
+          Upload and manage school logo, principal signature, and teacher signatures used in report cards.
+        </p>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="space-y-1 text-sm rounded-lg border border-black/10 p-3">
+            <div className="font-medium">School Logo</div>
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)} />
+            {assetUrl(branding?.logoUrl) ? (
+              <img src={assetUrl(branding?.logoUrl) ?? ''} alt="School Logo" className="h-20 w-20 rounded border border-black/10 object-contain bg-white p-1" />
+            ) : (
+              <div className="text-xs text-black/45">No logo uploaded.</div>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs">Replace</button>
+              <button disabled={!branding?.logoUrl} onClick={() => removeAsset('logo')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 disabled:opacity-50">Remove</button>
+            </div>
+          </div>
+
+          <div className="space-y-1 text-sm rounded-lg border border-black/10 p-3">
+            <div className="font-medium">Principal Signature</div>
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setPrincipalSignatureFile(e.target.files?.[0] ?? null)} />
+            {assetUrl(branding?.principalSignatureUrl) ? (
+              <img src={assetUrl(branding?.principalSignatureUrl) ?? ''} alt="Principal Signature" className="h-16 w-40 rounded border border-black/10 object-contain bg-white p-1" />
+            ) : (
+              <div className="text-xs text-black/45">No principal signature uploaded.</div>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs">Replace</button>
+              <button disabled={!branding?.principalSignatureUrl} onClick={() => removeAsset('principalSignature')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 disabled:opacity-50">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            disabled={uploading}
+            onClick={uploadBranding}
+            className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
+          >
+            {uploading ? 'Uploading...' : 'Upload Selected Assets'}
+          </button>
+          <span className="text-xs text-black/50">Accepted formats: PNG, JPG, WEBP. Max size: 2MB each. (Logo + Principal)</span>
+        </div>
+
+        <div className="mt-6 rounded-lg border border-black/10 p-3">
+          <h4 className="text-sm font-semibold">Teacher Signatures</h4>
+          <p className="mt-1 text-xs text-black/55">Upload signatures per teacher using teacher name/id.</p>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-[1.4fr_1fr_auto] md:items-end">
+            <label className="space-y-1 text-sm">
+              <div className="font-medium">Teacher</div>
+              <select className="w-full rounded-md border border-black/15 px-3 py-2" value={selectedTeacherId} onChange={(e) => setSelectedTeacherId(e.target.value)}>
+                <option value="">Select teacher</option>
+                {teachers.map((t) => (
+                  <option key={t._id} value={t._id}>{t.name} ({t._id})</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-1 text-sm">
+              <div className="font-medium">Signature File</div>
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setTeacherSignatureFile(e.target.files?.[0] ?? null)} />
+            </label>
+
+            <button
+              disabled={teacherUploading}
+              onClick={uploadTeacherSignature}
+              className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
+            >
+              {teacherUploading ? 'Uploading...' : 'Upload/Replace'}
+            </button>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-md border border-black/10">
+            <table className="w-full text-sm">
+              <thead className="bg-black/5 text-left">
+                <tr>
+                  <th className="px-3 py-2">Teacher</th>
+                  <th className="px-3 py-2">Teacher ID</th>
+                  <th className="px-3 py-2">Signature</th>
+                  <th className="px-3 py-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(branding?.teacherSignatures ?? []).map((sig: any) => (
+                  <tr key={sig.teacherId} className="border-t border-black/5">
+                    <td className="px-3 py-2">{sig.teacherName}</td>
+                    <td className="px-3 py-2 text-xs text-black/60">{sig.teacherId}</td>
+                    <td className="px-3 py-2">
+                      {assetUrl(sig.signatureUrl) ? (
+                        <img src={assetUrl(sig.signatureUrl) ?? ''} alt={`${sig.teacherName} signature`} className="h-12 w-32 rounded border border-black/10 object-contain bg-white p-1" />
+                      ) : (
+                        <span className="text-black/45">Not found</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <button onClick={() => removeTeacherSignature(sig.teacherId)} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600">
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!(branding?.teacherSignatures ?? []).length ? (
+                  <tr>
+                    <td className="px-3 py-6 text-center text-black/50" colSpan={4}>No teacher signatures uploaded.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 rounded-lg border border-black/10 bg-white p-4 md:grid-cols-4">
         <label className="space-y-1">
           <div className="text-sm font-medium">Lock type</div>
           <select className="w-full rounded-md border border-black/15 px-3 py-2" value={type} onChange={(e) => setType(e.target.value as any)}>
@@ -68,7 +263,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-black/10">
+      <div className="mt-6 overflow-hidden rounded-lg border border-black/10 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-black/5 text-left">
             <tr>
@@ -92,7 +287,7 @@ export function SettingsPage() {
                 <td className="px-4 py-3">{lock.updatedAt ? new Date(lock.updatedAt).toLocaleString() : '-'}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    <button onClick={() => toggleLock(!lock.isLocked)} className="text-orange-600">
+                    <button onClick={() => toggleRowLock(lock)} className="text-orange-600">
                       {lock.isLocked ? 'Unlock' : 'Lock'}
                     </button>
                     <button onClick={() => removeLock(lock._id)} className="text-red-600">

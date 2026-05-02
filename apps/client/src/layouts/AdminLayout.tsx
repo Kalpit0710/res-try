@@ -8,6 +8,7 @@ const nav = [
   { to: '/admin/classes', label: 'Classes' },
   { to: '/admin/subjects', label: 'Subjects' },
   { to: '/admin/teachers', label: 'Teachers' },
+  { to: '/admin/marks', label: 'Marks Entry' },
   { to: '/admin/reports', label: 'Reports' },
   { to: '/admin/logs', label: 'Logs' },
   { to: '/admin/settings', label: 'Settings' },
@@ -22,9 +23,9 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black flex">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#fff_0%,#fff8f1_100%)] text-black flex">
       {/* Sidebar (desktop) */}
-      <aside className="hidden md:flex w-64 border-r border-black/10 p-4 flex-col gap-2">
+      <aside className="hidden md:flex w-64 border-r border-black/10 bg-white/85 backdrop-blur p-4 flex-col gap-2 md:sticky md:top-0 md:self-start md:h-screen md:overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm text-black/60">SRMS</div>
@@ -53,11 +54,11 @@ export function AdminLayout() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1">
+      <main className="flex-1 min-w-0">
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="border-b border-black/10 px-4 md:px-6 py-3 flex items-center justify-between"
+          className="sticky top-0 z-20 border-b border-black/10 bg-white/80 backdrop-blur px-4 md:px-6 py-3 flex items-center justify-between"
         >
           <div className="font-semibold">School Result Management System</div>
           <button onClick={logout} className="md:hidden text-sm text-orange-600">Logout</button>

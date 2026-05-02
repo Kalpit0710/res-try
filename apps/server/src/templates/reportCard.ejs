@@ -20,6 +20,10 @@
       .subtitle { font-size: 12px; font-weight: 700; }
       .box { border: 1px solid #111; padding: 8px; }
       .label { font-weight: 700; }
+      .header-with-logo { display: flex; align-items: center; justify-content: center; gap: 12px; }
+      .school-logo { width: 56px; height: 56px; object-fit: contain; }
+      .signature-wrap { height: 34px; margin-bottom: 4px; display: flex; align-items: flex-end; justify-content: center; }
+      .signature-img { max-width: 120px; max-height: 32px; object-fit: contain; }
 
       table { width: 100%; border-collapse: collapse; }
       th, td { border: 1px solid #111; padding: 4px; vertical-align: middle; }
@@ -36,9 +40,16 @@
   </head>
   <body>
     <div class="center">
-      <div class="title"><%= schoolName %></div>
-      <div class="subtitle">PROGRESS REPORT</div>
-      <div class="small">Academic Session: <%= academicSession %></div>
+      <div class="header-with-logo">
+        <% if (schoolLogoDataUri) { %>
+          <img src="<%= schoolLogoDataUri %>" alt="School Logo" class="school-logo" />
+        <% } %>
+        <div>
+          <div class="title"><%= schoolName %></div>
+          <div class="subtitle">PROGRESS REPORT</div>
+          <div class="small">Academic Session: <%= academicSession %></div>
+        </div>
+      </div>
     </div>
 
     <div class="box mt-12">
@@ -125,9 +136,23 @@
 
       <table class="mt-12">
         <tr>
-          <td class="sign"><div class="center">Class Teacher</div></td>
+          <td class="sign">
+            <div class="signature-wrap">
+              <% if (teacherSignatureDataUri) { %>
+                <img src="<%= teacherSignatureDataUri %>" alt="Teacher Signature" class="signature-img" />
+              <% } %>
+            </div>
+            <div class="center">Class Teacher</div>
+          </td>
           <td class="sign"><div class="center">Exam Cell</div></td>
-          <td class="sign"><div class="center">Principal</div></td>
+          <td class="sign">
+            <div class="signature-wrap">
+              <% if (principalSignatureDataUri) { %>
+                <img src="<%= principalSignatureDataUri %>" alt="Principal Signature" class="signature-img" />
+              <% } %>
+            </div>
+            <div class="center">Principal</div>
+          </td>
         </tr>
       </table>
 

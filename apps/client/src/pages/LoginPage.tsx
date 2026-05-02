@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api, ApiError } from '../lib/api';
 import { setToken } from '../lib/auth';
@@ -39,8 +39,16 @@ export function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md border border-black/10 rounded-lg p-6"
       >
+        <div className="mb-3 text-sm">
+          <Link to="/" className="text-orange-600 hover:underline">Back to home</Link>
+        </div>
         <h1 className="text-2xl font-semibold">SRMS Admin Login</h1>
         <p className="text-sm text-black/60 mt-1">Sign in to manage students, classes, and results.</p>
+        <div className="mt-2 text-sm">
+          <Link to="/marks-entry" className="text-orange-600 hover:underline">
+            Open Teacher Marks Entry without admin login
+          </Link>
+        </div>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>

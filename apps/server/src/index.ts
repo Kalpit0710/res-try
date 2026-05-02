@@ -1,5 +1,6 @@
 import 'express-async-errors';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
@@ -17,6 +18,8 @@ import marksRoutes from './routes/marks.routes';
 import reportRoutes from './routes/report.routes';
 import logRoutes from './routes/log.routes';
 import lockRoutes from './routes/lock.routes';
+import brandingRoutes from './routes/branding.routes';
+import publicRoutes from './routes/public.routes';
 
 dotenv.config();
 
@@ -44,6 +47,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(apiLimiter);
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
@@ -59,6 +63,8 @@ app.use(`${API}/marks`, marksRoutes);
 app.use(`${API}/reports`, reportRoutes);
 app.use(`${API}/logs`, logRoutes);
 app.use(`${API}/locks`, lockRoutes);
+app.use(`${API}/settings`, brandingRoutes);
+app.use(`${API}/public`, publicRoutes);
 
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use(errorHandler);

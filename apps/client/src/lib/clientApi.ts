@@ -17,8 +17,26 @@ async function request(path: string, opts?: RequestInit) {
 }
 
 export const apiClient = {
-  getStudents: (params: { page?: number; limit?: number; search?: string }) =>
-    request(`/students?page=${params.page ?? 1}&limit=${params.limit ?? 20}&search=${encodeURIComponent(params.search ?? '')}`, { headers: headers() }),
+  // --- Public teacher portal data ---
+  publicGetClasses: () => request(`/public/classes`, { headers: headers() }),
+  publicGetStudents: (params: { classId?: string; search?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.classId) qs.set('classId', params.classId);
+    if (params.search) qs.set('search', params.search);
+    return request(`/public/students${qs.toString() ? `?${qs.toString()}` : ''}`, { headers: headers() });
+  },
+  publicGetSubjects: (params: { classId?: string } = {}) =>
+    request(`/public/subjects${params.classId ? `?classId=${params.classId}` : ''}`, { headers: headers() }),
+  publicGetTeachers: () => request(`/public/teachers`, { headers: headers() }),
+
+  getStudents: (params: { page?: number; limit?: number; search?: string; classId?: string }) => {
+    const qs = new URLSearchParams();
+    qs.set('page', String(params.page ?? 1));
+    qs.set('limit', String(params.limit ?? 20));
+    qs.set('search', params.search ?? '');
+    if (params.classId) qs.set('classId', params.classId);
+    return request(`/students?${qs.toString()}`, { headers: headers() });
+  },
 
   getStudent: (id: string) => request(`/students/${id}`, { headers: headers() }),
 
@@ -63,6 +81,51 @@ export const apiClient = {
     if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
     return res.blob();
   },
+  bulkDownloadReports: async (studentIds: string[]) => {
+    const res = await fetch(`${API_URL}/reports/bulk`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ studentIds }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.blob();
+  },
+  // --- Settings (branding assets) ---
+  getBranding: () => request(`/settings/branding`, { headers: headers() }),
+  uploadBrandingAssets: async (payload: { logo?: File | null; principalSignature?: File | null }) => {
+    const fd = new FormData();
+    if (payload.logo) fd.append('logo', payload.logo);
+    if (payload.principalSignature) fd.append('principalSignature', payload.principalSignature);
+
+    const token = getToken();
+    const res = await fetch(`${API_URL}/settings/branding`, {
+      method: 'POST',
+      body: fd,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.json();
+  },
+  uploadTeacherSignature: async (teacherId: string, signature: File) => {
+    const fd = new FormData();
+    fd.append('teacherId', teacherId);
+    fd.append('signature', signature);
+
+    const token = getToken();
+    const res = await fetch(`${API_URL}/settings/branding/teacher-signature`, {
+      method: 'POST',
+      body: fd,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.json();
+  },
+  removeBrandingAsset: (assetKey: 'logo' | 'principalSignature') =>
+    request(`/settings/branding/asset/${assetKey}`, { method: 'DELETE', headers: headers() }),
+  removeTeacherSignature: (teacherId: string) =>
+    request(`/settings/branding/teacher-signature/${teacherId}`, { method: 'DELETE', headers: headers() }),
   // --- Logs ---
   getLogs: (params: { teacherName?: string; studentId?: string; subjectId?: string; from?: string; to?: string } = {}) => {
     const qs = new URLSearchParams();
@@ -78,6 +141,15 @@ export const apiClient = {
   createLock: (body: any) => request(`/locks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateLock: (id: string, body: any) => request(`/locks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
   deleteLock: (id: string) => request(`/locks/${id}`, { method: 'DELETE', headers: headers() }),
+  // --- Marks ---
+  getMarks: (params: { studentId?: string; subjectId?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.studentId) qs.set('studentId', params.studentId);
+    if (params.subjectId) qs.set('subjectId', params.subjectId);
+    return request(`/marks${qs.toString() ? `?${qs.toString()}` : ''}`, { headers: headers() });
+  },
+  createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
 };
 
 export default apiClient;
