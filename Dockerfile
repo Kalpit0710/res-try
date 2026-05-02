@@ -42,7 +42,8 @@ COPY apps/server/package.json ./apps/server/package.json
 # Copy built artifacts from builder
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/apps/server/dist ./apps/server/dist
-COPY --from=builder /app/apps/server/templates ./apps/server/templates
+# Copy templates from server build output (created by copyTemplates.mjs)
+COPY --from=builder /app/apps/server/dist/templates ./apps/server/templates
 
 # Install production dependencies only
 RUN npm ci --omit=dev

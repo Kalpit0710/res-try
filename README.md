@@ -45,7 +45,7 @@ Edit `apps/server/.env` with your settings:
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/srms
+MONGO_URI=mongodb://localhost:27017/srms
 PUPPETEER_EXECUTABLE_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe
 CLIENT_URL=http://localhost:5173
 SCHOOL_NAME=Your School Name
@@ -124,6 +124,68 @@ npm run build --workspace=apps/server
 ```bash
 npm run build --workspace=apps/client
 ```
+
+## Deployment
+
+This app is best deployed as two services:
+
+- Frontend: Vercel or Netlify
+- Backend: Render, Fly.io, or a Docker-based host
+- Database: MongoDB Atlas free tier
+
+### Important backend note
+
+The server uses `puppeteer-core` for PDF generation, so the production host must provide a Chrome/Chromium executable or a custom container image that installs one. Plain Node-only free tiers usually fail on report generation unless you add a browser runtime.
+
+### Recommended free setup
+
+1. Create a free MongoDB Atlas M0 cluster and copy the connection string.
+2. Deploy the backend to a host that can run Chrome/Chromium.
+3. Deploy the frontend separately and point `VITE_API_URL` at the backend API.
+
+### Backend environment variables
+
+Set these on the backend host:
+
+```env
+PORT=5000
+MONGO_URI=your-mongodb-atlas-connection-string
+JWT_SECRET=your-long-random-secret
+NODE_ENV=production
+CLIENT_URL=https://your-frontend-domain.example
+SCHOOL_NAME=Your School Name
+ACADEMIC_SESSION=2025-26
+PUPPETEER_EXECUTABLE_PATH=/path/to/chrome-or-chromium
+```
+
+If your host does not support a browser binary, PDF generation will not work until you switch to a host image that includes Chromium.
+
+### Frontend environment variables
+
+Set this on the frontend host:
+
+```env
+VITE_API_URL=https://your-backend-domain.example/api/v1
+```
+
+### End-to-end deployment steps
+
+1. Run `npm install` at the repo root.
+2. Build locally with `npm run build` and confirm it succeeds.
+3. Create the MongoDB Atlas database and copy the connection string.
+4. Deploy the backend first and verify `GET /health` returns `ok`.
+5. Set `CLIENT_URL` to the frontend domain in the backend host.
+6. Deploy the frontend and set `VITE_API_URL` to the backend API URL.
+7. Log in and test a few API flows, including report PDF generation.
+
+### CLI deployment option
+
+If you want, the fastest CLI-based path is usually:
+
+- `vercel` for the client
+- the platform-specific CLI for the backend host
+
+I can help you wire that up next, but I need the hosting accounts or API tokens first.
 
 ## Database Seeding
 
