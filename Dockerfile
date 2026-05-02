@@ -25,9 +25,11 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install Chromium and dependencies for Puppeteer
+# Use common Alpine font packages (fontconfig, ttf-dejavu) instead of noto-sans
 RUN apk add --no-cache \
   chromium \
-  noto-sans \
+  fontconfig \
+  ttf-dejavu \
   freetype \
   harfbuzz \
   ca-certificates
