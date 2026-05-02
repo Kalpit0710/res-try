@@ -37,24 +37,27 @@ Save this connection string for Step 3.
 3. Give it a name (e.g., "srms-backend")
 4. Review the services:
    - **srms-backend** (Web service with Docker)
-   - **srms-db** (MongoDB instance)
 
 ## Step 4: Configure Environment Variables
 
 Before deploying, Render will show you the environment variables from `render.yaml`:
 
-1. **Update these critical variables:**
-   - `MONGO_URI`: Leave as-is (auto-configured to link to `srms-db`)
+1. **CRITICAL: Set MONGO_URI**
+   - Go to Step 1 and copy your MongoDB Atlas connection string
+   - Paste it as the `MONGO_URI` value
+   - Format: `mongodb+srv://username:password@cluster.mongodb.net/srms`
+
+2. **Update these critical variables:**
    - `JWT_SECRET`: Keep the auto-generated value
    - `CLIENT_URL`: Update to `https://client-jade-iota.vercel.app` (your Vercel frontend URL)
 
-2. **Optional updates:**
+3. **Optional updates:**
    - `ADMIN_USERNAME`: Change if desired
    - `ADMIN_PASSWORD`: Change if desired
    - `SCHOOL_NAME`: Update to your school name
    - `ACADEMIC_SESSION`: Update to current session
 
-3. Click "Create Blueprint" to deploy
+4. Click "Create Blueprint" to deploy
 
 ## Step 5: Wait for Deployment
 
@@ -107,9 +110,11 @@ Once deployed:
 
 ### MongoDB connection fails
 
-- Verify connection string in `MONGO_URI` is correct
-- Ensure IP whitelist includes 0.0.0.0/0 (or your Render IP)
-- Check database username and password are correct
+- Verify the `MONGO_URI` value is correct (copy from MongoDB Atlas "Connect" button)
+- Format should be: `mongodb+srv://username:password@cluster.mongodb.net/srms`
+- Replace `<password>` with your actual database password (not your Atlas account password)
+- Ensure IP whitelist in MongoDB Atlas includes 0.0.0.0/0 (or your Render IP range)
+- Check that the database user has permissions for the `srms` database
 
 ### Frontend returns 403 CORS errors
 
