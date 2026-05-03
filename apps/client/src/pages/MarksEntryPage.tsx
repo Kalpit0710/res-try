@@ -70,18 +70,17 @@ export function MarksEntryPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [classes, setClasses] = useState<any[]>([]);
-  const [classId, setClassId] = useState('');
+  const [classId, setClassId] = useState(searchParams.get('classId') && isObjectId(searchParams.get('classId') ?? '') ? searchParams.get('classId') ?? '' : '');
   const [students, setStudents] = useState<any[]>([]);
   const [studentId, setStudentId] = useState('');
   const [teachers, setTeachers] = useState<any[]>([]);
-  const [teacherName, setTeacherName] = useState('');
+  const [teacherName, setTeacherName] = useState(searchParams.get('teacherName') ?? '');
   const [subjectStates, setSubjectStates] = useState<SubjectMarksState[]>([]);
   const [coScholasticStates, setCoScholasticStates] = useState<CoScholasticMarksState[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [queryBootstrapDone, setQueryBootstrapDone] = useState(false);
   const [initialStudentApplied, setInitialStudentApplied] = useState(false);
   const isAdminMode = location.pathname.startsWith('/admin/');
 
@@ -93,11 +92,7 @@ export function MarksEntryPage() {
     error: string | null;
   }
   const [remarkState, setRemarkState] = useState<RemarkState>({ text: '', teacherName: '', saving: false, saved: false, error: null });
-  const initialTeacherName = searchParams.get('teacherName') ?? '';
-  const initialClassId = searchParams.get('classId') ?? '';
   const initialStudentId = searchParams.get('studentId') ?? '';
-
-  // Co-scholastic areas (static) - moved outside component to avoid new reference each render
 
   // Load classes on mount
   useEffect(() => {
@@ -106,35 +101,6 @@ export function MarksEntryPage() {
       setTeachers(teachersRes.data ?? teachersRes);
     });
   }, []);
-
-  useEffect(() => {
-    if (queryBootstrapDone) return;
-
-    if (initialTeacherName) setTeacherName(initialTeacherName);
-
-    if (initialClassId && isObjectId(initialClassId)) {
-      setClassId(initialClassId);
-      setQueryBootstrapDone(true);
-      return;
-    }
-
-    if (initialStudentId) {
-      apiClient
-        .publicGetStudents()
-        .then((res) => {
-          const all: any[] = res.data ?? res ?? [];
-          const initialStudent = all.find((s) => s._id === initialStudentId);
-          const derivedClassId = extractClassId(initialStudent?.classId);
-          if (derivedClassId && isObjectId(derivedClassId)) {
-            setClassId(derivedClassId);
-          }
-        })
-        .finally(() => setQueryBootstrapDone(true));
-      return;
-    }
-
-    setQueryBootstrapDone(true);
-  }, [queryBootstrapDone, initialTeacherName, initialClassId, initialStudentId]);
 
   // Load students when class changes
   useEffect(() => {
@@ -151,15 +117,30 @@ export function MarksEntryPage() {
       .finally(() => setLoadingStudents(false));
   }, [classId]);
 
+  // Auto-select teacher's linked class when teacher is selected (only if not initial URL teacher)
+  useEffect(() => {
+    if (!teacherName || teachers.length === 0) return;
+    
+    // Skip auto-select if teacher is the same as URL initial value
+    const initialTeacherFromUrl = searchParams.get('teacherName') ?? '';
+    if (teacherName === initialTeacherFromUrl) return;
+    
+    const selectedTeacher = teachers.find(t => t.name === teacherName);
+    if (selectedTeacher && selectedTeacher.classId) {
+      const linkedClassId = extractClassId(selectedTeacher.classId);
+      if (linkedClassId && linkedClassId !== classId) {
+        setClassId(linkedClassId);
+      }
+    }
+  }, [teacherName, teachers, searchParams, classId]);
+
   useEffect(() => {
     if (initialStudentApplied || !initialStudentId || students.length === 0) return;
 
     if (students.some((s) => s._id === initialStudentId)) {
       setStudentId(initialStudentId);
+      setInitialStudentApplied(true);
     }
-
-    // Apply URL-provided student only once so user can change selection freely.
-    setInitialStudentApplied(true);
   }, [initialStudentApplied, initialStudentId, students]);
 
   // Load subjects + existing marks when student changes

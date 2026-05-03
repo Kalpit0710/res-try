@@ -136,6 +136,28 @@ export function TeacherPortalPage() {
   const totalPages = Math.ceil(allStudents.length / ITEMS_PER_PAGE);
   const hasMoreStudents = currentPage < totalPages;
 
+  // Auto-select teacher's linked class when teacher is selected
+  useEffect(() => {
+    if (selectedTeacher && selectedTeacher.classId) {
+      const linkedClassId = extractClassId(selectedTeacher.classId);
+      if (linkedClassId) {
+        setSearchMode('class');
+        setClassId(linkedClassId);
+        setSearchText('');
+        setAllStudents([]);
+        setDisplayedStudents([]);
+        setCurrentPage(1);
+        setSelectedStudentId('');
+      }
+    } else {
+      // If teacher has no linked class, reset to name search
+      if (teacherId && !selectedTeacher?.classId) {
+        setSearchMode('name');
+        setClassId('');
+      }
+    }
+  }, [selectedTeacher, teacherId]);
+
   function changeSearchMode(mode: StudentSearchMode) {
     setSearchMode(mode);
     setAllStudents([]);

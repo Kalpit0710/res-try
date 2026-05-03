@@ -27,7 +27,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   const validPass = await bcrypt.compare(password, hashed);
 
   if (!validUser || !validPass) {
-    res.status(401).json({ success: false, message: 'Invalid credentials' });
+    res.status(200).json({ success: false, message: 'Invalid username or password' });
     return;
   }
 
