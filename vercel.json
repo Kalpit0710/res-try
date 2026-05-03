@@ -2,13 +2,23 @@
   "buildCommand": "npm run build",
   "outputDirectory": "apps/client/dist",
   "installCommand": "npm install",
-  "env": {
-    "VITE_API_URL": "@vite_api_url"
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ],
   "headers": [
