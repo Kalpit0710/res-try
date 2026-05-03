@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
+import { AdminMarksExcelBulk } from '../components/AdminMarksExcelBulk';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
 const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
@@ -66,6 +67,7 @@ function numOrEmpty(v: number | undefined): number | '' {
 
 export function MarksEntryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [classes, setClasses] = useState<any[]>([]);
   const [classId, setClassId] = useState('');
@@ -81,6 +83,7 @@ export function MarksEntryPage() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [queryBootstrapDone, setQueryBootstrapDone] = useState(false);
   const [initialStudentApplied, setInitialStudentApplied] = useState(false);
+  const isAdminMode = location.pathname.startsWith('/admin/');
 
   interface RemarkState {
     text: string;
@@ -430,6 +433,7 @@ export function MarksEntryPage() {
   }
 
   const selectedStudent = students.find((s) => s._id === studentId);
+  const selectedClass = classes.find((c) => c._id === classId);
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -441,6 +445,14 @@ export function MarksEntryPage() {
           Select a class and student to enter marks for all subjects at once.
         </p>
       </div>
+
+      {isAdminMode && (
+        <AdminMarksExcelBulk
+          classId={classId}
+          className={selectedClass?.name}
+          teacherName={teacherName}
+        />
+      )}
 
       {/* Step 1 — Class + Student + Teacher */}
       <div className="grid gap-3 md:grid-cols-3 rounded-lg border border-black/10 p-4 bg-black/[0.02]">

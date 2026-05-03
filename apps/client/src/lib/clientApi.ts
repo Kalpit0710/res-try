@@ -164,6 +164,29 @@ export const apiClient = {
   },
   createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  downloadMarksExcelTemplate: async (classId: string) => {
+    const token = getToken();
+    const res = await fetch(`${API_URL}/marks/admin/excel-template?classId=${encodeURIComponent(classId)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.blob();
+  },
+  parseMarksExcel: async (file: File, classId: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('classId', classId);
+    const token = getToken();
+    const res = await fetch(`${API_URL}/marks/admin/excel-parse`, {
+      method: 'POST',
+      body: fd,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.json();
+  },
+  importMarksExcel: (body: { classId: string; teacherName: string; rows: any[] }) =>
+    request(`/marks/admin/excel-import`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   // --- Remarks (class teacher) ---
   getRemarkByStudent: (studentId: string) => request(`/remarks/student/${studentId}`, { headers: headers() }),
   createOrUpdateRemark: (body: any) => request(`/remarks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
