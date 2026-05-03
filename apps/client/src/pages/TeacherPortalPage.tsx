@@ -140,37 +140,37 @@ export function TeacherPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#fff1dc,_#fff_36%,_#eefcff_100%)] px-4 py-6 text-black md:px-8 md:py-10">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#fff1dc,_#fff_36%,_#eefcff_100%)] px-3 py-4 text-black sm:px-4 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between gap-3 rounded-3xl border border-black/10 bg-white/80 px-5 py-4 backdrop-blur">
+        <div className="flex flex-col gap-3 rounded-3xl border border-black/10 bg-white/85 px-4 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.05)] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
-            <div className="text-xs uppercase tracking-[0.3em] text-black/45">Teacher Portal</div>
-            <div className="text-lg font-semibold">Select teacher and student</div>
+            <div className="text-[11px] uppercase tracking-[0.28em] text-black/45">Teacher Portal</div>
+            <div className="text-base font-semibold sm:text-lg">Select teacher and student</div>
           </div>
-          <Link to="/" className="text-sm text-orange-700 hover:underline">
+          <Link to="/" className="self-start text-sm text-orange-700 hover:underline sm:self-auto">
             Back to Home
           </Link>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <section className="rounded-[2rem] border border-black/10 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.08)] backdrop-blur">
-            <h1 className="text-3xl font-black tracking-tight">Teacher Portal</h1>
+        <div className="mt-5 grid gap-4 lg:grid-cols-[0.72fr_1.28fr] lg:gap-6">
+          <section className="rounded-[1.75rem] border border-black/10 bg-white/92 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.08)] backdrop-blur sm:p-6">
+            <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Teacher Portal</h1>
             <p className="mt-3 text-sm leading-6 text-black/65">
               Pick a teacher first, then search one student at a time before opening marks entry.
             </p>
 
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3">
               <StepDot step={1} current={currentStep}>Teacher</StepDot>
-              <div className="h-px flex-1 bg-black/10" />
+              <div className="hidden h-px flex-1 bg-black/10 sm:block" />
               <StepDot step={2} current={currentStep}>Student</StepDot>
-              <div className="h-px flex-1 bg-black/10" />
+              <div className="hidden h-px flex-1 bg-black/10 sm:block" />
               <StepDot step={3} current={currentStep}>Marks</StepDot>
             </div>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-5 space-y-4">
               <label className="block">
                 <div className="mb-1 text-sm font-medium">Teacher</div>
-                <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)} className="w-full rounded-xl border border-black/15 bg-white px-3 py-3 text-sm">
+                <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)} className="w-full rounded-xl border border-black/15 bg-white px-3 py-3 text-sm shadow-[0_1px_0_rgba(0,0,0,0.02)]">
                   <option value="">Select teacher</option>
                   {teachers.map((teacher) => (
                     <option key={teacher._id} value={teacher._id}>
@@ -180,42 +180,48 @@ export function TeacherPortalPage() {
                 </select>
               </label>
 
-              <div className="rounded-2xl border border-black/10 bg-[linear-gradient(180deg,#fff,#fff9f2)] p-4">
-                <div className="text-sm font-semibold text-black">Search student</div>
-                <div className="mt-1 text-xs leading-5 text-black/55">Search by name, reg. no, or filter by class. Use one path at a time.</div>
+              <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff,#fff7ed)] p-3 sm:p-4 shadow-[0_8px_20px_rgba(0,0,0,0.03)]">
+                <div className="text-sm font-semibold text-slate-900">Search student</div>
+                <div className="mt-1 text-xs leading-5 text-slate-600">Search by name, reg. no, or filter by class. Use one path at a time.</div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-black/35">
+                <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] sm:flex sm:flex-wrap sm:items-center sm:gap-2">
                   <button
                     type="button"
                     onClick={() => changeSearchMode('name')}
                     disabled={!teacherId}
                     className={[
-                      'rounded-full border px-3 py-2 transition disabled:cursor-not-allowed disabled:opacity-40',
-                      searchMode === 'name' ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-black/10 bg-white text-black/55',
+                      'rounded-full border px-2 py-2 text-[9px] leading-tight transition disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-[10px]',
+                      searchMode === 'name'
+                        ? 'border-orange-500 bg-orange-100 text-orange-800 shadow-[0_4px_14px_rgba(249,115,22,0.18)]'
+                        : 'border-slate-200 bg-white text-slate-700 shadow-[0_1px_0_rgba(0,0,0,0.02)]',
                     ].join(' ')}
                   >
                     Name
                   </button>
-                  <span className="px-1 text-black/30">---or---</span>
+                  <span className="hidden px-1 text-slate-400 sm:inline">---or---</span>
                   <button
                     type="button"
                     onClick={() => changeSearchMode('regNo')}
                     disabled={!teacherId}
                     className={[
-                      'rounded-full border px-3 py-2 transition disabled:cursor-not-allowed disabled:opacity-40',
-                      searchMode === 'regNo' ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-black/10 bg-white text-black/55',
+                      'rounded-full border px-2 py-2 text-[9px] leading-tight transition disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-[10px]',
+                      searchMode === 'regNo'
+                        ? 'border-orange-500 bg-orange-100 text-orange-800 shadow-[0_4px_14px_rgba(249,115,22,0.18)]'
+                        : 'border-slate-200 bg-white text-slate-700 shadow-[0_1px_0_rgba(0,0,0,0.02)]',
                     ].join(' ')}
                   >
                     Reg. No
                   </button>
-                  <span className="px-1 text-black/30">---or---</span>
+                  <span className="hidden px-1 text-slate-400 sm:inline">---or---</span>
                   <button
                     type="button"
                     onClick={() => changeSearchMode('class')}
                     disabled={!teacherId}
                     className={[
-                      'rounded-full border px-3 py-2 transition disabled:cursor-not-allowed disabled:opacity-40',
-                      searchMode === 'class' ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-black/10 bg-white text-black/55',
+                      'rounded-full border px-2 py-2 text-[9px] leading-tight transition disabled:cursor-not-allowed disabled:opacity-40 sm:px-3 sm:text-[10px]',
+                      searchMode === 'class'
+                        ? 'border-orange-500 bg-orange-100 text-orange-800 shadow-[0_4px_14px_rgba(249,115,22,0.18)]'
+                        : 'border-slate-200 bg-white text-slate-700 shadow-[0_1px_0_rgba(0,0,0,0.02)]',
                     ].join(' ')}
                   >
                     Class
@@ -225,7 +231,7 @@ export function TeacherPortalPage() {
                 <div className="mt-4">
                   {searchMode === 'class' ? (
                     <label className="block">
-                      <div className="mb-1 text-sm font-medium">Class filter</div>
+                      <div className="mb-1 text-sm font-medium text-slate-900">Class filter</div>
                       <select
                         value={classId}
                         onChange={(e) => setClassId(e.target.value)}
@@ -242,7 +248,7 @@ export function TeacherPortalPage() {
                     </label>
                   ) : (
                     <label className="block">
-                      <div className="mb-1 text-sm font-medium">{searchMode === 'regNo' ? 'Search by reg. no' : 'Search by name'}</div>
+                      <div className="mb-1 text-sm font-medium text-slate-900">{searchMode === 'regNo' ? 'Search by reg. no' : 'Search by name'}</div>
                       <input
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
@@ -290,7 +296,7 @@ export function TeacherPortalPage() {
               <div className="mt-4 space-y-3">
                 {/* Progress Bar */}
                 <div className="rounded-xl border border-black/10 bg-gradient-to-r from-orange-50 to-orange-100/40 p-3">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
                     <span className="text-xs font-medium text-black/70">Showing {displayedStudents.length} of {allStudents.length} students</span>
                     <span className="text-xs text-black/50">{currentPage} of {totalPages}</span>
                   </div>
@@ -303,7 +309,7 @@ export function TeacherPortalPage() {
                 </div>
 
                 {/* Student Grid */}
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {displayedStudents.map((student) => {
                     const isSelected = selectedStudentId === student._id;
                     return (
@@ -337,7 +343,7 @@ export function TeacherPortalPage() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-[linear-gradient(180deg,#fff,#fff8f1)] p-4">
+            <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-black/10 bg-[linear-gradient(180deg,#fff,#fff8f1)] p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-black/65">
                 {selectedTeacher ? <span className="font-medium text-black">Teacher: {selectedTeacher.name}</span> : 'Pick a teacher to continue.'}
                 {selectedStudent ? <span className="ml-2 font-medium text-black">Student: {selectedStudent.name}</span> : null}
@@ -345,7 +351,7 @@ export function TeacherPortalPage() {
               <button
                 onClick={continueToMarks}
                 disabled={!selectedTeacher || !selectedStudent}
-                className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:self-start"
               >
                 Continue to Marks Entry
               </button>
@@ -371,7 +377,7 @@ function StepDot({
   return (
     <div
       className={[
-        'flex min-w-0 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] transition',
+        'flex min-w-0 items-center gap-2 rounded-full border px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] transition sm:px-3 sm:text-xs sm:tracking-[0.22em]',
         active ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-black/10 bg-white text-black/35',
       ].join(' ')}
     >

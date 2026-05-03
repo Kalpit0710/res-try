@@ -14,13 +14,13 @@ export function LandingPage() {
         <motion.header
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between rounded-3xl border border-black/10 bg-white/80 px-5 py-4 backdrop-blur"
+          className="flex flex-col gap-3 rounded-3xl border border-black/10 bg-white/80 px-5 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
             <div className="text-xs uppercase tracking-[0.3em] text-black/45">SRMS</div>
             <div className="text-lg font-semibold">School Result Management System</div>
           </div>
-          <div className="text-sm text-black/55">Students, marks, reports, and branding in one place.</div>
+          <div className="text-sm text-black/55 sm:text-right">Students, marks, reports, and branding in one place.</div>
         </motion.header>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
@@ -40,16 +40,16 @@ export function LandingPage() {
               Admins get a full control panel. Teachers get a fast portal to select teacher, choose a class or search a student, and enter marks without admin login friction.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 to="/login"
-                className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black/90"
+                className="rounded-full bg-black px-5 py-3 text-center text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black/90"
               >
                 Admin Login
               </Link>
               <Link
                 to="/teacher-portal"
-                className="rounded-full border border-black/15 bg-white px-5 py-3 text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:border-orange-300 hover:text-orange-700"
+                className="rounded-full border border-black/15 bg-white px-5 py-3 text-center text-sm font-semibold text-black transition hover:-translate-y-0.5 hover:border-orange-300 hover:text-orange-700"
               >
                 Teachers Portal
               </Link>

@@ -31,8 +31,8 @@ export function SubjectsPage() {
   const unlinkedSubjects = subjects.filter((subject) => !subjectClassId(subject));
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Subjects</h2>
           <p className="text-sm text-black/60">Manage subjects and max marks, grouped by linked class</p>
@@ -42,7 +42,7 @@ export function SubjectsPage() {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setActiveClassId('all')}
           className={['rounded-full px-3 py-1.5 text-sm border', activeClassId === 'all' ? 'bg-black text-white border-black' : 'bg-white border-black/10'].join(' ')}
@@ -77,13 +77,13 @@ export function SubjectsPage() {
               ) : (
                 group.items.map((s) => (
                   <div key={s._id} className="p-4">
-                    <div className="flex justify-between items-center gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                       <div>
                         <div className="font-semibold">{s.name} <span className="text-sm text-black/60">({subjectClassName(s)})</span></div>
                         <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
                         <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
                       </div>
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex flex-wrap gap-2 shrink-0">
                         <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
                         <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
                       </div>
@@ -107,13 +107,13 @@ export function SubjectsPage() {
             <div className="divide-y divide-black/5">
               {unlinkedSubjects.map((s) => (
                 <div key={s._id} className="p-4">
-                  <div className="flex justify-between items-center gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <div>
                       <div className="font-semibold">{s.name} <span className="text-sm text-black/60">(—)</span></div>
                       <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
                       <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex flex-wrap gap-2 shrink-0">
                       <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
                       <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
                     </div>
@@ -147,10 +147,10 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-      <div className="bg-white rounded-md p-6 w-full max-w-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
         <h3 className="text-lg font-semibold">{subject._id ? 'Edit' : 'Add'} Subject</h3>
-        <div className="grid grid-cols-2 gap-3 mt-3">
+        <div className="grid grid-cols-1 gap-3 mt-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
             <span>Subject Name</span>
             <input value={name} onChange={e=>setName(e.target.value)} placeholder="Enter subject name like Mathematics" className="border px-2 py-2 rounded font-normal" />
@@ -164,10 +164,10 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
           </label>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <div className="font-semibold">Term 1 Max Marks</div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
                 <span>Periodic Test</span>
                 <input type="number" value={maxT1.periodicTest} onChange={e=>setMaxT1(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
@@ -188,7 +188,7 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
           </div>
           <div>
             <div className="font-semibold">Term 2 Max Marks</div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
                 <span>Periodic Test</span>
                 <input type="number" value={maxT2.periodicTest} onChange={e=>setMaxT2(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
@@ -209,7 +209,7 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
           </div>
         </div>
 
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={save} disabled={loading} className="px-3 py-1 bg-orange-500 text-white rounded">Save</button>
         </div>

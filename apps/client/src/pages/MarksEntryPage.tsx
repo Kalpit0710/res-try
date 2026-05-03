@@ -462,7 +462,7 @@ export function MarksEntryPage() {
 
       {/* Progress steps */}
       <div className="mt-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <StepDot step={1} current={currentStep} onClick={() => setCurrentStep(1)}>Subject</StepDot>
           <div className="flex-1 h-px bg-black/10" />
           <StepDot step={2} current={currentStep} onClick={() => setCurrentStep(2)}>Co-Scholastic</StepDot>
@@ -498,7 +498,7 @@ export function MarksEntryPage() {
             />
           ))}
 
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
             <button onClick={async () => { try { await saveAllMarks(); setCurrentStep(2); } catch { /* errors already surfaced */ } }} className="rounded-md bg-black text-white px-4 py-2">Save & Next</button>
           </div>
         </div>
@@ -517,7 +517,7 @@ export function MarksEntryPage() {
             />
           ))}
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button onClick={() => setCurrentStep(1)} className="rounded-md border px-4 py-2">Previous</button>
             <button onClick={async () => { try { await saveAllMarks(); setCurrentStep(3); } catch { /* errors already surfaced */ } }} className="rounded-md bg-black text-white px-4 py-2">Save & Next</button>
           </div>
@@ -537,11 +537,11 @@ export function MarksEntryPage() {
             placeholder="Write class teacher's remarks here..."
           />
 
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <button onClick={async () => { try { await saveAllMarks(); } catch { /* errors already surfaced */ } }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
               {studentId && (
                 <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
@@ -598,7 +598,7 @@ function SubjectCard({
           <div className="text-xs font-semibold text-black/50 uppercase tracking-wider mb-3">
             Term 1
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <MarksInput
               label="Periodic Test"
               max={maxMarks?.term1?.periodicTest}
@@ -631,7 +631,7 @@ function SubjectCard({
           <div className="text-xs font-semibold text-black/50 uppercase tracking-wider mb-3">
             Term 2
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <MarksInput
               label="Periodic Test"
               max={maxMarks?.term2?.periodicTest}

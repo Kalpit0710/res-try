@@ -15,8 +15,8 @@ export function TeachersPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Teachers</h2>
           <p className="text-sm text-black/60">Manage teachers</p>
@@ -29,7 +29,7 @@ export function TeachersPage() {
       <div className="mt-4">
         <ul className="space-y-2">
           {teachers.map(t => (
-            <li key={t._id} className="border p-2 flex justify-between items-center">
+            <li key={t._id} className="rounded-lg border bg-white p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>{t.name}</div>
               <div className="flex gap-2">
                 <button onClick={() => setEditing(t)} className="text-orange-600">Edit</button>
@@ -60,14 +60,14 @@ function TeacherForm({ teacher = {}, onClose }: { teacher?: any; onClose: () => 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-      <div className="bg-white rounded-md p-6 w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
         <h3 className="text-lg font-semibold">{teacher._id ? 'Edit' : 'Add'} Teacher</h3>
         <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-black/80">
           <span>Teacher Name</span>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter teacher name" className="w-full border px-2 py-2 rounded font-normal" />
         </label>
-        <div className="mt-3 flex justify-end gap-2">
+        <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={save} disabled={loading} className="px-3 py-1 bg-orange-500 text-white rounded">Save</button>
         </div>

@@ -72,17 +72,17 @@ export function BulkUpload({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-md p-6 w-full max-w-4xl max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold mb-2">Bulk Upload Students</h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button onClick={downloadTemplate} className="px-3 py-1 border rounded text-sm">Download Template</button>
             <button onClick={onClose} className="px-3 py-1 border rounded text-sm">Close</button>
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-4">
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop} className="p-4 border-dashed border-2 border-gray-300 rounded">
             <div className="text-sm text-black/70 mb-2">Drag & drop CSV/Excel file here</div>
             <div className="text-sm">or</div>
@@ -104,8 +104,8 @@ export function BulkUpload({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            <div className="mt-3">
-              <table className="w-full text-sm">
+            <div className="mt-3 overflow-x-auto">
+              <table className="min-w-[520px] w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-black/60">
                     <th className="p-1">#</th>
@@ -133,7 +133,7 @@ export function BulkUpload({ onClose }: { onClose: () => void }) {
               </table>
             </div>
 
-            <div className="mt-3 flex justify-end gap-2">
+            <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button onClick={() => { setParsedRows([]); setSelected({}); setParseErrors([]); }} className="px-3 py-1 border rounded text-sm">Clear</button>
               <button onClick={commitSelected} disabled={committing} className="px-3 py-1 bg-orange-500 text-white rounded text-sm">{committing ? 'Importing…' : 'Import Selected'}</button>
             </div>

@@ -232,8 +232,8 @@ export function ReportsPage() {
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
 
         {/* Student table */}
-        <div className="overflow-hidden rounded-lg border border-black/10">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-black/10 bg-white">
+          <table className="min-w-[720px] w-full text-sm">
             <thead className="bg-black/5 text-left">
               <tr>
                 {/* Select-all checkbox */}
@@ -327,11 +327,11 @@ export function ReportsPage() {
 
           {/* Selection summary bar */}
           {selectedCount > 0 && (
-            <div className="flex items-center justify-between border-t border-black/10 bg-orange-50 px-4 py-2 text-sm">
+            <div className="flex flex-col gap-2 border-t border-black/10 bg-orange-50 px-4 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
               <span className="text-orange-700 font-medium">
                 {selectedCount} of {students.length} student{selectedCount > 1 ? 's' : ''} selected
               </span>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => setSelected(new Set())}
                   className="text-black/50 hover:text-black/80"
@@ -351,8 +351,8 @@ export function ReportsPage() {
         </div>
 
         {/* Preview panel */}
-        <div className="rounded-lg border border-black/10 p-4 min-h-[70vh] flex flex-col">
-          <div className="flex items-center justify-between">
+        <div className="rounded-lg border border-black/10 p-4 min-h-[50vh] lg:min-h-[70vh] flex flex-col bg-white">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-semibold text-sm">Preview</h3>
             {previewName && (
               <span className="text-xs text-black/50 bg-black/5 rounded px-2 py-1">

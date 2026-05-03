@@ -23,18 +23,18 @@ export function LogsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Logs</h2>
           <p className="text-sm text-black/60">Filter activity logs by teacher, student, subject, and date range.</p>
         </div>
-        <button onClick={load} className="rounded-md bg-orange-500 text-white px-4 py-2">
+        <button onClick={load} className="rounded-md bg-orange-500 px-4 py-2 text-white sm:self-start">
           {loading ? 'Loading…' : 'Apply Filters'}
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
           <span>Teacher Name</span>
           <input value={teacherName} onChange={(e) => setTeacherName(e.target.value)} placeholder="Filter by teacher name" className="rounded-md border border-black/15 px-3 py-2 font-normal" />
@@ -57,8 +57,8 @@ export function LogsPage() {
         </label>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-black/10">
-        <table className="w-full text-sm">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-black/10 bg-white">
+        <table className="min-w-[720px] w-full text-sm">
           <thead className="bg-black/5 text-left">
             <tr>
               <th className="px-4 py-3">Timestamp</th>

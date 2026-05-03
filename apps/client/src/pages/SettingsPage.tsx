@@ -118,7 +118,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <div>
         <h2 className="text-xl font-semibold">Settings</h2>
         <p className="text-sm text-black/60">Manage locks and branding assets used in report PDFs.</p>
@@ -133,7 +133,7 @@ export function SettingsPage() {
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className="space-y-3 text-sm rounded-lg border border-black/10 p-4">
             <div className="font-medium">School Logo</div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <label className="relative cursor-pointer rounded border border-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/5">
                 Choose File
                 <input
@@ -148,7 +148,7 @@ export function SettingsPage() {
             {assetUrl(branding?.logoUrl) ? (
               <div className="space-y-2">
                 <img src={assetUrl(branding?.logoUrl) ?? ''} alt="School Logo" className="h-20 w-20 rounded border border-black/10 object-contain bg-white p-1" />
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs hover:bg-black/5 disabled:opacity-50">Replace</button>
                   <button disabled={uploading} onClick={() => removeAsset('logo')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">Remove</button>
                 </div>
@@ -160,7 +160,7 @@ export function SettingsPage() {
 
           <div className="space-y-3 text-sm rounded-lg border border-black/10 p-4">
             <div className="font-medium">Principal Signature</div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <label className="relative cursor-pointer rounded border border-black/20 px-3 py-1.5 text-xs font-medium hover:bg-black/5">
                 Choose File
                 <input
@@ -175,7 +175,7 @@ export function SettingsPage() {
             {assetUrl(branding?.principalSignatureUrl) ? (
               <div className="space-y-2">
                 <img src={assetUrl(branding?.principalSignatureUrl) ?? ''} alt="Principal Signature" className="h-16 w-40 rounded border border-black/10 object-contain bg-white p-1" />
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button disabled={uploading} onClick={uploadBranding} className="rounded border border-black/15 px-2 py-1 text-xs hover:bg-black/5 disabled:opacity-50">Replace</button>
                   <button disabled={uploading} onClick={() => removeAsset('principalSignature')} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50">Remove</button>
                 </div>
@@ -186,7 +186,7 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
             disabled={uploading}
             onClick={uploadBranding}
@@ -226,8 +226,8 @@ export function SettingsPage() {
             </button>
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-md border border-black/10">
-            <table className="w-full text-sm">
+          <div className="mt-4 overflow-x-auto rounded-md border border-black/10">
+            <table className="min-w-[640px] w-full text-sm">
               <thead className="bg-black/5 text-left">
                 <tr>
                   <th className="px-3 py-2">Teacher</th>
@@ -279,7 +279,7 @@ export function SettingsPage() {
           <input className="w-full rounded-md border border-black/15 px-3 py-2" value={referenceId} onChange={(e) => setReferenceId(e.target.value)} placeholder="Enter global, classId, studentId, or teacher name" />
         </label>
 
-        <div className="flex items-end gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <button disabled={busy} onClick={() => toggleLock(true)} className="rounded-md bg-orange-500 px-4 py-2 text-white disabled:opacity-60">
             Lock
           </button>
@@ -289,8 +289,8 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-black/10 bg-white">
-        <table className="w-full text-sm">
+      <div className="mt-6 overflow-x-auto rounded-lg border border-black/10 bg-white">
+        <table className="min-w-[720px] w-full text-sm">
           <thead className="bg-black/5 text-left">
             <tr>
               <th className="px-4 py-3">Type</th>

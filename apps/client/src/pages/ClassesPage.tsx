@@ -18,8 +18,8 @@ export function ClassesPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Classes</h2>
           <p className="text-sm text-black/60">Manage classes and assign subjects</p>
@@ -31,8 +31,8 @@ export function ClassesPage() {
 
       <div className="mt-4 space-y-3">
         {classes.map(c => (
-          <div key={c._id} className="border p-3">
-            <div className="flex justify-between items-center">
+          <div key={c._id} className="rounded-lg border bg-white p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="font-semibold">{c.name}</div>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -54,7 +54,7 @@ export function ClassesPage() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button onClick={() => setAssigning({ cls: c })} className="text-sm">Assign Subject</button>
                 <button onClick={() => setEditing(c)} className="text-sm text-orange-600">Edit</button>
                 <button onClick={() => remove(c._id)} className="text-sm text-red-600">Delete</button>
@@ -86,14 +86,14 @@ function ClassForm({ cls = {}, onClose }: { cls?: any; onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-      <div className="bg-white rounded-md p-6 w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
         <h3 className="text-lg font-semibold">{cls._id ? 'Edit' : 'Add'} Class</h3>
         <label className="mt-3 flex flex-col gap-1 text-sm font-medium text-black/80">
           <span>Class Name</span>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter class name like 10-A" className="w-full border px-2 py-2 rounded font-normal" />
         </label>
-        <div className="mt-3 flex justify-end gap-2">
+        <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={save} disabled={loading} className="px-3 py-1 bg-orange-500 text-white rounded">Save</button>
         </div>
@@ -114,8 +114,8 @@ function AssignSubjectModal({ cls, subjects, onClose }: { cls: any; subjects: an
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-      <div className="bg-white rounded-md p-6 w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
         <h3 className="text-lg font-semibold">Assign Subject to {cls.name}</h3>
         <div className="mt-3 text-sm text-black/60">
           {availableSubjects.length ? 'Select a subject that is not already assigned.' : 'All available subjects are already assigned to this class.'}
@@ -132,7 +132,7 @@ function AssignSubjectModal({ cls, subjects, onClose }: { cls: any; subjects: an
             {availableSubjects.map(s=> <option key={s._id} value={s._id}>{s.name}</option>)}
           </select>
         </label>
-        <div className="mt-3 flex justify-end gap-2">
+        <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
           <button onClick={add} className="px-3 py-1 bg-orange-500 text-white rounded">Assign</button>
         </div>

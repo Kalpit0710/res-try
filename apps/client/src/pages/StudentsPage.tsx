@@ -21,25 +21,25 @@ export function StudentsPage() {
   useEffect(() => { load(); }, [page, query]);
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Students</h2>
           <p className="text-sm text-black/60">Manage student master data</p>
         </div>
 
-        <div className="flex gap-2 items-end">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
             <span>Search Students</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search students by name or regNo" className="rounded-md border px-3 py-2 font-normal" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search students by name or regNo" className="w-full rounded-md border px-3 py-2 font-normal sm:w-72" />
           </label>
-          <button onClick={() => setShowBulk(true)} className="rounded-md bg-orange-500 text-white px-3 py-2">Bulk Upload</button>
+          <button onClick={() => setShowBulk(true)} className="rounded-md bg-orange-500 px-3 py-2 text-white">Bulk Upload</button>
           <button onClick={() => setEditing({})} className="rounded-md border px-3 py-2">Add Student</button>
         </div>
       </div>
 
-      <div className="mt-4">
-        <table className="w-full table-auto border-collapse">
+      <div className="overflow-x-auto rounded-lg border border-black/10 bg-white">
+        <table className="min-w-[720px] w-full table-auto border-collapse">
           <thead>
             <tr className="text-left text-sm text-black/70">
               <th className="p-2">Reg No</th>
@@ -64,7 +64,7 @@ export function StudentsPage() {
           </tbody>
         </table>
 
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-black/60">Total: {total}</div>
           <div className="flex gap-2">
             <button disabled={page<=1} onClick={() => setPage(p=>p-1)} className="px-3 py-1 border rounded">Prev</button>

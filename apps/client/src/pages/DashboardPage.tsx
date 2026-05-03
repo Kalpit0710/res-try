@@ -52,8 +52,8 @@ export function DashboardPage() {
   const unlockedLocks = useMemo(() => locks.filter((lock) => !lock.isLocked).length, [locks]);
 
   return (
-    <div className="p-6 pb-24 md:pb-6">
-      <div className="rounded-3xl border border-black/10 bg-[radial-gradient(ellipse_at_top_left,_#fff7ed,_#ffffff_45%,_#ecfeff)] p-6 shadow-[0_12px_40px_rgba(0,0,0,0.07)]">
+    <div className="p-4 pb-24 sm:p-6 md:pb-6 space-y-6">
+      <div className="rounded-3xl border border-black/10 bg-[radial-gradient(ellipse_at_top_left,_#fff7ed,_#ffffff_45%,_#ecfeff)] p-4 sm:p-6 shadow-[0_12px_40px_rgba(0,0,0,0.07)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Admin Dashboard</h2>
@@ -78,9 +78,9 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-[0_8px_25px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-base font-semibold">Recent Activity</h3>
             <Link to="/admin/logs" className="text-sm text-orange-700 hover:underline">View all logs</Link>
           </div>
@@ -105,7 +105,7 @@ export function DashboardPage() {
 
         <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-[0_8px_25px_rgba(0,0,0,0.05)]">
           <h3 className="text-base font-semibold">Locks Overview</h3>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-red-50 p-3">
               <div className="text-xs uppercase text-red-700/80">Locked</div>
               <div className="mt-1 text-2xl font-bold text-red-700">{activeLocks}</div>
@@ -131,7 +131,7 @@ export function DashboardPage() {
             {!locks.length ? <div className="text-sm text-black/50">No locks configured.</div> : null}
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Link to="/admin/settings" className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-medium text-white">Manage Locks</Link>
             <Link to="/admin/reports" className="rounded-lg border border-black/15 px-3 py-2 text-sm font-medium text-black">Generate Reports</Link>
           </div>
