@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
+import { getReportBrowser } from './services/report.service';
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 import authRoutes from './routes/auth.routes';
@@ -76,8 +77,16 @@ app.use(errorHandler);
 // ── Boot ──────────────────────────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT ?? '5000', 10);
 
-connectDB().then(() => {
+async function boot() {
+  await connectDB();
+  await getReportBrowser();
+
   app.listen(PORT, () => {
     console.log(`✅  SRMS server running on http://localhost:${PORT}`);
   });
+}
+
+boot().catch((error) => {
+  console.error('❌  Server failed to start', error);
+  process.exit(1);
 });
