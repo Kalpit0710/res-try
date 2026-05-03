@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import archiver from 'archiver';
-import { generateStudentReportPdf } from '../services/report.service';
+import { generateStudentReportPdf, getReportBrowser } from '../services/report.service';
 import { Student } from '../models/Student';
+
+const BULK_BATCH_SIZE = 4;
 
 // GET /reports/student/:studentId
 export async function getStudentReport(req: Request, res: Response): Promise<void> {
@@ -30,28 +32,60 @@ export async function bulkStudentReport(req: Request, res: Response): Promise<vo
   const students = await Student.find({ _id: { $in: studentIds } }).select('name regNo').lean();
   const studentMap = new Map(students.map(s => [s._id.toString(), s]));
 
-  // Generate all PDFs in parallel
-  const results = await Promise.allSettled(
-    studentIds.map(async (id) => {
-      const pdf = await generateStudentReportPdf(id);
-      const student = studentMap.get(id);
-      const safeName = (student?.name ?? id).replace(/[^a-z0-9_\-\s]/gi, '_').trim();
-      const filename = `${safeName}_${student?.regNo ?? id}.pdf`;
-      return { pdf, filename };
-    })
-  );
-
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename="report-cards.zip"');
 
   const archive = archiver('zip', { zlib: { level: 6 } });
   archive.pipe(res);
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      archive.append(result.value.pdf, { name: result.value.filename });
-    }
-  }
+  const failures: Array<{ studentId: string; message: string }> = [];
+  let successCount = 0;
+  const browser = await getReportBrowser();
 
-  await archive.finalize();
+  try {
+    for (let i = 0; i < studentIds.length; i += BULK_BATCH_SIZE) {
+      const batch = studentIds.slice(i, i + BULK_BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(async (id) => {
+          const pdf = await generateStudentReportPdf(id, browser);
+          const student = studentMap.get(id);
+          const safeName = (student?.name ?? id).replace(/[^a-z0-9_\-\s]/gi, '_').trim();
+          const filename = `${safeName}_${student?.regNo ?? id}.pdf`;
+          return { pdf, filename };
+        })
+      );
+
+      for (let index = 0; index < results.length; index += 1) {
+        const result = results[index];
+        const studentId = batch[index];
+
+        if (result.status === 'fulfilled') {
+          archive.append(result.value.pdf, { name: result.value.filename });
+          successCount += 1;
+        } else {
+          failures.push({ studentId, message: result.reason instanceof Error ? result.reason.message : String(result.reason) });
+        }
+      }
+    }
+
+    if (successCount === 0) {
+      archive.append(
+        Buffer.from(
+          `No report PDFs could be generated.\n\nPossible reasons:\n- Chromium executable path is missing or invalid\n- MongoDB data is incomplete for the selected students\n- A report template/runtime error occurred\n\nFailures:\n${failures.map((failure) => `- ${failure.studentId}: ${failure.message}`).join('\n') || '- No detailed errors captured'}\n`
+        ),
+        { name: 'generation-errors.txt' }
+      );
+    } else if (failures.length > 0) {
+      archive.append(
+        Buffer.from(
+          `Some reports failed to generate. Successful PDFs were included in this archive.\n\nFailures:\n${failures.map((failure) => `- ${failure.studentId}: ${failure.message}`).join('\n')}\n`
+        ),
+        { name: 'generation-errors.txt' }
+      );
+    }
+
+    await archive.finalize();
+  } finally {
+    void browser;
+  }
 }

@@ -11,6 +11,10 @@ import { CoScholasticMarks } from '../models/CoScholasticMarks';
 import { Remark } from '../models/Remarks';
 import { calcOverallResult, calcSubjectResult } from '@srms/shared';
 
+type BrowserInstance = Awaited<ReturnType<typeof puppeteer.launch>>;
+let browserInstance: BrowserInstance | null = null;
+let browserLaunchPromise: Promise<BrowserInstance> | null = null;
+
 function resolveAssetDataUri(relativePath?: string): string | null {
   if (!relativePath) return null;
 
@@ -30,16 +34,18 @@ function resolveAssetDataUri(relativePath?: string): string | null {
 }
 
 function resolveBrowserExecutablePath(): string {
-  const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
-  if (fromEnv) return fromEnv;
-
-  // Common Windows installs (best-effort, optional)
   const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH?.trim(),
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/microsoft-edge',
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-  ];
+  ].filter((candidate): candidate is string => Boolean(candidate));
 
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
@@ -48,6 +54,38 @@ function resolveBrowserExecutablePath(): string {
   throw new Error(
     'No browser executable found. Set PUPPETEER_EXECUTABLE_PATH to a Chrome/Edge executable path.'
   );
+}
+
+export async function launchReportBrowser(): Promise<BrowserInstance> {
+  return puppeteer.launch({
+    headless: true,
+    executablePath: resolveBrowserExecutablePath(),
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
+
+export async function getReportBrowser(): Promise<BrowserInstance> {
+  if (browserInstance?.isConnected()) {
+    return browserInstance;
+  }
+
+  if (!browserLaunchPromise) {
+    browserLaunchPromise = launchReportBrowser()
+      .then((browser) => {
+        browserInstance = browser;
+        browser.on('disconnected', () => {
+          browserInstance = null;
+          browserLaunchPromise = null;
+        });
+        return browser;
+      })
+      .catch((error) => {
+        browserLaunchPromise = null;
+        throw error;
+      });
+  }
+
+  return browserLaunchPromise;
 }
 
 function getCoScholasticGrade(marks: number | undefined): string {
@@ -62,7 +100,7 @@ function getCoScholasticGrade(marks: number | undefined): string {
   return 'E';
 }
 
-export async function generateStudentReportPdf(studentId: string): Promise<Buffer> {
+export async function generateStudentReportPdf(studentId: string, browser?: BrowserInstance): Promise<Buffer> {
   const student = await Student.findById(studentId).lean();
   if (!student) throw new Error('Student not found');
 
@@ -125,14 +163,9 @@ export async function generateStudentReportPdf(studentId: string): Promise<Buffe
     generatedAt: new Date(),
   });
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: resolveBrowserExecutablePath(),
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-
+  const activeBrowser = browser ?? await getReportBrowser();
+  const page = await activeBrowser.newPage();
   try {
-    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
     const pdf = await page.pdf({
@@ -144,6 +177,6 @@ export async function generateStudentReportPdf(studentId: string): Promise<Buffe
 
     return Buffer.from(pdf);
   } finally {
-    await browser.close();
+    await page.close().catch(() => undefined);
   }
 }
