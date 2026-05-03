@@ -9,9 +9,10 @@ import {
 
 const router = Router();
 
-router.get('/', authenticate, getCoScholasticMarks);
-router.get('/student/:studentId', authenticate, getCoScholasticMarksByStudent);
-router.post('/', authenticate, createOrUpdateCoScholasticMarks);
+// Teacher flow is intentionally unauthenticated like marks/remarks
+router.get('/', getCoScholasticMarks);
+router.get('/student/:studentId', getCoScholasticMarksByStudent);
+router.post('/', createOrUpdateCoScholasticMarks);
 router.delete('/:id', authenticate, deleteCoScholasticMarks);
 
 export default router;

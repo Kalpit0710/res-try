@@ -5,6 +5,28 @@ import { apiClient } from '../lib/clientApi';
 // Co-scholastic areas (static) - module scope to keep stable reference
 const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
 
+function isObjectId(value: string): boolean {
+  return /^[a-f\d]{24}$/i.test(value);
+}
+
+function extractClassId(value: unknown): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value !== 'object') return '';
+
+  const candidate = value as Record<string, unknown>;
+  const nested = candidate._id ?? candidate.id;
+  if (typeof nested === 'string') return nested;
+
+  if (nested && typeof nested === 'object') {
+    const nestedObj = nested as Record<string, unknown>;
+    if (typeof nestedObj.$oid === 'string') return nestedObj.$oid;
+  }
+
+  if (typeof candidate.$oid === 'string') return candidate.$oid;
+  return '';
+}
+
 interface TermMarks {
   periodicTest?: number | '';
   notebook?: number | '';
@@ -57,6 +79,8 @@ export function MarksEntryPage() {
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [queryBootstrapDone, setQueryBootstrapDone] = useState(false);
+  const [initialStudentApplied, setInitialStudentApplied] = useState(false);
 
   interface RemarkState {
     text: string;
@@ -81,9 +105,33 @@ export function MarksEntryPage() {
   }, []);
 
   useEffect(() => {
-    if (initialTeacherName && !teacherName) setTeacherName(initialTeacherName);
-    if (initialClassId && !classId) setClassId(initialClassId);
-  }, [initialTeacherName, initialClassId, teacherName, classId]);
+    if (queryBootstrapDone) return;
+
+    if (initialTeacherName) setTeacherName(initialTeacherName);
+
+    if (initialClassId && isObjectId(initialClassId)) {
+      setClassId(initialClassId);
+      setQueryBootstrapDone(true);
+      return;
+    }
+
+    if (initialStudentId) {
+      apiClient
+        .publicGetStudents()
+        .then((res) => {
+          const all: any[] = res.data ?? res ?? [];
+          const initialStudent = all.find((s) => s._id === initialStudentId);
+          const derivedClassId = extractClassId(initialStudent?.classId);
+          if (derivedClassId && isObjectId(derivedClassId)) {
+            setClassId(derivedClassId);
+          }
+        })
+        .finally(() => setQueryBootstrapDone(true));
+      return;
+    }
+
+    setQueryBootstrapDone(true);
+  }, [queryBootstrapDone, initialTeacherName, initialClassId, initialStudentId]);
 
   // Load students when class changes
   useEffect(() => {
@@ -101,11 +149,15 @@ export function MarksEntryPage() {
   }, [classId]);
 
   useEffect(() => {
-    if (!initialStudentId) return;
-    if (students.some((s) => s._id === initialStudentId) && studentId !== initialStudentId) {
+    if (initialStudentApplied || !initialStudentId || students.length === 0) return;
+
+    if (students.some((s) => s._id === initialStudentId)) {
       setStudentId(initialStudentId);
     }
-  }, [initialStudentId, students, studentId]);
+
+    // Apply URL-provided student only once so user can change selection freely.
+    setInitialStudentApplied(true);
+  }, [initialStudentApplied, initialStudentId, students]);
 
   // Load subjects + existing marks when student changes
   useEffect(() => {
@@ -722,6 +774,9 @@ function CoScholasticCard({
   onSave: () => void;
 }) {
   const { area, term1, term2, saving, saved, error } = state;
+  const term1Invalid = term1 !== '' && (Number(term1) < 0 || Number(term1) > 100);
+  const term2Invalid = term2 !== '' && (Number(term2) < 0 || Number(term2) > 100);
+  const hasValidationError = term1Invalid || term2Invalid;
 
   return (
     <div className="rounded-lg border border-black/10 bg-white overflow-hidden">
@@ -737,7 +792,7 @@ function CoScholasticCard({
           )}
           <button
             onClick={onSave}
-            disabled={saving}
+            disabled={saving || hasValidationError}
             className="rounded-md bg-orange-500 text-white px-4 py-1.5 text-sm disabled:opacity-60 hover:bg-orange-600 transition-colors"
           >
             {saving ? 'Saving…' : 'Save'}
@@ -760,9 +815,15 @@ function CoScholasticCard({
               max={100}
               value={term1}
               onChange={(e) => onFieldChange('term1', e.target.value)}
-              className="rounded-md border border-black/15 px-3 py-1.5 font-normal w-full bg-white"
+              className={[
+                'rounded-md border px-3 py-1.5 font-normal w-full',
+                term1Invalid ? 'border-red-400 bg-red-50 text-red-700' : 'border-black/15 bg-white',
+              ].join(' ')}
               placeholder="—"
             />
+            {term1Invalid && (
+              <span className="text-xs text-red-500">Must be between 0 and 100</span>
+            )}
           </label>
         </div>
 
@@ -779,9 +840,15 @@ function CoScholasticCard({
               max={100}
               value={term2}
               onChange={(e) => onFieldChange('term2', e.target.value)}
-              className="rounded-md border border-black/15 px-3 py-1.5 font-normal w-full bg-white"
+              className={[
+                'rounded-md border px-3 py-1.5 font-normal w-full',
+                term2Invalid ? 'border-red-400 bg-red-50 text-red-700' : 'border-black/15 bg-white',
+              ].join(' ')}
               placeholder="—"
             />
+            {term2Invalid && (
+              <span className="text-xs text-red-500">Must be between 0 and 100</span>
+            )}
           </label>
         </div>
       </div>

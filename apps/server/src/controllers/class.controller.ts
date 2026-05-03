@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Class } from '../models/Class';
+import { Subject } from '../models/Subject';
 
 export async function getClasses(_req: Request, res: Response): Promise<void> {
   const classes = await Class.find().populate('subjects', 'name').lean();
@@ -33,12 +34,26 @@ export async function deleteClass(req: Request, res: Response): Promise<void> {
 
 export async function addSubjectToClass(req: Request, res: Response): Promise<void> {
   const { subjectId } = req.body;
-  const cls = await Class.findByIdAndUpdate(
-    req.params.id,
-    { $addToSet: { subjects: subjectId } },
-    { new: true }
-  );
+
+  const [subject, cls] = await Promise.all([
+    Subject.findById(subjectId),
+    Class.findById(req.params.id),
+  ]);
+
+  if (!subject) {
+    res.status(404).json({ success: false, message: 'Subject not found' });
+    return;
+  }
   if (!cls) { res.status(404).json({ success: false, message: 'Class not found' }); return; }
+
+  subject.classId = cls._id as any;
+  await subject.save();
+
+  if (!cls.subjects.some((id) => String(id) === String(subject._id))) {
+    cls.subjects.push(subject._id as any);
+    await cls.save();
+  }
+
   res.json({ success: true, data: cls });
 }
 

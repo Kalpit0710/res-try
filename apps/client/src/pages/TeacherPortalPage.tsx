@@ -5,6 +5,24 @@ import { apiClient } from '../lib/clientApi';
 type StudentSearchMode = 'name' | 'regNo' | 'class';
 const ITEMS_PER_PAGE = 6;
 
+function extractClassId(value: unknown): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value !== 'object') return '';
+
+  const candidate = value as Record<string, unknown>;
+  const nested = candidate._id ?? candidate.id;
+  if (typeof nested === 'string') return nested;
+
+  if (nested && typeof nested === 'object') {
+    const nestedObj = nested as Record<string, unknown>;
+    if (typeof nestedObj.$oid === 'string') return nestedObj.$oid;
+  }
+
+  if (typeof candidate.$oid === 'string') return candidate.$oid;
+  return '';
+}
+
 export function TeacherPortalPage() {
   const navigate = useNavigate();
   const [teachers, setTeachers] = useState<any[]>([]);
@@ -134,8 +152,15 @@ export function TeacherPortalPage() {
 
   function continueToMarks() {
     if (!selectedTeacher || !selectedStudent) return;
+
+    const resolvedClassId = extractClassId(selectedStudent.classId) || classId;
+    if (!resolvedClassId) {
+      alert('Unable to determine class for selected student. Please search by class and try again.');
+      return;
+    }
+
     navigate(
-      `/marks-entry?teacherId=${encodeURIComponent(selectedTeacher._id)}&teacherName=${encodeURIComponent(selectedTeacher.name)}&classId=${encodeURIComponent(selectedStudent.classId?._id ?? selectedStudent.classId ?? classId)}&studentId=${encodeURIComponent(selectedStudent._id)}`
+      `/marks-entry?teacherId=${encodeURIComponent(selectedTeacher._id)}&teacherName=${encodeURIComponent(selectedTeacher.name)}&classId=${encodeURIComponent(resolvedClassId)}&studentId=${encodeURIComponent(selectedStudent._id)}`
     );
   }
 

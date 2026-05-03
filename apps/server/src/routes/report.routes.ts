@@ -4,8 +4,8 @@ import { getStudentReport, bulkStudentReport } from '../controllers/report.contr
 
 const router = Router();
 
-// Admin use-case (teacher flow can be added later if needed)
-router.get('/student/:studentId', authenticate, getStudentReport);
+// Teacher portal flow: single-student report generation is intentionally unauthenticated
+router.get('/student/:studentId', getStudentReport);
 
 // Bulk ZIP download: POST /reports/bulk  { studentIds: string[] }
 router.post('/bulk', authenticate, bulkStudentReport);
