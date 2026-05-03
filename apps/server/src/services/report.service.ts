@@ -9,6 +9,7 @@ import { Subject } from '../models/Subject';
 import { Marks } from '../models/Marks';
 import { CoScholasticMarks } from '../models/CoScholasticMarks';
 import { Remark } from '../models/Remarks';
+import { Teacher } from '../models/Teacher';
 import { calcOverallResult, calcSubjectResult } from '@srms/shared';
 
 type BrowserInstance = Awaited<ReturnType<typeof puppeteer.launch>>;
@@ -141,11 +142,27 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
   }));
 
   const branding = await Branding.findOne({ key: 'singleton' }).lean();
-  const firstMarkedTeacher = marks.find((m) => Boolean(m.teacherName))?.teacherName?.trim();
-  const teacherSignature = branding?.teacherSignatures?.find((s) => {
-    if (!firstMarkedTeacher) return false;
-    return s.teacherId === firstMarkedTeacher || s.teacherName.toLowerCase() === firstMarkedTeacher.toLowerCase();
-  }) ?? branding?.teacherSignatures?.[0];
+  
+  // Fetch the teacher linked to this class
+  const classTeacher = await Teacher.findOne({ classId: cls._id }).lean();
+  
+  // Find the teacher's signature from branding
+  let teacherSignature = undefined;
+  if (classTeacher) {
+    teacherSignature = branding?.teacherSignatures?.find((s) => {
+      return s.teacherId === classTeacher._id.toString() || 
+             s.teacherName.toLowerCase() === classTeacher.name.toLowerCase();
+    });
+  }
+  
+  // Fallback: use first marked teacher's signature if class teacher doesn't have one
+  if (!teacherSignature) {
+    const firstMarkedTeacher = marks.find((m) => Boolean(m.teacherName))?.teacherName?.trim();
+    teacherSignature = branding?.teacherSignatures?.find((s) => {
+      if (!firstMarkedTeacher) return false;
+      return s.teacherId === firstMarkedTeacher || s.teacherName.toLowerCase() === firstMarkedTeacher.toLowerCase();
+    }) ?? branding?.teacherSignatures?.[0];
+  }
 
   const templatePath = path.join(__dirname, '../templates/reportCard.ejs');
   const html = await ejs.renderFile(templatePath, {

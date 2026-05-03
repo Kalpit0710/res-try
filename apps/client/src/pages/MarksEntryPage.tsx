@@ -148,6 +148,19 @@ export function MarksEntryPage() {
       .finally(() => setLoadingStudents(false));
   }, [classId]);
 
+  // Auto-select teacher's linked class when teacher is selected
+  useEffect(() => {
+    if (!teacherName || teachers.length === 0) return;
+    
+    const selectedTeacher = teachers.find(t => t.name === teacherName);
+    if (selectedTeacher && selectedTeacher.classId) {
+      const linkedClassId = extractClassId(selectedTeacher.classId);
+      if (linkedClassId && linkedClassId !== classId) {
+        setClassId(linkedClassId);
+      }
+    }
+  }, [teacherName, teachers]);
+
   useEffect(() => {
     if (initialStudentApplied || !initialStudentId || students.length === 0) return;
 
