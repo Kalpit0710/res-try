@@ -22,6 +22,12 @@ export function LoginPage() {
 
     try {
       const res = await api.login({ username: username.trim(), password });
+      
+      if (!res.success || !res.data.token) {
+        setError(res.message ?? 'Login failed. Please check your credentials.');
+        return;
+      }
+      
       setToken(res.data.token);
       navigate('/admin', { replace: true });
     } catch (err: unknown) {
