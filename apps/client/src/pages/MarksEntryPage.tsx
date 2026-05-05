@@ -431,7 +431,10 @@ export function MarksEntryPage() {
         <AdminMarksExcelBulk
           classId={classId}
           className={selectedClass?.name}
-          teacherName={teacherName}
+          teacherName={
+            // prefer explicit teacherName, otherwise use the teacher linked to this class
+            teacherName || (teachers.find((t) => extractClassId(t.classId) === classId)?.name ?? '')
+          }
         />
       )}
 
@@ -474,22 +477,24 @@ export function MarksEntryPage() {
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-          <span>Teacher Name</span>
-          <select
-            id="marks-teacher-name"
-            value={teacherName}
-            onChange={(e) => setTeacherName(e.target.value)}
-            className="rounded-md border border-black/15 px-3 py-2 font-normal bg-white"
-          >
-            <option value="">Select teacher</option>
-            {teachers.map((t) => (
-              <option key={t._id} value={t.name}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!isAdminMode && (
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+            <span>Teacher Name</span>
+            <select
+              id="marks-teacher-name"
+              value={teacherName}
+              onChange={(e) => setTeacherName(e.target.value)}
+              className="rounded-md border border-black/15 px-3 py-2 font-normal bg-white"
+            >
+              <option value="">Select teacher</option>
+              {teachers.map((t) => (
+                <option key={t._id} value={t.name}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       {/* Student info badge */}

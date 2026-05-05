@@ -164,11 +164,15 @@ export const apiClient = {
   },
   createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
-  downloadMarksExcelTemplate: async (classId: string) => {
+  downloadMarksExcelTemplate: async (classId?: string) => {
     const token = getToken();
-    const res = await fetch(`${API_URL}/marks/admin/excel-template?classId=${encodeURIComponent(classId)}`, {
+    const url = classId ? `${API_URL}/marks/admin/excel-template?classId=${encodeURIComponent(classId)}` : `${API_URL}/marks/admin/excel-template`;
+    const res = await fetch(url, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Unauthorized: sign in as admin to download templates');
+    }
     if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
     return res.blob();
   },

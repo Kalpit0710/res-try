@@ -27,9 +27,9 @@ type ImportError = {
 export function AdminMarksExcelBulk(props: {
   classId: string;
   className?: string;
-  teacherName: string;
+  teacherName?: string;
 }) {
-  const { classId, className, teacherName } = props;
+  const { classId, className, teacherName = '' } = props;
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [downloading, setDownloading] = useState(false);
@@ -48,18 +48,13 @@ export function AdminMarksExcelBulk(props: {
   );
 
   async function handleDownloadTemplate() {
-    if (!classId) {
-      alert('Select class first.');
-      return;
-    }
-
     setDownloading(true);
     try {
-      const blob = await apiClient.downloadMarksExcelTemplate(classId);
+      const blob = await apiClient.downloadMarksExcelTemplate(classId || undefined);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `${className || 'class'}-marks-template.xlsx`;
+      anchor.download = classId ? `${className || 'class'}-marks-template.xlsx` : 'all-classes-marks-template.xlsx';
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -122,10 +117,7 @@ export function AdminMarksExcelBulk(props: {
       return;
     }
 
-    if (!teacherName.trim()) {
-      alert('Select teacher name before import.');
-      return;
-    }
+    // Use linked teacher passed from parent; if missing, proceed without explicit teacher name.
 
     if (selectedRows.length === 0) {
       alert('No rows selected.');
@@ -164,7 +156,7 @@ export function AdminMarksExcelBulk(props: {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleDownloadTemplate}
-            disabled={downloading || !classId}
+            disabled={downloading}
             className="rounded-md border px-3 py-2 text-sm disabled:opacity-60"
           >
             {downloading ? 'Downloading…' : 'Download Filled Template'}

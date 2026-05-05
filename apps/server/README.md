@@ -2,28 +2,23 @@
 
 ## Seed Demo Data
 
-Populate the configured MongoDB database with deterministic SRMS demo data:
+Populate the configured MongoDB database with deterministic SRMS demo data. The seed script drops the database first, then recreates only the school data used by the app:
 
 ```bash
 npm --prefix C:\Users\ASUS\res-try\res-try run seed --workspace=apps/server
 ```
 
 What gets seeded:
-- 4 classes
-- 4 teachers
+- 3 classes: 3, 4, 5
+- 27 subjects total, with the same 9 subjects for each class
+- 12 teachers: 3 class teachers and 9 subject teachers
 - 6 students
-- 6 marks entries for the report-card flow
-- 3 activity logs
-- 5 lock records
-
-Future-ready fixtures included:
-- `11-Science` class
-- `Artificial Intelligence` subject in `10-A`
+- 27 marks entries for 3 students across all 9 subjects
 
 Default local database name:
 - `srms`
 
-The seed script clears and recreates the SRMS collections it owns so the output stays repeatable.
+The seed script fully clears the configured database before inserting the new curriculum data.
 
 ## Environment
 
