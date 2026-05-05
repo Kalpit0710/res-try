@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { TableLoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function LogsPage() {
   const [teacherName, setTeacherName] = useState('');
@@ -69,22 +70,25 @@ export function LogsPage() {
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => (
-              <tr key={log._id} className="border-t border-black/5">
-                <td className="px-4 py-3">{new Date(log.timestamp).toLocaleString()}</td>
-                <td className="px-4 py-3">{log.teacherName}</td>
-                <td className="px-4 py-3">{log.action}</td>
-                <td className="px-4 py-3">{log.studentId?.name ?? log.studentId ?? '-'}</td>
-                <td className="px-4 py-3">{log.subjectId?.name ?? log.subjectId ?? '-'}</td>
-              </tr>
-            ))}
-            {!logs.length ? (
+            {loading ? (
+              <TableLoadingSkeleton rows={6} cols={5} />
+            ) : logs.length ? (
+              logs.map((log) => (
+                <tr key={log._id} className="border-t border-black/5">
+                  <td className="px-4 py-3">{new Date(log.timestamp).toLocaleString()}</td>
+                  <td className="px-4 py-3">{log.teacherName}</td>
+                  <td className="px-4 py-3">{log.action}</td>
+                  <td className="px-4 py-3">{log.studentId?.name ?? log.studentId ?? '-'}</td>
+                  <td className="px-4 py-3">{log.subjectId?.name ?? log.subjectId ?? '-'}</td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <td className="px-4 py-8 text-center text-black/50" colSpan={5}>
                   No log entries found for the selected filters.
                 </td>
               </tr>
-            ) : null}
+            )}
           </tbody>
         </table>
       </div>

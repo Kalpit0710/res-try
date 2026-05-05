@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
 import { StudentForm } from '../components/StudentForm';
 import { BulkUpload } from '../components/BulkUpload';
+import { TableLoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
@@ -11,11 +12,17 @@ export function StudentsPage() {
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<any | null>(null);
   const [showBulk, setShowBulk] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
-    const res = await apiClient.getStudents({ page, limit, search: query });
-    setStudents(res.data);
-    setTotal(res.total ?? 0);
+    setLoading(true);
+    try {
+      const res = await apiClient.getStudents({ page, limit, search: query });
+      setStudents(res.data);
+      setTotal(res.total ?? 0);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, [page, query]);
@@ -49,19 +56,29 @@ export function StudentsPage() {
               <th className="p-2">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {students.map((s) => (
-              <tr key={s._id} className="border-t">
-                <td className="p-2">{s.regNo}</td>
-                <td className="p-2">{s.name}</td>
-                <td className="p-2">{s.classId?.name ?? '-'}</td>
-                <td className="p-2">{s.rollNo ?? '-'}</td>
-                <td className="p-2">
-                  <button onClick={() => setEditing(s)} className="mr-2 text-sm text-orange-600">Edit</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          {loading ? (
+            <TableLoadingSkeleton rows={6} cols={5} />
+          ) : (
+            <tbody>
+              {students.length > 0 ? students.map((s) => (
+                <tr key={s._id} className="border-t">
+                  <td className="p-2">{s.regNo}</td>
+                  <td className="p-2">{s.name}</td>
+                  <td className="p-2">{s.classId?.name ?? '-'}</td>
+                  <td className="p-2">{s.rollNo ?? '-'}</td>
+                  <td className="p-2">
+                    <button onClick={() => setEditing(s)} className="mr-2 text-sm text-orange-600">Edit</button>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-sm text-black/50">
+                    No students found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          )}
         </table>
 
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

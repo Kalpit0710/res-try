@@ -1,16 +1,45 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function SubjectsPage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
   const [classes, setClasses] = useState<any[]>([]);
   const [activeClassId, setActiveClassId] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [classesLoading, setClassesLoading] = useState(true);
 
-  async function load() { const res = await apiClient.getSubjects(); setSubjects(res.data ?? res); }
-  useEffect(()=>{ load(); apiClient.getClasses().then(r=>setClasses(r.data??r)); }, []);
+  async function loadSubjects() {
+    setLoading(true);
+    try {
+      const res = await apiClient.getSubjects();
+      setSubjects(res.data ?? res);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  async function remove(id: string) { if (!confirm('Delete subject?')) return; await apiClient.deleteSubject(id); load(); }
+  async function loadClasses() {
+    setClassesLoading(true);
+    try {
+      const res = await apiClient.getClasses();
+      setClasses(res.data ?? res);
+    } finally {
+      setClassesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadSubjects();
+    loadClasses();
+  }, []);
+
+  async function remove(id: string) {
+    if (!confirm('Delete subject?')) return;
+    await apiClient.deleteSubject(id);
+    await loadSubjects();
+  }
 
   function subjectClassId(subject: any) {
     return subject.classId?._id ?? subject.classId ?? '';
@@ -49,19 +78,33 @@ export function SubjectsPage() {
         >
           All Classes
         </button>
-        {classes.map((cls) => (
-          <button
-            key={cls._id}
-            onClick={() => setActiveClassId(cls._id)}
-            className={['rounded-full px-3 py-1.5 text-sm border', activeClassId === cls._id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white border-black/10'].join(' ')}
-          >
-            {cls.name}
-          </button>
-        ))}
+        {classesLoading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-9 w-24 rounded-full bg-slate-200/70 animate-pulse" />
+          ))
+        ) : (
+          classes.map((cls) => (
+            <button
+              key={cls._id}
+              onClick={() => setActiveClassId(cls._id)}
+              className={['rounded-full px-3 py-1.5 text-sm border', activeClassId === cls._id ? 'bg-orange-500 text-white border-orange-500' : 'bg-white border-black/10'].join(' ')}
+            >
+              {cls.name}
+            </button>
+          ))
+        )}
       </div>
 
       <div className="mt-4 space-y-6">
-        {groupedSubjects.map((group) => (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="rounded-lg border border-black/10 bg-white overflow-hidden p-4">
+              <LoadingSkeleton className="h-5 w-48 mb-3" />
+              <LoadingSkeleton className="h-4 w-32 mb-2" />
+              <LoadingSkeleton className="h-4 w-28" />
+            </div>
+          ))
+        ) : groupedSubjects.map((group) => (
           <div key={group.classId} className="rounded-lg border border-black/10 bg-white overflow-hidden">
             <div className="border-b border-black/10 bg-black/[0.02] px-4 py-3 flex items-center justify-between">
               <div>
@@ -125,7 +168,7 @@ export function SubjectsPage() {
         )}
       </div>
 
-      {editing !== null && <SubjectForm subject={editing} classes={classes} onClose={() => { setEditing(null); load(); }} />}
+      {editing !== null && <SubjectForm subject={editing} classes={classes} onClose={() => { setEditing(null); loadSubjects(); }} />}
     </div>
   );
 }

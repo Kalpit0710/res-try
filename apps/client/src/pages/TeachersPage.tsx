@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function TeachersPage() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function load() { const res = await apiClient.getTeachers(); setTeachers(res.data ?? res); }
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await apiClient.getTeachers();
+      setTeachers(res.data ?? res);
+    } finally {
+      setLoading(false);
+    }
+  }
   useEffect(() => { load(); }, []);
 
   async function remove(id: string) {
@@ -28,18 +38,29 @@ export function TeachersPage() {
 
       <div className="mt-4">
         <ul className="space-y-2">
-          {teachers.map(t => (
-            <li key={t._id} className="rounded-lg border bg-white p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-1">
-                <div className="font-medium">{t.name}</div>
-                {t.classId && <div className="text-xs text-black/60">Class: {typeof t.classId === 'object' ? t.classId.name : t.classId}</div>}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setEditing(t)} className="text-orange-600">Edit</button>
-                <button onClick={() => remove(t._id)} className="text-red-600">Delete</button>
-              </div>
-            </li>
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <li key={index} className="rounded-lg border bg-white p-3">
+                <LoadingSkeleton className="h-5 w-48 mb-2" />
+                <LoadingSkeleton className="h-4 w-32" />
+              </li>
+            ))
+          ) : teachers.length ? (
+            teachers.map(t => (
+              <li key={t._id} className="rounded-lg border bg-white p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <div className="font-medium">{t.name}</div>
+                  {t.classId && <div className="text-xs text-black/60">Class: {typeof t.classId === 'object' ? t.classId.name : t.classId}</div>}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setEditing(t)} className="text-orange-600">Edit</button>
+                  <button onClick={() => remove(t._id)} className="text-red-600">Delete</button>
+                </div>
+              </li>
+            ))
+          ) : (
+            <li className="rounded-lg border bg-white p-6 text-center text-sm text-black/50">No teachers available.</li>
+          )}
         </ul>
       </div>
 

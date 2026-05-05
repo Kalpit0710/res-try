@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 type StudentSearchMode = 'name' | 'regNo' | 'class';
 const ITEMS_PER_PAGE = 6;
@@ -30,6 +31,8 @@ export function TeacherPortalPage() {
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [displayedStudents, setDisplayedStudents] = useState<any[]>([]);
   const [teacherId, setTeacherId] = useState('');
+  const [teachersLoading, setTeachersLoading] = useState(true);
+  const [classesLoading, setClassesLoading] = useState(true);
   const [searchMode, setSearchMode] = useState<StudentSearchMode>('name');
   const [searchText, setSearchText] = useState('');
   const [classId, setClassId] = useState('');
@@ -38,10 +41,18 @@ export function TeacherPortalPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    Promise.all([apiClient.publicGetTeachers(), apiClient.publicGetClasses()]).then(([teachersRes, classesRes]) => {
-      setTeachers(teachersRes.data ?? teachersRes);
-      setClasses(classesRes.data ?? classesRes);
-    });
+    setTeachersLoading(true);
+    setClassesLoading(true);
+
+    Promise.all([apiClient.publicGetTeachers(), apiClient.publicGetClasses()])
+      .then(([teachersRes, classesRes]) => {
+        setTeachers(teachersRes.data ?? teachersRes);
+        setClasses(classesRes.data ?? classesRes);
+      })
+      .finally(() => {
+        setTeachersLoading(false);
+        setClassesLoading(false);
+      });
   }, []);
 
   // Fetch students based on search criteria
@@ -219,11 +230,15 @@ export function TeacherPortalPage() {
                 <div className="mb-1 text-sm font-medium">Teacher</div>
                 <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)} className="w-full rounded-xl border border-black/15 bg-white px-3 py-3 text-sm shadow-[0_1px_0_rgba(0,0,0,0.02)]">
                   <option value="">Select teacher</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher._id} value={teacher._id}>
-                      {teacher.name}
-                    </option>
-                  ))}
+                  {teachersLoading ? (
+                    <option value="" disabled>Loading teachers…</option>
+                  ) : (
+                    teachers.map((teacher) => (
+                      <option key={teacher._id} value={teacher._id}>
+                        {teacher.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </label>
 
@@ -286,11 +301,15 @@ export function TeacherPortalPage() {
                         className="w-full rounded-xl border border-black/15 bg-white px-3 py-3 text-sm disabled:cursor-not-allowed disabled:bg-black/5"
                       >
                         <option value="">Select class</option>
-                        {classes.map((cls) => (
-                          <option key={cls._id} value={cls._id}>
-                            {cls.name}
-                          </option>
-                        ))}
+                        {classesLoading ? (
+                          <option value="" disabled>Loading classes…</option>
+                        ) : (
+                          classes.map((cls) => (
+                            <option key={cls._id} value={cls._id}>
+                              {cls.name}
+                            </option>
+                          ))
+                        )}
                       </select>
                     </label>
                   ) : (
@@ -330,10 +349,14 @@ export function TeacherPortalPage() {
                 Choose a search path above, then enter a name, reg. no, or class.
               </div>
             ) : loading && allStudents.length === 0 ? (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-dashed border-black/15 px-4 py-10 text-center text-sm text-black/45">
-                  Loading students…
-                </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+                    <LoadingSkeleton className="h-5 w-40 mb-3" />
+                    <LoadingSkeleton className="h-4 w-32 mb-2" />
+                    <LoadingSkeleton className="h-4 w-28" />
+                  </div>
+                ))}
               </div>
             ) : allStudents.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-black/15 px-4 py-10 text-center text-sm text-black/45">

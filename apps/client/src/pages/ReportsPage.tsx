@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { LoadingSkeleton, TableLoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function ReportsPage() {
   // ── Search / filter state ──────────────────────────────────────────────
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState('');
   const [classes, setClasses] = useState<any[]>([]);
+  const [classesLoading, setClassesLoading] = useState(true);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -27,7 +29,11 @@ export function ReportsPage() {
 
   // Load classes for filter dropdown
   useEffect(() => {
-    apiClient.getClasses().then((r) => setClasses(r.data ?? r));
+    setClassesLoading(true);
+    apiClient.getClasses()
+      .then((r) => setClasses(r.data ?? r))
+      .finally(() => setClassesLoading(false));
+
     // Auto-load all students on mount
     doSearch('', '');
   }, []);
@@ -188,11 +194,15 @@ export function ReportsPage() {
             className="rounded-md border border-black/15 px-3 py-2 bg-white min-w-40"
           >
             <option value="">All classes</option>
-            {classes.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))}
+            {classesLoading ? (
+              <option value="" disabled>Loading classes…</option>
+            ) : (
+              classes.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))
+            )}
           </select>
         </label>
 
@@ -257,52 +267,56 @@ export function ReportsPage() {
               </tr>
             </thead>
             <tbody>
-              {students.map((student) => {
-                const isSelected = selected.has(student._id);
-                return (
-                  <tr
-                    key={student._id}
-                    onClick={() => toggleOne(student._id)}
-                    className={[
-                      'border-t border-black/5 cursor-pointer transition-colors',
-                      isSelected ? 'bg-orange-50' : 'hover:bg-black/[0.02]',
-                    ].join(' ')}
-                  >
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleOne(student._id)}
-                        className="h-4 w-4 rounded accent-orange-500 cursor-pointer"
-                        aria-label={`Select ${student.name}`}
-                      />
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-black/70">{student.regNo}</td>
-                    <td className="px-4 py-3 font-medium">{student.name}</td>
-                    <td className="px-4 py-3 text-black/60">{student.classId?.name ?? '-'}</td>
-                    <td
-                      className="px-4 py-3"
-                      onClick={(e) => e.stopPropagation()}
+              {loading && students.length === 0 ? (
+                <TableLoadingSkeleton rows={6} cols={5} />
+              ) : (
+                students.map((student) => {
+                  const isSelected = selected.has(student._id);
+                  return (
+                    <tr
+                      key={student._id}
+                      onClick={() => toggleOne(student._id)}
+                      className={[
+                        'border-t border-black/5 cursor-pointer transition-colors',
+                        isSelected ? 'bg-orange-50' : 'hover:bg-black/[0.02]',
+                      ].join(' ')}
                     >
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => openPreview(student._id, student.name)}
-                          disabled={previewLoading}
-                          className="text-orange-600 hover:text-orange-700 disabled:opacity-50 text-xs font-medium"
-                        >
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => downloadSingle(student._id, student.name, student.regNo)}
-                          className="text-black/50 hover:text-black/80 text-xs font-medium"
-                        >
-                          ↓ PDF
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(student._id)}
+                          className="h-4 w-4 rounded accent-orange-500 cursor-pointer"
+                          aria-label={`Select ${student.name}`}
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-black/70">{student.regNo}</td>
+                      <td className="px-4 py-3 font-medium">{student.name}</td>
+                      <td className="px-4 py-3 text-black/60">{student.classId?.name ?? '-'}</td>
+                      <td
+                        className="px-4 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => openPreview(student._id, student.name)}
+                            disabled={previewLoading}
+                            className="text-orange-600 hover:text-orange-700 disabled:opacity-50 text-xs font-medium"
+                          >
+                            Preview
+                          </button>
+                          <button
+                            onClick={() => downloadSingle(student._id, student.name, student.regNo)}
+                            className="text-black/50 hover:text-black/80 text-xs font-medium"
+                          >
+                            ↓ PDF
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
 
               {/* Empty state */}
               {hasSearched && !loading && students.length === 0 && (
@@ -362,8 +376,11 @@ export function ReportsPage() {
           </div>
 
           {previewLoading && (
-            <div className="flex-1 flex items-center justify-center text-sm text-black/50">
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-sm text-black/50">
               <SpinnerIcon className="mr-2" /> Generating PDF…
+              <LoadingSkeleton className="h-4 w-3/4" />
+              <LoadingSkeleton className="h-4 w-2/3" />
+              <LoadingSkeleton className="h-4 w-1/2" />
             </div>
           )}
 

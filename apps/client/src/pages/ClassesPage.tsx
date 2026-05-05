@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function ClassesPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [editing, setEditing] = useState<any | null>(null);
   const [assigning, setAssigning] = useState<{ cls: any } | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  async function load() { const res = await apiClient.getClasses(); setClasses(res.data ?? res); }
+  async function load() {
+    setLoading(true);
+    try {
+      const res = await apiClient.getClasses();
+      setClasses(res.data ?? res);
+    } finally {
+      setLoading(false);
+    }
+  }
   useEffect(() => { load(); apiClient.getSubjects().then(r=>setSubjects(r.data??r)); }, []);
 
   async function remove(id: string) { if (!confirm('Delete class?')) return; await apiClient.deleteClass(id); load(); }
@@ -30,38 +40,49 @@ export function ClassesPage() {
       </div>
 
       <div className="mt-4 space-y-3">
-        {classes.map(c => (
-          <div key={c._id} className="rounded-lg border bg-white p-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="font-semibold">{c.name}</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {(c.subjects || []).length ? (
-                    (c.subjects || []).map((subject: any) => (
-                      <span key={subject._id} className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1 text-sm">
-                        <span>{subject.name}</span>
-                        <button
-                          onClick={() => removeSubject(c._id, subject._id)}
-                          className="text-red-600 hover:text-red-700"
-                          title="Remove subject"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))
-                  ) : (
-                    <div className="text-sm text-black/60">No subjects assigned yet.</div>
-                  )}
+        {loading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="rounded-lg border bg-white p-3">
+              <LoadingSkeleton className="h-6 w-32 mb-3" />
+              <LoadingSkeleton className="h-5 w-44" />
+            </div>
+          ))
+        ) : classes.length ? (
+          classes.map(c => (
+            <div key={c._id} className="rounded-lg border bg-white p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-semibold">{c.name}</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(c.subjects || []).length ? (
+                      (c.subjects || []).map((subject: any) => (
+                        <span key={subject._id} className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1 text-sm">
+                          <span>{subject.name}</span>
+                          <button
+                            onClick={() => removeSubject(c._id, subject._id)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Remove subject"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))
+                    ) : (
+                      <div className="text-sm text-black/60">No subjects assigned yet.</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setAssigning({ cls: c })} className="text-sm">Assign Subject</button>
+                  <button onClick={() => setEditing(c)} className="text-sm text-orange-600">Edit</button>
+                  <button onClick={() => remove(c._id)} className="text-sm text-red-600">Delete</button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button onClick={() => setAssigning({ cls: c })} className="text-sm">Assign Subject</button>
-                <button onClick={() => setEditing(c)} className="text-sm text-orange-600">Edit</button>
-                <button onClick={() => remove(c._id)} className="text-sm text-red-600">Delete</button>
-              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className="rounded-lg border bg-white p-6 text-center text-sm text-black/50">No classes available yet.</div>
+        )}
       </div>
 
       {editing !== null && <ClassForm cls={editing} onClose={() => { setEditing(null); load(); }} />}

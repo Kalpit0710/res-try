@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 function StatCard(props: { label: string; value: number; accent: string; hint?: string }) {
   return (
@@ -71,10 +72,18 @@ export function DashboardPage() {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Students" value={studentsTotal} accent="text-orange-700" hint="All registered students" />
-          <StatCard label="Classes" value={classesCount} accent="text-cyan-700" hint="Configured class groups" />
-          <StatCard label="Subjects" value={subjectsCount} accent="text-emerald-700" hint="Mapped to classes" />
-          <StatCard label="Teachers" value={teachersCount} accent="text-rose-700" hint="Available for marks entry" />
+          {loading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-28 rounded-2xl bg-slate-200/70 animate-pulse" />
+            ))
+          ) : (
+            <>
+              <StatCard label="Students" value={studentsTotal} accent="text-orange-700" hint="All registered students" />
+              <StatCard label="Classes" value={classesCount} accent="text-cyan-700" hint="Configured class groups" />
+              <StatCard label="Subjects" value={subjectsCount} accent="text-emerald-700" hint="Mapped to classes" />
+              <StatCard label="Teachers" value={teachersCount} accent="text-rose-700" hint="Available for marks entry" />
+            </>
+          )}
         </div>
       </div>
 
@@ -85,7 +94,14 @@ export function DashboardPage() {
             <Link to="/admin/logs" className="text-sm text-orange-700 hover:underline">View all logs</Link>
           </div>
           <div className="mt-3 divide-y divide-black/5">
-            {logs.length ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="py-4">
+                  <LoadingSkeleton className="h-5 w-2/3 mb-2" />
+                  <LoadingSkeleton className="h-4 w-1/2" />
+                </div>
+              ))
+            ) : logs.length ? (
               logs.map((log) => (
                 <div key={log._id} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -117,7 +133,14 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-4 space-y-2">
-            {locks.slice(0, 6).map((lock) => (
+            {loading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="rounded-lg border border-black/10 bg-slate-100/80 p-3">
+                  <LoadingSkeleton className="h-4 w-32 mb-2" />
+                  <LoadingSkeleton className="h-4 w-20" />
+                </div>
+              ))
+            ) : locks.slice(0, 6).map((lock) => (
               <div key={lock._id} className="flex items-center justify-between rounded-lg border border-black/10 px-3 py-2 text-sm">
                 <div>
                   <span className="font-medium">{lock.type}</span>
@@ -128,7 +151,7 @@ export function DashboardPage() {
                 </span>
               </div>
             ))}
-            {!locks.length ? <div className="text-sm text-black/50">No locks configured.</div> : null}
+            {!loading && !locks.length ? <div className="text-sm text-black/50">No locks configured.</div> : null}
           </div>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
