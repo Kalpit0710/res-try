@@ -9,6 +9,9 @@ export function ReportsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(15);
+  const [total, setTotal] = useState(0);
 
   // ── Selection state ────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -28,30 +31,37 @@ export function ReportsPage() {
   // Load classes for filter dropdown
   useEffect(() => {
     apiClient.getClasses().then((r) => setClasses(r.data ?? r));
-    // Auto-load all students on mount
-    doSearch('', '');
   }, []);
 
-  async function doSearch(q: string, cid: string) {
+  async function loadStudents(pageToLoad: number, searchTerm: string, classId: string) {
     setLoading(true);
     setHasSearched(true);
-    setSelected(new Set()); // clear selection on new search
+    setSelected(new Set()); // clear selection on new search/page change
     try {
       const res = await apiClient.getStudents({
-        page: 1,
-        limit: 200,
-        search: q,
-        ...(cid ? { classId: cid } : {}),
+        page: pageToLoad,
+        limit,
+        search: searchTerm,
+        ...(classId ? { classId } : {}),
       });
       setStudents(res.data ?? []);
+      setTotal(res.total ?? 0);
     } finally {
       setLoading(false);
     }
   }
 
   function handleSearch() {
-    doSearch(search, classFilter);
+    if (page === 1) {
+      loadStudents(1, search, classFilter);
+    } else {
+      setPage(1);
+    }
   }
+
+  useEffect(() => {
+    loadStudents(page, search, classFilter);
+  }, [page]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter') handleSearch();
@@ -135,6 +145,9 @@ export function ReportsPage() {
   }
 
   const selectedCount = selected.size;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const canGoPrev = page > 1;
+  const canGoNext = page < totalPages;
 
   return (
     <div className="p-6">
@@ -324,6 +337,31 @@ export function ReportsPage() {
               )}
             </tbody>
           </table>
+
+          <div className="mt-4 flex flex-col gap-3 border-t border-black/10 px-4 py-3 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              Showing {students.length} of {total} students
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={!canGoPrev || loading}
+                className="rounded-md border border-black/10 px-3 py-1 text-sm disabled:opacity-50"
+              >
+                Prev
+              </button>
+              <span className="px-3 py-1">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={!canGoNext || loading}
+                className="rounded-md border border-black/10 px-3 py-1 text-sm disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
 
           {/* Selection summary bar */}
           {selectedCount > 0 && (

@@ -6,19 +6,25 @@ import { BulkUpload } from '../components/BulkUpload';
 export function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit] = useState(15);
   const [total, setTotal] = useState(0);
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<any | null>(null);
   const [showBulk, setShowBulk] = useState(false);
 
-  async function load() {
-    const res = await apiClient.getStudents({ page, limit, search: query });
+  async function loadStudents(pageToLoad: number, searchTerm: string) {
+    const res = await apiClient.getStudents({ page: pageToLoad, limit, search: searchTerm });
     setStudents(res.data);
     setTotal(res.total ?? 0);
   }
 
-  useEffect(() => { load(); }, [page, query]);
+  useEffect(() => {
+    loadStudents(page, query);
+  }, [page, query]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const canGoPrev = page > 1;
+  const canGoNext = page < totalPages;
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -31,7 +37,12 @@ export function StudentsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
             <span>Search Students</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search students by name or regNo" className="w-full rounded-md border px-3 py-2 font-normal sm:w-72" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search students by name or regNo"
+              className="w-full rounded-md border px-3 py-2 font-normal sm:w-72"
+            />
           </label>
           <button onClick={() => setShowBulk(true)} className="rounded-md bg-orange-500 px-3 py-2 text-white">Bulk Upload</button>
           <button onClick={() => setEditing({})} className="rounded-md border px-3 py-2">Add Student</button>
@@ -65,21 +76,21 @@ export function StudentsPage() {
         </table>
 
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-black/60">Total: {total}</div>
-          <div className="flex gap-2">
-            <button disabled={page<=1} onClick={() => setPage(p=>p-1)} className="px-3 py-1 border rounded">Prev</button>
-            <div className="px-3 py-1">{page}</div>
-            <button disabled={students.length<limit} onClick={() => setPage(p=>p+1)} className="px-3 py-1 border rounded">Next</button>
+          <div className="text-sm text-black/60">Showing {students.length} of {total} students</div>
+          <div className="flex gap-2 items-center">
+            <button disabled={!canGoPrev} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
+            <div className="px-3 py-1">Page {page} of {totalPages}</div>
+            <button disabled={!canGoNext} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
           </div>
         </div>
       </div>
 
       {editing !== null && (
-        <StudentForm student={editing} onClose={() => { setEditing(null); load(); }} />
+        <StudentForm student={editing} onClose={() => { setEditing(null); loadStudents(page, query); }} />
       )}
 
       {showBulk && (
-        <BulkUpload onClose={() => { setShowBulk(false); load(); }} />
+        <BulkUpload onClose={() => { setShowBulk(false); loadStudents(page, query); }} />
       )}
     </div>
   );
