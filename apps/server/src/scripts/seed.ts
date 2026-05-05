@@ -14,7 +14,7 @@ type SubjectMaxMarks = {
 
 type ClassSeed = {
   name: string;
-  classTeacherName: string;
+  classTeacherName?: string;
 };
 
 type TeacherSeed = {
@@ -58,9 +58,11 @@ const sharedSubjectNames = [
 ];
 
 const classSeeds: ClassSeed[] = [
-  { name: '3', classTeacherName: 'Anita Roy' },
-  { name: '4', classTeacherName: 'Rahul Mehta' },
-  { name: '5', classTeacherName: 'Priya Nair' },
+  { name: 'Class 1', classTeacherName: 'Ramesh Gupta' },
+  { name: 'Class 2', classTeacherName: 'Shweta Rao' },
+  { name: 'Class 3' },
+  { name: 'Class 4' },
+  { name: 'Class 5' },
 ];
 
 const subjectTeacherNames: Record<string, string> = {
@@ -76,17 +78,22 @@ const subjectTeacherNames: Record<string, string> = {
 };
 
 const teacherSeeds: TeacherSeed[] = [
-  ...classSeeds.map((classSeed) => ({ name: classSeed.classTeacherName, className: classSeed.name })),
+  { name: 'Ramesh Gupta', className: 'Class 1' },
+  { name: 'Shweta Rao', className: 'Class 2' },
   ...Object.values(subjectTeacherNames).map((name) => ({ name })),
 ];
 
 const studentSeeds: StudentSeed[] = [
-  { regNo: '2026-03-001', name: 'Aarav Sharma', fatherName: 'Sandeep Sharma', motherName: 'Neha Sharma', dob: '2018-02-14', rollNo: '1', className: '3' },
-  { regNo: '2026-03-002', name: 'Ira Verma', fatherName: 'Manoj Verma', motherName: 'Pooja Verma', dob: '2018-07-19', rollNo: '2', className: '3' },
-  { regNo: '2026-04-001', name: 'Kabir Singh', fatherName: 'Rohit Singh', motherName: 'Anita Singh', dob: '2017-11-03', rollNo: '1', className: '4' },
-  { regNo: '2026-04-002', name: 'Meera Patel', fatherName: 'Jignesh Patel', motherName: 'Kiran Patel', dob: '2017-04-25', rollNo: '2', className: '4' },
-  { regNo: '2026-05-001', name: 'Arjun Iyer', fatherName: 'Vikram Iyer', motherName: 'Lakshmi Iyer', dob: '2016-08-08', rollNo: '1', className: '5' },
-  { regNo: '2026-05-002', name: 'Anaya Das', fatherName: 'Sourav Das', motherName: 'Rina Das', dob: '2016-12-17', rollNo: '2', className: '5' },
+  { regNo: '2026-01-001', name: 'Riya Singh', fatherName: 'Suresh Singh', motherName: 'Anjali Singh', dob: '2019-03-10', rollNo: '1', className: 'Class 1' },
+  { regNo: '2026-01-002', name: 'Aman Sharma', fatherName: 'Rakesh Sharma', motherName: 'Sneha Sharma', dob: '2019-09-04', rollNo: '2', className: 'Class 1' },
+  { regNo: '2026-02-001', name: 'Rohan Mehta', fatherName: 'Vikram Mehta', motherName: 'Priya Mehta', dob: '2018-12-20', rollNo: '1', className: 'Class 2' },
+  { regNo: '2026-02-002', name: 'Sara Khan', fatherName: 'Imran Khan', motherName: 'Nisha Khan', dob: '2018-05-15', rollNo: '2', className: 'Class 2' },
+  { regNo: '2026-03-001', name: 'Mohd. Barkaat', fatherName: 'Sandeep Sharma', motherName: 'Neha Sharma', dob: '2018-02-14', rollNo: '4', className: 'Class 3' },
+  { regNo: '2026-03-002', name: 'Mohd. Subhan', fatherName: 'Manoj Verma', motherName: 'Pooja Verma', dob: '2018-07-19', rollNo: '2', className: 'Class 3' },
+  { regNo: '2026-04-001', name: 'Preety Devi', fatherName: 'Rohit Singh', motherName: 'Anita Singh', dob: '2017-11-03', rollNo: '1', className: 'Class 4' },
+  { regNo: '2026-04-002', name: 'Ayra Azeem', fatherName: 'Jignesh Patel', motherName: 'Kiran Patel', dob: '2017-04-25', rollNo: '2', className: 'Class 4' },
+  { regNo: '2026-05-001', name: 'Arjun Iyer', fatherName: 'Vikram Iyer', motherName: 'Lakshmi Iyer', dob: '2016-08-08', rollNo: '1', className: 'Class 5' },
+  { regNo: '2026-05-002', name: 'Anaya Das', fatherName: 'Sourav Das', motherName: 'Rina Das', dob: '2016-12-17', rollNo: '2', className: 'Class 5' },
 ];
 
 const markBlueprints: Record<string, { term1: MarkSeed['term1']; term2: MarkSeed['term2'] }> = {
@@ -126,9 +133,16 @@ function buildMarksForStudent(regNo: string, shift: number): MarkSeed[] {
 }
 
 const markSeeds: MarkSeed[] = [
-  ...buildMarksForStudent('2026-03-001', 1),
-  ...buildMarksForStudent('2026-04-001', 2),
-  ...buildMarksForStudent('2026-05-001', 0),
+  ...buildMarksForStudent('2026-01-001', 1),
+  ...buildMarksForStudent('2026-01-002', 2),
+  ...buildMarksForStudent('2026-02-001', 1),
+  ...buildMarksForStudent('2026-02-002', 2),
+  ...buildMarksForStudent('2026-03-001', 3),
+  ...buildMarksForStudent('2026-03-002', 4),
+  ...buildMarksForStudent('2026-04-001', 5),
+  ...buildMarksForStudent('2026-04-002', 6),
+  ...buildMarksForStudent('2026-05-001', 7),
+  ...buildMarksForStudent('2026-05-002', 8),
 ];
 
 function requireDoc<T>(value: T | undefined, message: string): T {
@@ -139,6 +153,107 @@ function requireDoc<T>(value: T | undefined, message: string): T {
   return value;
 }
 
+async function upsertClass(classSeed: ClassSeed) {
+  const classDoc = await Class.findOneAndUpdate(
+    { name: classSeed.name },
+    { name: classSeed.name },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).exec();
+
+  if (!classDoc) {
+    throw new Error(`Unable to upsert class ${classSeed.name}`);
+  }
+
+  return classDoc;
+}
+
+async function upsertSubject(classDoc: any, subjectName: string) {
+  const subjectDoc = await Subject.findOneAndUpdate(
+    { classId: classDoc._id, name: subjectName },
+    { name: subjectName, classId: classDoc._id, maxMarks: sharedMaxMarks },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).exec();
+
+  if (!subjectDoc) {
+    throw new Error(`Unable to upsert subject ${subjectName} for class ${classDoc.name}`);
+  }
+
+  return subjectDoc;
+}
+
+async function upsertTeacher(teacherSeed: TeacherSeed, classByName: Map<string, any>) {
+  const update: any = { name: teacherSeed.name };
+  if (teacherSeed.className) {
+    const classDoc = requireDoc(classByName.get(teacherSeed.className), `Class ${teacherSeed.className} not found`);
+    update.classId = classDoc._id;
+  }
+
+  const teacherDoc = await Teacher.findOneAndUpdate(
+    { name: teacherSeed.name },
+    update,
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).exec();
+
+  if (!teacherDoc) {
+    throw new Error(`Unable to upsert teacher ${teacherSeed.name}`);
+  }
+
+  return teacherDoc;
+}
+
+async function upsertStudent(student: StudentSeed, classByName: Map<string, any>) {
+  const classDoc = requireDoc(classByName.get(student.className), `Class ${student.className} not found`);
+  const studentDoc = await Student.findOneAndUpdate(
+    { regNo: student.regNo },
+    {
+      regNo: student.regNo,
+      name: student.name,
+      fatherName: student.fatherName,
+      motherName: student.motherName,
+      dob: new Date(student.dob),
+      rollNo: student.rollNo,
+      classId: classDoc._id,
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).exec();
+
+  if (!studentDoc) {
+    throw new Error(`Unable to upsert student ${student.regNo}`);
+  }
+
+  return studentDoc;
+}
+
+async function upsertMark(mark: MarkSeed, studentByRegNo: Map<string, any>, subjectByClassAndName: Map<string, any>) {
+  const studentDoc = requireDoc(studentByRegNo.get(mark.regNo), `Student ${mark.regNo} not found`);
+  const className = requireDoc(
+    (await Class.findById(studentDoc.classId).exec())?.name,
+    `Class for ${mark.regNo} not found`
+  );
+  const subjectDoc = requireDoc(
+    subjectByClassAndName.get(`${className}:${mark.subjectName}`),
+    `Subject ${mark.subjectName} not found for class ${className}`
+  );
+
+  const marksDoc = await Marks.findOneAndUpdate(
+    { studentId: studentDoc._id, subjectId: subjectDoc._id },
+    {
+      studentId: studentDoc._id,
+      subjectId: subjectDoc._id,
+      teacherName: mark.teacherName,
+      term1: mark.term1,
+      term2: mark.term2,
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).exec();
+
+  if (!marksDoc) {
+    throw new Error(`Unable to upsert marks for ${mark.regNo} ${mark.subjectName}`);
+  }
+
+  return marksDoc;
+}
+
 async function main() {
   const uri = process.env.MONGO_URI;
   if (!uri) {
@@ -147,80 +262,36 @@ async function main() {
 
   await mongoose.connect(normalizeMongoUri(uri));
   console.log('Connected to MongoDB for seeding');
+  console.log('Preserving existing data and upserting new classes, subjects, teachers, students, and marks');
 
-  await mongoose.connection.dropDatabase();
-  console.log('Database cleared');
-
-  const classDocs: any[] = [];
   const classByName = new Map<string, any>();
   const subjectByClassAndName = new Map<string, any>();
 
   for (const classSeed of classSeeds) {
-    const classDoc = await Class.create({ name: classSeed.name, subjects: [] });
-    classDocs.push(classDoc);
-    classByName.set(classSeed.name, classDoc);
+    const classDoc = await upsertClass(classSeed);
+    classByName.set(classDoc.name, classDoc);
 
-    const subjectDocs = await Subject.insertMany(
-      sharedSubjectNames.map((name) => ({
-        name,
-        classId: classDoc._id,
-        maxMarks: sharedMaxMarks,
-      }))
-    );
-
+    const subjectDocs = await Promise.all(sharedSubjectNames.map((subjectName) => upsertSubject(classDoc, subjectName)));
     for (const subjectDoc of subjectDocs) {
-      subjectByClassAndName.set(`${classSeed.name}:${subjectDoc.name}`, subjectDoc);
+      subjectByClassAndName.set(`${classDoc.name}:${subjectDoc.name}`, subjectDoc);
     }
 
-    classDoc.subjects = subjectDocs.map((subjectDoc) => subjectDoc._id) as any;
+    classDoc.subjects = subjectDocs.map((subjectDoc) => subjectDoc._id as any);
     await classDoc.save();
   }
 
-  const teacherDocs = await Teacher.insertMany(
-    teacherSeeds.map((teacherSeed) => ({
-      name: teacherSeed.name,
-      ...(teacherSeed.className ? { classId: requireDoc(classByName.get(teacherSeed.className), `Class ${teacherSeed.className} not found`)._id } : {}),
-    }))
-  );
-
-  const studentDocs = await Student.insertMany(
-    studentSeeds.map((student) => ({
-      regNo: student.regNo,
-      name: student.name,
-      fatherName: student.fatherName,
-      motherName: student.motherName,
-      dob: student.dob,
-      classId: requireDoc(classByName.get(student.className), `Class ${student.className} not found`)._id,
-      rollNo: student.rollNo,
-    }))
-  );
-
+  const teacherDocs = await Promise.all(teacherSeeds.map((teacherSeed) => upsertTeacher(teacherSeed, classByName)));
+  const studentDocs = await Promise.all(studentSeeds.map((student) => upsertStudent(student, classByName)));
   const studentByRegNo = new Map(studentDocs.map((doc) => [doc.regNo, doc]));
 
-  const marksDocs = await Marks.insertMany(
-    markSeeds.map((mark) => {
-      const studentDoc = requireDoc(studentByRegNo.get(mark.regNo), `Student ${mark.regNo} not found`);
-      const className = requireDoc(classDocs.find((classDoc) => classDoc._id.equals(studentDoc.classId))?.name, `Class for ${mark.regNo} not found`);
-      const subjectDoc = requireDoc(subjectByClassAndName.get(`${className}:${mark.subjectName}`), `Subject ${mark.subjectName} not found for class ${className}`);
-      const teacherName = requireDoc(subjectTeacherNames[mark.subjectName], `Teacher for ${mark.subjectName} not found`);
-
-      return {
-        studentId: studentDoc._id,
-        subjectId: subjectDoc._id,
-        teacherName,
-        term1: mark.term1,
-        term2: mark.term2,
-      };
-    })
-  );
+  const marksDocs = await Promise.all(markSeeds.map((mark) => upsertMark(mark, studentByRegNo, subjectByClassAndName)));
 
   console.log('\nSeed completed successfully');
   console.log(`Teachers: ${teacherDocs.length}`);
-  console.log(`Classes: ${classDocs.length}`);
+  console.log(`Classes: ${classByName.size}`);
   console.log(`Students: ${studentDocs.length}`);
-  console.log(`Marks: ${marksDocs.length}`);
-  console.log('Subjects: 27');
-  console.log('Database was fully cleared before seeding');
+  console.log(`Marks documents processed: ${marksDocs.length}`);
+  console.log('Existing data was preserved');
 }
 
 main()
