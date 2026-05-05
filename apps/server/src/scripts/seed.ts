@@ -5,21 +5,21 @@ import { Subject } from '../models/Subject';
 import { Teacher } from '../models/Teacher';
 import { Student } from '../models/Student';
 import { Marks } from '../models/Marks';
-import { Log } from '../models/Log';
-import { Lock } from '../models/Lock';
 import { normalizeMongoUri } from '../config/mongoUri';
 
-type SubjectSeed = {
-  name: string;
-  maxMarks: {
-    term1: { periodicTest: number; notebook: number; subEnrichment: number; halfYearlyExam: number };
-    term2: { periodicTest: number; notebook: number; subEnrichment: number; yearlyExam: number };
-  };
+type SubjectMaxMarks = {
+  term1: { periodicTest: number; notebook: number; subEnrichment: number; halfYearlyExam: number };
+  term2: { periodicTest: number; notebook: number; subEnrichment: number; yearlyExam: number };
 };
 
 type ClassSeed = {
   name: string;
-  subjects: SubjectSeed[];
+  classTeacherName: string;
+};
+
+type TeacherSeed = {
+  name: string;
+  className?: string;
 };
 
 type StudentSeed = {
@@ -40,126 +40,104 @@ type MarkSeed = {
   term2: { periodicTest: number; notebook: number; subEnrichment: number; yearlyExam: number };
 };
 
-const classSeeds: ClassSeed[] = [
-  {
-    name: '8-A',
-    subjects: [
-      'English',
-      'Mathematics',
-      'Science',
-      'Social Studies',
-    ].map((name) => ({
-      name,
-      maxMarks: {
-        term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 },
-        term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 },
-      },
-    })),
-  },
-  {
-    name: '9-A',
-    subjects: [
-      'English',
-      'Mathematics',
-      'Science',
-      'Computer Applications',
-    ].map((name) => ({
-      name,
-      maxMarks: {
-        term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 },
-        term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 },
-      },
-    })),
-  },
-  {
-    name: '10-A',
-    subjects: [
-      'English',
-      'Mathematics',
-      'Science',
-      'Social Science',
-      'Computer Applications',
-      'Artificial Intelligence',
-    ].map((name) => ({
-      name,
-      maxMarks: {
-        term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 },
-        term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 },
-      },
-    })),
-  },
-  {
-    name: '11-Science',
-    subjects: [
-      'Physics',
-      'Chemistry',
-      'Mathematics',
-      'Computer Science',
-    ].map((name) => ({
-      name,
-      maxMarks: {
-        term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 },
-        term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 },
-      },
-    })),
-  },
+const sharedMaxMarks: SubjectMaxMarks = {
+  term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 },
+  term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 },
+};
+
+const sharedSubjectNames = [
+  'English',
+  'Hindi',
+  'Mathematics',
+  'Science',
+  'Social Studies',
+  'General Knowledge',
+  'Computer',
+  'Sanskrit',
+  'Value Education',
 ];
 
-const teacherSeeds = ['Asha Verma', 'Rahul Kumar', 'Neha Sharma', 'Imran Khan'];
+const classSeeds: ClassSeed[] = [
+  { name: '3', classTeacherName: 'Anita Roy' },
+  { name: '4', classTeacherName: 'Rahul Mehta' },
+  { name: '5', classTeacherName: 'Priya Nair' },
+];
+
+const subjectTeacherNames: Record<string, string> = {
+  English: 'Meera Joshi',
+  Hindi: 'Arvind Verma',
+  Mathematics: 'Kunal Shah',
+  Science: 'Ritu Singh',
+  'Social Studies': 'Farhan Khan',
+  'General Knowledge': 'Sonia Kapoor',
+  Computer: 'Naveen Kumar',
+  Sanskrit: 'Sushma Pandey',
+  'Value Education': 'Deepa Menon',
+};
+
+const teacherSeeds: TeacherSeed[] = [
+  ...classSeeds.map((classSeed) => ({ name: classSeed.classTeacherName, className: classSeed.name })),
+  ...Object.values(subjectTeacherNames).map((name) => ({ name })),
+];
 
 const studentSeeds: StudentSeed[] = [
-  { regNo: '2025-8A-001', name: 'Arjun Kumar', fatherName: 'Sanjay Kumar', motherName: 'Pooja Kumar', dob: '2012-04-12', rollNo: '1', className: '8-A' },
-  { regNo: '2025-8A-002', name: 'Ananya Singh', fatherName: 'Vivek Singh', motherName: 'Rita Singh', dob: '2012-09-24', rollNo: '2', className: '8-A' },
-  { regNo: '2025-9A-001', name: 'Riya Patel', fatherName: 'Mahesh Patel', motherName: 'Kiran Patel', dob: '2011-01-18', rollNo: '1', className: '9-A' },
-  { regNo: '2025-9A-002', name: 'Kabir Das', fatherName: 'Anil Das', motherName: 'Sangeeta Das', dob: '2011-08-07', rollNo: '2', className: '9-A' },
-  { regNo: '2025-10A-001', name: 'Meera Iyer', fatherName: 'N. Iyer', motherName: 'Lakshmi Iyer', dob: '2010-03-03', rollNo: '1', className: '10-A' },
-  { regNo: '2025-10A-002', name: 'Aarav Verma', fatherName: 'Rohit Verma', motherName: 'Sonia Verma', dob: '2010-11-15', rollNo: '2', className: '10-A' },
+  { regNo: '2026-03-001', name: 'Aarav Sharma', fatherName: 'Sandeep Sharma', motherName: 'Neha Sharma', dob: '2018-02-14', rollNo: '1', className: '3' },
+  { regNo: '2026-03-002', name: 'Ira Verma', fatherName: 'Manoj Verma', motherName: 'Pooja Verma', dob: '2018-07-19', rollNo: '2', className: '3' },
+  { regNo: '2026-04-001', name: 'Kabir Singh', fatherName: 'Rohit Singh', motherName: 'Anita Singh', dob: '2017-11-03', rollNo: '1', className: '4' },
+  { regNo: '2026-04-002', name: 'Meera Patel', fatherName: 'Jignesh Patel', motherName: 'Kiran Patel', dob: '2017-04-25', rollNo: '2', className: '4' },
+  { regNo: '2026-05-001', name: 'Arjun Iyer', fatherName: 'Vikram Iyer', motherName: 'Lakshmi Iyer', dob: '2016-08-08', rollNo: '1', className: '5' },
+  { regNo: '2026-05-002', name: 'Anaya Das', fatherName: 'Sourav Das', motherName: 'Rina Das', dob: '2016-12-17', rollNo: '2', className: '5' },
 ];
 
+const markBlueprints: Record<string, { term1: MarkSeed['term1']; term2: MarkSeed['term2'] }> = {
+  English: { term1: { periodicTest: 9, notebook: 5, subEnrichment: 5, halfYearlyExam: 28 }, term2: { periodicTest: 9, notebook: 5, subEnrichment: 5, yearlyExam: 29 } },
+  Hindi: { term1: { periodicTest: 8, notebook: 5, subEnrichment: 5, halfYearlyExam: 27 }, term2: { periodicTest: 8, notebook: 5, subEnrichment: 5, yearlyExam: 28 } },
+  Mathematics: { term1: { periodicTest: 9, notebook: 4, subEnrichment: 5, halfYearlyExam: 29 }, term2: { periodicTest: 9, notebook: 5, subEnrichment: 5, yearlyExam: 30 } },
+  Science: { term1: { periodicTest: 8, notebook: 5, subEnrichment: 5, halfYearlyExam: 27 }, term2: { periodicTest: 8, notebook: 5, subEnrichment: 5, yearlyExam: 28 } },
+  'Social Studies': { term1: { periodicTest: 9, notebook: 5, subEnrichment: 5, halfYearlyExam: 27 }, term2: { periodicTest: 9, notebook: 5, subEnrichment: 5, yearlyExam: 28 } },
+  'General Knowledge': { term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 }, term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 } },
+  Computer: { term1: { periodicTest: 9, notebook: 5, subEnrichment: 5, halfYearlyExam: 29 }, term2: { periodicTest: 9, notebook: 5, subEnrichment: 5, yearlyExam: 29 } },
+  Sanskrit: { term1: { periodicTest: 8, notebook: 4, subEnrichment: 5, halfYearlyExam: 26 }, term2: { periodicTest: 8, notebook: 4, subEnrichment: 5, yearlyExam: 27 } },
+  'Value Education': { term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 }, term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 } },
+};
+
+function buildMarksForStudent(regNo: string, shift: number): MarkSeed[] {
+  return sharedSubjectNames.map((subjectName, index) => {
+    const blueprint = markBlueprints[subjectName];
+
+    return {
+      regNo,
+      subjectName,
+      teacherName: subjectTeacherNames[subjectName],
+      term1: {
+        periodicTest: Math.min(10, Math.max(0, blueprint.term1.periodicTest - (shift % 2 === 0 ? 0 : index % 2))),
+        notebook: Math.min(5, Math.max(0, blueprint.term1.notebook - (shift % 3 === 0 ? 0 : index % 2))),
+        subEnrichment: blueprint.term1.subEnrichment,
+        halfYearlyExam: Math.min(30, Math.max(0, blueprint.term1.halfYearlyExam - shift)),
+      },
+      term2: {
+        periodicTest: Math.min(10, Math.max(0, blueprint.term2.periodicTest - (shift % 2 === 1 ? 0 : index % 2))),
+        notebook: Math.min(5, Math.max(0, blueprint.term2.notebook - (shift % 2 === 0 ? 0 : index % 2))),
+        subEnrichment: blueprint.term2.subEnrichment,
+        yearlyExam: Math.min(30, Math.max(0, blueprint.term2.yearlyExam - shift)),
+      },
+    };
+  });
+}
+
 const markSeeds: MarkSeed[] = [
-  {
-    regNo: '2025-10A-001',
-    subjectName: 'English',
-    teacherName: 'Asha Verma',
-    term1: { periodicTest: 8, notebook: 4, subEnrichment: 5, halfYearlyExam: 25 },
-    term2: { periodicTest: 9, notebook: 5, subEnrichment: 5, yearlyExam: 26 },
-  },
-  {
-    regNo: '2025-10A-001',
-    subjectName: 'Mathematics',
-    teacherName: 'Rahul Kumar',
-    term1: { periodicTest: 9, notebook: 5, subEnrichment: 5, halfYearlyExam: 27 },
-    term2: { periodicTest: 8, notebook: 5, subEnrichment: 4, yearlyExam: 28 },
-  },
-  {
-    regNo: '2025-10A-001',
-    subjectName: 'Science',
-    teacherName: 'Neha Sharma',
-    term1: { periodicTest: 7, notebook: 4, subEnrichment: 5, halfYearlyExam: 24 },
-    term2: { periodicTest: 8, notebook: 4, subEnrichment: 5, yearlyExam: 25 },
-  },
-  {
-    regNo: '2025-10A-001',
-    subjectName: 'Social Science',
-    teacherName: 'Imran Khan',
-    term1: { periodicTest: 9, notebook: 5, subEnrichment: 4, halfYearlyExam: 26 },
-    term2: { periodicTest: 9, notebook: 5, subEnrichment: 5, yearlyExam: 27 },
-  },
-  {
-    regNo: '2025-10A-001',
-    subjectName: 'Computer Applications',
-    teacherName: 'Asha Verma',
-    term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 28 },
-    term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 29 },
-  },
-  {
-    regNo: '2025-10A-001',
-    subjectName: 'Artificial Intelligence',
-    teacherName: 'Rahul Kumar',
-    term1: { periodicTest: 10, notebook: 5, subEnrichment: 5, halfYearlyExam: 30 },
-    term2: { periodicTest: 10, notebook: 5, subEnrichment: 5, yearlyExam: 30 },
-  },
+  ...buildMarksForStudent('2026-03-001', 1),
+  ...buildMarksForStudent('2026-04-001', 2),
+  ...buildMarksForStudent('2026-05-001', 0),
 ];
+
+function requireDoc<T>(value: T | undefined, message: string): T {
+  if (!value) {
+    throw new Error(message);
+  }
+
+  return value;
+}
 
 async function main() {
   const uri = process.env.MONGO_URI;
@@ -170,18 +148,8 @@ async function main() {
   await mongoose.connect(normalizeMongoUri(uri));
   console.log('Connected to MongoDB for seeding');
 
-  await Promise.all([
-    Log.deleteMany({}),
-    Marks.deleteMany({}),
-    Student.deleteMany({}),
-    Subject.deleteMany({}),
-    Class.deleteMany({}),
-    Teacher.deleteMany({}),
-    Lock.deleteMany({}),
-  ]);
-
-  const teacherDocs = await Teacher.insertMany(teacherSeeds.map((name) => ({ name })));
-  const teacherByName = new Map(teacherDocs.map((doc) => [doc.name, doc]));
+  await mongoose.connection.dropDatabase();
+  console.log('Database cleared');
 
   const classDocs: any[] = [];
   const classByName = new Map<string, any>();
@@ -193,10 +161,10 @@ async function main() {
     classByName.set(classSeed.name, classDoc);
 
     const subjectDocs = await Subject.insertMany(
-      classSeed.subjects.map((subject) => ({
-        name: subject.name,
+      sharedSubjectNames.map((name) => ({
+        name,
         classId: classDoc._id,
-        maxMarks: subject.maxMarks,
+        maxMarks: sharedMaxMarks,
       }))
     );
 
@@ -208,6 +176,13 @@ async function main() {
     await classDoc.save();
   }
 
+  const teacherDocs = await Teacher.insertMany(
+    teacherSeeds.map((teacherSeed) => ({
+      name: teacherSeed.name,
+      ...(teacherSeed.className ? { classId: requireDoc(classByName.get(teacherSeed.className), `Class ${teacherSeed.className} not found`)._id } : {}),
+    }))
+  );
+
   const studentDocs = await Student.insertMany(
     studentSeeds.map((student) => ({
       regNo: student.regNo,
@@ -215,83 +190,37 @@ async function main() {
       fatherName: student.fatherName,
       motherName: student.motherName,
       dob: student.dob,
-      classId: classByName.get(student.className)._id,
+      classId: requireDoc(classByName.get(student.className), `Class ${student.className} not found`)._id,
       rollNo: student.rollNo,
     }))
   );
 
   const studentByRegNo = new Map(studentDocs.map((doc) => [doc.regNo, doc]));
 
-  const marksPayload = markSeeds.map((mark) => {
-    const studentDoc = studentByRegNo.get(mark.regNo);
-    const className = studentDoc
-      ? classDocs.find((classDoc) => classDoc._id.equals(studentDoc.classId))?.name
-      : undefined;
-    const subjectDoc = className ? subjectByClassAndName.get(`${className}:${mark.subjectName}`) : undefined;
-    const teacherDoc = teacherByName.get(mark.teacherName);
+  const marksDocs = await Marks.insertMany(
+    markSeeds.map((mark) => {
+      const studentDoc = requireDoc(studentByRegNo.get(mark.regNo), `Student ${mark.regNo} not found`);
+      const className = requireDoc(classDocs.find((classDoc) => classDoc._id.equals(studentDoc.classId))?.name, `Class for ${mark.regNo} not found`);
+      const subjectDoc = requireDoc(subjectByClassAndName.get(`${className}:${mark.subjectName}`), `Subject ${mark.subjectName} not found for class ${className}`);
+      const teacherName = requireDoc(subjectTeacherNames[mark.subjectName], `Teacher for ${mark.subjectName} not found`);
 
-    if (!studentDoc || !subjectDoc || !teacherDoc) {
-      throw new Error(`Unable to resolve seed references for ${mark.regNo} / ${mark.subjectName}`);
-    }
-
-    return {
-      studentId: studentDoc._id,
-      subjectId: subjectDoc._id,
-      teacherName: teacherDoc.name,
-      term1: mark.term1,
-      term2: mark.term2,
-    };
-  });
-
-  const marksDocs = await Marks.insertMany(marksPayload);
-
-  const englishSubjectId = subjectByClassAndName.get('10-A:English')?._id;
-  const mathSubjectId = subjectByClassAndName.get('10-A:Mathematics')?._id;
-  const targetStudentId = studentByRegNo.get('2025-10A-001')?._id;
-  const futureClassId = classByName.get('11-Science')._id.toString();
-
-  if (!targetStudentId || !englishSubjectId || !mathSubjectId || !futureClassId) {
-    throw new Error('Seed data references could not be resolved');
-  }
-
-  await Log.insertMany([
-    {
-      teacherName: 'Asha Verma',
-      action: 'seeded_demo_data',
-      studentId: targetStudentId,
-      subjectId: englishSubjectId,
-      timestamp: new Date('2026-04-15T10:00:00.000Z'),
-    },
-    {
-      teacherName: 'Rahul Kumar',
-      action: 'marks_saved',
-      studentId: targetStudentId,
-      subjectId: mathSubjectId,
-      timestamp: new Date('2026-04-16T11:30:00.000Z'),
-    },
-    {
-      teacherName: 'Admin',
-      action: 'future_class_provisioned',
-      timestamp: new Date('2026-04-20T08:00:00.000Z'),
-    },
-  ]);
-
-  await Lock.insertMany([
-    { type: 'system', referenceId: 'global', isLocked: false },
-    { type: 'class', referenceId: classByName.get('10-A')._id.toString(), isLocked: false },
-    { type: 'class', referenceId: futureClassId, isLocked: false },
-    { type: 'student', referenceId: targetStudentId.toString(), isLocked: false },
-    { type: 'teacher', referenceId: 'Asha Verma', isLocked: false },
-  ]);
+      return {
+        studentId: studentDoc._id,
+        subjectId: subjectDoc._id,
+        teacherName,
+        term1: mark.term1,
+        term2: mark.term2,
+      };
+    })
+  );
 
   console.log('\nSeed completed successfully');
   console.log(`Teachers: ${teacherDocs.length}`);
   console.log(`Classes: ${classDocs.length}`);
   console.log(`Students: ${studentDocs.length}`);
   console.log(`Marks: ${marksDocs.length}`);
-  console.log('Logs: 3');
-  console.log('Locks: 5');
-  console.log('Future perspective included: 11-Science class + Artificial Intelligence subject');
+  console.log('Subjects: 27');
+  console.log('Database was fully cleared before seeding');
 }
 
 main()
