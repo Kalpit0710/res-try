@@ -104,6 +104,15 @@ export const apiClient = {
     if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
     return res.blob();
   },
+  bulkDownloadReportsPdf: async (studentIds: string[]) => {
+    const res = await fetch(`${API_URL}/reports/bulk-pdf`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ studentIds }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    return res.blob();
+  },
   // --- Settings (branding assets) ---
   getBranding: () => request(`/settings/branding`, { headers: headers() }),
   uploadBrandingAssets: async (payload: { logo?: File | null; principalSignature?: File | null }) => {

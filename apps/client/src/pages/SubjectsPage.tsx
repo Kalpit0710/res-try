@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { addDataChangeListener, emitDataChange } from '../lib/dataEvents';
 
 export function SubjectsPage() {
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -7,10 +8,32 @@ export function SubjectsPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [activeClassId, setActiveClassId] = useState('all');
 
-  async function load() { const res = await apiClient.getSubjects(); setSubjects(res.data ?? res); }
-  useEffect(()=>{ load(); apiClient.getClasses().then(r=>setClasses(r.data??r)); }, []);
+  async function load() {
+    const res = await apiClient.getSubjects();
+    setSubjects(res.data ?? res);
+  }
 
-  async function remove(id: string) { if (!confirm('Delete subject?')) return; await apiClient.deleteSubject(id); load(); }
+  async function loadClasses() {
+    const res = await apiClient.getClasses();
+    setClasses(res.data ?? res);
+  }
+
+  useEffect(()=>{
+    load();
+    loadClasses();
+    const dispose = addDataChangeListener(() => {
+      load();
+      loadClasses();
+    });
+    return dispose;
+  }, []);
+
+  async function remove(id: string) {
+    if (!confirm('Delete subject?')) return;
+    await apiClient.deleteSubject(id);
+    await load();
+    emitDataChange({ type: 'subjects' });
+  }
 
   function subjectClassId(subject: any) {
     return subject.classId?._id ?? subject.classId ?? '';
@@ -125,7 +148,7 @@ export function SubjectsPage() {
         )}
       </div>
 
-      {editing !== null && <SubjectForm subject={editing} classes={classes} onClose={() => { setEditing(null); load(); }} />}
+      {editing !== null && <SubjectForm subject={editing} classes={classes} onClose={() => { setEditing(null); load(); emitDataChange({ type: 'subjects' }); }} />}
     </div>
   );
 }

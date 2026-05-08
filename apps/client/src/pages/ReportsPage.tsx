@@ -24,6 +24,7 @@ export function ReportsPage() {
   // ── Bulk download state ────────────────────────────────────────────────
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState('');
+  const [selectAllLoading, setSelectAllLoading] = useState(false);
 
   // Ref for cleanup
   const previewUrlRef = useRef<string | null>(null);
@@ -36,7 +37,6 @@ export function ReportsPage() {
   async function loadStudents(pageToLoad: number, searchTerm: string, classId: string) {
     setLoading(true);
     setHasSearched(true);
-    setSelected(new Set()); // clear selection on new search/page change
     try {
       const res = await apiClient.getStudents({
         page: pageToLoad,
@@ -52,6 +52,7 @@ export function ReportsPage() {
   }
 
   function handleSearch() {
+    setSelected(new Set());
     if (page === 1) {
       loadStudents(1, search, classFilter);
     } else {
@@ -69,14 +70,32 @@ export function ReportsPage() {
 
   // ── Selection helpers ──────────────────────────────────────────────────
   const allIds = students.map((s) => s._id);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  const allSelected = total > 0 && selected.size === total;
   const someSelected = selected.size > 0 && !allSelected;
 
-  function toggleSelectAll() {
+  async function toggleSelectAll() {
     if (allSelected) {
       setSelected(new Set());
-    } else {
+      return;
+    }
+
+    if (selected.size === total && total > 0) {
       setSelected(new Set(allIds));
+      return;
+    }
+
+    setSelectAllLoading(true);
+    try {
+      const res = await apiClient.getStudents({
+        page: 1,
+        limit: total || 1,
+        search,
+        ...(classFilter ? { classId: classFilter } : {}),
+      });
+      const ids = (res.data ?? []).map((student: any) => student._id);
+      setSelected(new Set(ids));
+    } finally {
+      setSelectAllLoading(false);
     }
   }
 
@@ -121,18 +140,22 @@ export function ReportsPage() {
   }
 
   // ── Bulk download ──────────────────────────────────────────────────────
-  async function bulkDownload() {
+  async function bulkDownload(type: 'zip' | 'pdf') {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
 
     setBulkLoading(true);
     setBulkProgress(`Generating ${ids.length} report${ids.length > 1 ? 's' : ''}…`);
     try {
-      const blob = await apiClient.bulkDownloadReports(ids);
+      const blob = type === 'pdf'
+        ? await apiClient.bulkDownloadReportsPdf(ids)
+        : await apiClient.bulkDownloadReports(ids);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `report-cards-${new Date().toISOString().slice(0, 10)}.zip`;
+      a.download = type === 'pdf'
+        ? `combined-report-cards-${new Date().toISOString().slice(0, 10)}.pdf`
+        : `report-cards-${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
       setBulkProgress('');
@@ -163,15 +186,15 @@ export function ReportsPage() {
         {/* Bulk Download button — shown when ≥1 selected */}
         <div className="flex items-center gap-3">
           {selectedCount > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-orange-100 text-orange-700 px-3 py-1 text-sm font-medium">
                 {selectedCount} selected
               </span>
               <button
                 id="bulk-download-zip-btn"
-                onClick={bulkDownload}
+                onClick={() => bulkDownload('zip')}
                 disabled={bulkLoading}
-                className="flex items-center gap-2 rounded-md bg-orange-500 text-white px-4 py-2 text-sm font-medium hover:bg-orange-600 disabled:opacity-60 transition-colors"
+                className="rounded-md bg-orange-500 text-white px-4 py-2 text-sm font-medium hover:bg-orange-600 disabled:opacity-60 transition-colors"
               >
                 {bulkLoading ? (
                   <>
@@ -181,9 +204,17 @@ export function ReportsPage() {
                 ) : (
                   <>
                     <DownloadZipIcon />
-                    Download ZIP ({selectedCount})
+                    Download ZIP
                   </>
                 )}
+              </button>
+              <button
+                id="bulk-download-pdf-btn"
+                onClick={() => bulkDownload('pdf')}
+                disabled={bulkLoading}
+                className="rounded-md border border-black/15 bg-white px-4 py-2 text-sm font-medium text-black hover:border-black/25 hover:bg-black/5 disabled:opacity-50 transition-colors"
+              >
+                {bulkLoading ? 'Generating…' : 'Download PDF'}
               </button>
             </div>
           )}
@@ -234,9 +265,10 @@ export function ReportsPage() {
           <button
             id="report-select-all-btn"
             onClick={toggleSelectAll}
-            className="rounded-md border border-black/15 px-4 py-2 text-sm hover:bg-black/5 transition-colors"
+            disabled={selectAllLoading}
+            className="rounded-md border border-black/15 px-4 py-2 text-sm hover:bg-black/5 transition-colors disabled:opacity-50"
           >
-            {allSelected ? 'Deselect All' : `Select All (${students.length})`}
+            {selectAllLoading ? 'Selecting…' : allSelected ? 'Deselect All' : `Select All (${total})`}
           </button>
         )}
       </div>
@@ -367,21 +399,14 @@ export function ReportsPage() {
           {selectedCount > 0 && (
             <div className="flex flex-col gap-2 border-t border-black/10 bg-orange-50 px-4 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
               <span className="text-orange-700 font-medium">
-                {selectedCount} of {students.length} student{selectedCount > 1 ? 's' : ''} selected
+                {selectedCount} of {total} filtered student{total === 1 ? '' : 's'} selected
               </span>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 items-center">
                 <button
                   onClick={() => setSelected(new Set())}
                   className="text-black/50 hover:text-black/80"
                 >
                   Clear
-                </button>
-                <button
-                  onClick={bulkDownload}
-                  disabled={bulkLoading}
-                  className="rounded bg-orange-500 text-white px-3 py-1 text-xs font-medium hover:bg-orange-600 disabled:opacity-60"
-                >
-                  {bulkLoading ? bulkProgress : `Download ${selectedCount} as ZIP`}
                 </button>
               </div>
             </div>

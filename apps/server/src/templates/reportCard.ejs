@@ -39,34 +39,34 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        padding: 6px 10px;
+        gap: 12px;
+        padding: 10px 12px;
         border-bottom: 2px solid #1a3a5c;
         background: #fff;
       }
       .school-logo {
-        width: 58px;
-        height: 58px;
+        width: 72px;
+        height: 72px;
         object-fit: contain;
         flex-shrink: 0;
       }
       .logo-placeholder {
-        width: 58px;
-        height: 58px;
+        width: 72px;
+        height: 72px;
         border: 1.5px solid #ccc;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 9px;
+        font-size: 11px;
         color: #aaa;
         flex-shrink: 0;
       }
-      .header-text { text-align: center; }
+      .header-text { text-align: center; line-height: 1.1; }
       .school-name {
-        font-size: 17px;
+        font-size: 20px;
         font-weight: 900;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
         color: #1a3a5c;
         text-transform: uppercase;
       }
@@ -74,19 +74,19 @@
         display: inline-block;
         background: #1a3a5c;
         color: #fff;
-        font-size: 10.5px;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: 1px;
-        padding: 2px 14px;
+        padding: 3px 16px;
         border-radius: 2px;
-        margin: 3px 0;
+        margin: 4px 0;
         text-transform: uppercase;
       }
       .session-line {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         color: #333;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.55px;
       }
 
       /* ── SECTION LABEL BAR ── */
@@ -105,7 +105,7 @@
         border-bottom: 1.5px solid #1a3a5c;
       }
       /* spacing between major sections (tighter to fit single page) */
-      .student-profile { margin-bottom: 6px; }
+      .student-profile { margin-bottom: 8px; }
       .marks-section { margin-top: 6px; }
       .marks-table { margin-bottom: 8px; }
       .marks-section + .section-label { margin-top: 6px; }
@@ -116,28 +116,36 @@
       .student-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 4px;
-        padding: 4px 6px;
+        column-gap: 10px;
+        row-gap: 4px;
+        padding: 6px 6px 4px;
       }
       .student-field {
-        display: flex;
-        align-items: baseline;
+        display: grid;
+        grid-template-columns: auto 8px minmax(0, 1fr);
+        align-items: center;
         gap: 4px;
-        padding: 2px 4px 2px 0;
-        font-size: 9.5px;
+        padding: 4px 0 2px;
+        font-size: 10.75px;
       }
-      .student-field .fl { font-weight: 700; white-space: nowrap; min-width: 88px; }
+      .student-field .fl {
+        font-weight: 700;
+        white-space: nowrap;
+        min-width: 78px;
+        letter-spacing: 0.2px;
+      }
       .student-field .fv {
-        border-bottom: 1px solid #555;
-        flex: 1;
-        min-height: 13px;
-        padding-bottom: 1px;
+        border-bottom: 1px solid #333;
+        min-height: 16px;
+        padding-bottom: 2px;
+        font-size: 10.75px;
+        color: #111;
       }
       .adm-row {
         display: flex;
         justify-content: flex-end;
-        padding: 3px 8px 0;
-        font-size: 10px;
+        padding: 4px 8px 0;
+        font-size: 11px;
         font-weight: 700;
       }
 
@@ -300,17 +308,17 @@
       /* Improve vertical rhythm between major sections and table cells for print (compact)
         Adjusted to keep entire report on one A4 page */
       .page { padding: 6px; }
-      .header { padding: 8px 10px; }
-      .school-logo { width: 48px; height: 48px; }
-      .header-text { line-height: 1; }
-      .school-name { font-size: 15px; }
+      .header { padding: 10px 12px; }
+      .school-logo { width: 64px; height: 64px; }
+      .header-text { line-height: 1.05; }
+      .school-name { font-size: 18px; }
 
       /* Student profile spacing */
-      .student-profile { padding: 6px 8px; margin-bottom: 6px; }
-      .student-grid { gap: 4px; }
-      .student-field { padding: 4px 4px; font-size: 9.5px; }
-      .student-field .fl { min-width: 92px; }
-      .student-field .fv { padding-bottom: 2px; }
+      .student-profile { padding: 8px 10px; margin-bottom: 8px; }
+      .student-grid { gap: 6px; }
+      .student-field { padding: 5px 4px; font-size: 11px; }
+      .student-field .fl { min-width: 78px; }
+      .student-field .fv { padding-bottom: 3px; }
 
       /* Section label spacing */
       .section-label { padding: 6px 10px; margin-top: 8px; margin-bottom: 6px; }
@@ -366,7 +374,7 @@
         <div class="adm-row">Adm. No. : &nbsp;<span><%= student.regNo %></span></div>
         <div class="student-grid">
           <div class="student-field">
-            <span class="fl">Name Of Student</span>
+            <span class="fl">Name of Student</span>
             <span style="margin:0 3px;">:</span>
             <span class="fv b"><%= student.name %></span>
           </div>
@@ -381,7 +389,7 @@
             <span class="fv"><%= student.motherName ?? '—' %></span>
           </div>
           <div class="student-field">
-            <span class="fl">Date Of Birth</span>
+            <span class="fl">Date of Birth</span>
             <span style="margin:0 3px;">:</span>
             <span class="fv"><%= student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '—' %></span>
           </div>

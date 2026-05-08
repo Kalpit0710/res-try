@@ -89,6 +89,8 @@ export async function getReportBrowser(): Promise<BrowserInstance> {
   return browserLaunchPromise;
 }
 
+const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
+
 function getCoScholasticGrade(marks: number | undefined): string {
   if (marks === undefined || marks === null) return '—';
   if (marks >= 91) return 'A1';
@@ -134,12 +136,28 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     ...calcOverallResult(subjectResults.map(r => r.result)),
   };
 
-  const coScholasticData = coScholasticMarks.map((m: any) => ({
-    area: m.area,
-    term1: m.term1,
-    term2: m.term2,
-    grade: m.term1 || m.term2 ? getCoScholasticGrade(m.term1 ?? m.term2) : '—',
-  }));
+  const coScholasticData = CO_SCHOLASTIC_AREAS.map((area) => {
+    const found = coScholasticMarks.find((m: any) => m.area === area);
+    const term1 = found?.term1;
+    const term2 = found?.term2;
+    return {
+      area,
+      term1,
+      term2,
+      grade: term1 !== undefined || term2 !== undefined
+        ? getCoScholasticGrade(term1 ?? term2)
+        : '—',
+    };
+  }).concat(
+    coScholasticMarks
+      .filter((m: any) => !CO_SCHOLASTIC_AREAS.includes(m.area))
+      .map((m: any) => ({
+        area: m.area,
+        term1: m.term1,
+        term2: m.term2,
+        grade: m.term1 || m.term2 ? getCoScholasticGrade(m.term1 ?? m.term2) : '—',
+      }))
+  );
 
   const branding = await Branding.findOne({ key: 'singleton' }).lean();
   

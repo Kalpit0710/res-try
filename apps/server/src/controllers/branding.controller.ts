@@ -44,11 +44,22 @@ export async function upsertBrandingAssets(req: Request, res: Response): Promise
 
   const updates: Record<string, string> = {};
 
+  // Get current branding to delete old files
+  const currentBranding = await Branding.findOne({ key: BRANDING_KEY });
+
   if (files.logo?.[0]) {
+    // Delete old logo file
+    if (currentBranding?.logoUrl) {
+      deleteSavedFile(currentBranding.logoUrl);
+    }
     updates.logoUrl = saveUploadedFile(files.logo[0]);
   }
 
   if (files.principalSignature?.[0]) {
+    // Delete old principal signature file
+    if (currentBranding?.principalSignatureUrl) {
+      deleteSavedFile(currentBranding.principalSignatureUrl);
+    }
     updates.principalSignatureUrl = saveUploadedFile(files.principalSignature[0]);
   }
 

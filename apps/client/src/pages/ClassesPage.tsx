@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { addDataChangeListener, emitDataChange } from '../lib/dataEvents';
 
 export function ClassesPage() {
   const [classes, setClasses] = useState<any[]>([]);
@@ -7,14 +8,37 @@ export function ClassesPage() {
   const [assigning, setAssigning] = useState<{ cls: any } | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
 
-  async function load() { const res = await apiClient.getClasses(); setClasses(res.data ?? res); }
-  useEffect(() => { load(); apiClient.getSubjects().then(r=>setSubjects(r.data??r)); }, []);
+  async function load() {
+    const res = await apiClient.getClasses();
+    setClasses(res.data ?? res);
+  }
 
-  async function remove(id: string) { if (!confirm('Delete class?')) return; await apiClient.deleteClass(id); load(); }
+  async function loadSubjects() {
+    const res = await apiClient.getSubjects();
+    setSubjects(res.data ?? res);
+  }
+
+  useEffect(() => {
+    load();
+    loadSubjects();
+    const dispose = addDataChangeListener(() => {
+      load();
+      loadSubjects();
+    });
+    return dispose;
+  }, []);
+
+  async function remove(id: string) {
+    if (!confirm('Delete class?')) return;
+    await apiClient.deleteClass(id);
+    await load();
+    emitDataChange({ type: 'classes' });
+  }
 
   async function removeSubject(classId: string, subjectId: string) {
     await apiClient.removeSubjectFromClass(classId, subjectId);
-    load();
+    await load();
+    emitDataChange({ type: 'all' });
   }
 
   return (
@@ -64,10 +88,10 @@ export function ClassesPage() {
         ))}
       </div>
 
-      {editing !== null && <ClassForm cls={editing} onClose={() => { setEditing(null); load(); }} />}
+      {editing !== null && <ClassForm cls={editing} onClose={() => { setEditing(null); load(); emitDataChange({ type: 'classes' }); }} />}
 
       {assigning && (
-        <AssignSubjectModal cls={assigning.cls} subjects={subjects} onClose={() => { setAssigning(null); load(); }} />
+        <AssignSubjectModal cls={assigning.cls} subjects={subjects} onClose={() => { setAssigning(null); load(); emitDataChange({ type: 'all' }); }} />
       )}
     </div>
   );

@@ -80,6 +80,8 @@ export function MarksEntryPage() {
   const [reportLoading, setReportLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [initialStudentApplied, setInitialStudentApplied] = useState(false);
+  const [teacherTouched, setTeacherTouched] = useState(false);
+  const [classTouched, setClassTouched] = useState(false);
 
   interface RemarkState {
     text: string;
@@ -114,14 +116,15 @@ export function MarksEntryPage() {
       .finally(() => setLoadingStudents(false));
   }, [classId]);
 
-  // Auto-select teacher's linked class when teacher is selected (only if not initial URL teacher)
+  // Auto-select class when teacher is selected, but only if class has not already been manually set.
   useEffect(() => {
     if (!teacherName || teachers.length === 0) return;
-    
+    if (classTouched) return;
+
     // Skip auto-select if teacher is the same as URL initial value
     const initialTeacherFromUrl = searchParams.get('teacherName') ?? '';
     if (teacherName === initialTeacherFromUrl) return;
-    
+
     const selectedTeacher = teachers.find(t => t.name === teacherName);
     if (selectedTeacher && selectedTeacher.classId) {
       const linkedClassId = extractClassId(selectedTeacher.classId);
@@ -129,7 +132,20 @@ export function MarksEntryPage() {
         setClassId(linkedClassId);
       }
     }
-  }, [teacherName, teachers, searchParams, classId]);
+  }, [teacherName, teachers, searchParams, classId, classTouched]);
+
+  // Auto-select teacher when class is selected, but only if teacher has not been manually changed.
+  useEffect(() => {
+    if (!classId || teachers.length === 0) return;
+    if (teacherTouched) return;
+
+    const classTeacher = teachers.find((t) => extractClassId(t.classId) === classId);
+    if (!classTeacher) return;
+
+    if (teacherName !== classTeacher.name) {
+      setTeacherName(classTeacher.name);
+    }
+  }, [classId, teachers, teacherName, teacherTouched]);
 
   useEffect(() => {
     if (initialStudentApplied || !initialStudentId || students.length === 0) return;
@@ -430,7 +446,10 @@ export function MarksEntryPage() {
           <select
             id="marks-class-select"
             value={classId}
-            onChange={(e) => setClassId(e.target.value)}
+            onChange={(e) => {
+              setClassId(e.target.value);
+              setClassTouched(true);
+            }}
             className="rounded-md border border-black/15 px-3 py-2 font-normal bg-white"
           >
             <option value="">— Select class —</option>
@@ -467,7 +486,10 @@ export function MarksEntryPage() {
           <select
             id="marks-teacher-name"
             value={teacherName}
-            onChange={(e) => setTeacherName(e.target.value)}
+            onChange={(e) => {
+              setTeacherName(e.target.value);
+              setTeacherTouched(true);
+            }}
             className="rounded-md border border-black/15 px-3 py-2 font-normal bg-white"
           >
             <option value="">Select teacher</option>

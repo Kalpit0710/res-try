@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import PDFMerger from 'pdf-merger-js';
 import archiver from 'archiver';
 import { generateStudentReportPdf, getReportBrowser } from '../services/report.service';
 import { Student } from '../models/Student';
@@ -85,6 +86,66 @@ export async function bulkStudentReport(req: Request, res: Response): Promise<vo
     }
 
     await archive.finalize();
+  } finally {
+    void browser;
+  }
+}
+
+// POST /reports/bulk-pdf  — body: { studentIds: string[] } - Single combined PDF
+export async function bulkStudentReportPdf(req: Request, res: Response): Promise<void> {
+  const { studentIds } = req.body as { studentIds?: string[] };
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    res.status(400).json({ success: false, message: 'studentIds array is required' });
+    return;
+  }
+
+  if (studentIds.length > 100) {
+    res.status(400).json({ success: false, message: 'Maximum 100 students per bulk download' });
+    return;
+  }
+
+  const merger = new PDFMerger();
+  const failures: Array<{ studentId: string; message: string }> = [];
+  let successCount = 0;
+  const browser = await getReportBrowser();
+
+  try {
+    for (let i = 0; i < studentIds.length; i += BULK_BATCH_SIZE) {
+      const batch = studentIds.slice(i, i + BULK_BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(async (id) => {
+          const pdf = await generateStudentReportPdf(id, browser);
+          return { pdf, studentId: id };
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          await merger.add(result.value.pdf);
+          successCount += 1;
+        } else {
+          const studentId = result.reason?.studentId || 'unknown';
+          failures.push({ studentId, message: result.reason instanceof Error ? result.reason.message : String(result.reason) });
+        }
+      }
+    }
+
+    if (successCount === 0) {
+      res.status(500).json({
+        success: false,
+        message: 'No report PDFs could be generated',
+        failures
+      });
+      return;
+    }
+
+    const mergedPdf = await merger.saveAsBuffer();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="combined-report-cards-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.send(mergedPdf);
+
   } finally {
     void browser;
   }
