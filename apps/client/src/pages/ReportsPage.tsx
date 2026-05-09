@@ -26,7 +26,10 @@ export function ReportsPage() {
   const [total, setTotal] = useState(0);
 
   // ── Selection state ────────────────────────────────────────────────────
+  // `selected` holds the IDs; `selectedCache` holds the full student objects
+  // so we can pin them even when they're filtered out of the current page.
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedCache, setSelectedCache] = useState<Map<string, any>>(new Map());
   const [selectAllLoading, setSelectAllLoading] = useState(false);
 
   // ── Preview state ──────────────────────────────────────────────────────
@@ -114,10 +117,9 @@ export function ReportsPage() {
     }
   }
 
-  // ── Class change — instant, resets page ───────────────────────────────
+  // ── Class change — instant, resets page but KEEPS selection ──────────
   function handleClassChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setClassFilter(e.target.value);
-    setSelected(new Set());
     setPage(1);
   }
 
@@ -127,8 +129,9 @@ export function ReportsPage() {
     setAppliedSearch(student.name);
     setShowSuggestions(false);
     setHighlightedIndex(-1);
-    // ADD to existing selection — don't replace it
+    // Add to selection + cache
     setSelected((prev) => new Set([...prev, student._id]));
+    setSelectedCache((prev) => new Map(prev).set(student._id, student));
   }
 
   // ── Search input typing ────────────────────────────────────────────────
@@ -211,10 +214,19 @@ export function ReportsPage() {
     }
   }
 
-  function toggleOne(id: string) {
+  function toggleOne(student: any) {
+    const id = student._id;
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        // Remove from cache when deselected
+        setSelectedCache((c) => { const m = new Map(c); m.delete(id); return m; });
+      } else {
+        next.add(id);
+        // Cache the full student object for pinning
+        setSelectedCache((c) => new Map(c).set(id, student));
+      }
       return next;
     });
   }
@@ -281,6 +293,13 @@ export function ReportsPage() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages;
+
+  // Students in the current filter page
+  const currentPageIds = new Set(students.map((s) => s._id));
+  // Selected students that are NOT visible in the current filtered page — pinned at top
+  const pinnedRows = [...selected]
+    .filter((id) => !currentPageIds.has(id) && selectedCache.has(id))
+    .map((id) => selectedCache.get(id));
 
   return (
     <div className="p-6">
@@ -456,7 +475,7 @@ export function ReportsPage() {
             {classFilter && (
               <span className="flex items-center gap-1 rounded-full bg-black/[0.07] text-black/70 text-xs font-medium px-2.5 py-1">
                 {classes.find((c) => c._id === classFilter)?.name ?? 'Class'}
-                <button onClick={() => { setClassFilter(''); setSelected(new Set()); }} className="ml-0.5 text-black/40 hover:text-black/70">×</button>
+                <button onClick={() => { setClassFilter(''); }} className="ml-0.5 text-black/40 hover:text-black/70">×</button>
               </span>
             )}
           </div>
@@ -500,6 +519,60 @@ export function ReportsPage() {
               </tr>
             </thead>
             <tbody>
+              {/* ── Pinned selected rows (hidden by current filter) ── */}
+              {pinnedRows.length > 0 && (
+                <>
+                  {pinnedRows.map((student) => (
+                    <tr
+                      key={`pinned-${student._id}`}
+                      onClick={() => toggleOne(student)}
+                      className="border-t border-black/5 cursor-pointer bg-orange-50 hover:bg-orange-100/60 transition-colors"
+                    >
+                      <td className="px-4 py-3 w-10" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={true}
+                          onChange={() => toggleOne(student)}
+                          className="h-4 w-4 rounded accent-orange-500 cursor-pointer"
+                          aria-label={`Deselect ${student.name}`}
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-black/70">{student.regNo}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <span className="inline-flex items-center gap-1.5">
+                          {student.name}
+                          <span className="text-[10px] bg-orange-200 text-orange-800 font-semibold px-1.5 py-0.5 rounded-full tracking-wide">PINNED</span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-black/60">{student.classId?.name ?? '-'}</td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => openPreview(student._id, student.name)}
+                            disabled={previewLoading}
+                            className="text-orange-600 hover:text-orange-700 disabled:opacity-50 text-xs font-medium"
+                          >
+                            Preview
+                          </button>
+                          <button
+                            onClick={() => downloadSingle(student._id, student.name, student.regNo)}
+                            className="text-black/50 hover:text-black/80 text-xs font-medium"
+                          >
+                            ↓ PDF
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {/* Separator between pinned and filtered results */}
+                  <tr className="bg-black/[0.02]">
+                    <td colSpan={5} className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-black/30">
+                      Filtered results
+                    </td>
+                  </tr>
+                </>
+              )}
+
               {/* Skeleton while loading */}
               {loading && students.length === 0 && Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i} className="border-t border-black/5">
@@ -528,7 +601,7 @@ export function ReportsPage() {
                 return (
                   <tr
                     key={student._id}
-                    onClick={() => toggleOne(student._id)}
+                    onClick={() => toggleOne(student)}
                     className={[
                       'border-t border-black/5 cursor-pointer transition-colors',
                       isSelected ? 'bg-orange-50' : 'hover:bg-black/[0.02]',
@@ -538,7 +611,7 @@ export function ReportsPage() {
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => toggleOne(student._id)}
+                        onChange={() => toggleOne(student)}
                         className="h-4 w-4 rounded accent-orange-500 cursor-pointer"
                         aria-label={`Select ${student.name}`}
                       />
