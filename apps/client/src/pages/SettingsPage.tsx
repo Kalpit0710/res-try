@@ -6,6 +6,7 @@ const API_BASE = ((import.meta.env.VITE_API_URL as string | undefined)?.replace(
 
 function assetUrl(url?: string): string | null {
   if (!url) return null;
+  if (url.startsWith('data:')) return url;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
 }

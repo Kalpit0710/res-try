@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import { Request, Response } from 'express';
 import { Branding } from '../models/Branding';
@@ -6,32 +5,14 @@ import { Teacher } from '../models/Teacher';
 
 const BRANDING_KEY = 'singleton';
 
-function getUploadsRoot(): string {
-  return path.resolve(process.cwd(), 'uploads', 'branding');
-}
-
-function ensureUploadsRoot(): void {
-  const root = getUploadsRoot();
-  if (!fs.existsSync(root)) {
-    fs.mkdirSync(root, { recursive: true });
-  }
-}
-
-function saveUploadedFile(file: Express.Multer.File): string {
-  ensureUploadsRoot();
-  const ext = path.extname(file.originalname) || '.png';
-  const safeExt = ext.toLowerCase();
-  const name = `${file.fieldname}-${Date.now()}${safeExt}`;
-  const fullPath = path.join(getUploadsRoot(), name);
-  fs.writeFileSync(fullPath, file.buffer);
-  return `/uploads/branding/${name}`;
-}
-
-function deleteSavedFile(relativePath?: string): void {
-  if (!relativePath) return;
-  const normalized = relativePath.replace(/^\//, '');
-  const fullPath = path.resolve(process.cwd(), normalized);
-  if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+function fileToDataUri(file: Express.Multer.File): string {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const mime = ext === '.jpg' || ext === '.jpeg'
+    ? 'image/jpeg'
+    : ext === '.webp'
+      ? 'image/webp'
+      : 'image/png';
+  return `data:${mime};base64,${file.buffer.toString('base64')}`;
 }
 
 export async function getBranding(req: Request, res: Response): Promise<void> {
@@ -48,19 +29,11 @@ export async function upsertBrandingAssets(req: Request, res: Response): Promise
   const currentBranding = await Branding.findOne({ key: BRANDING_KEY });
 
   if (files.logo?.[0]) {
-    // Delete old logo file
-    if (currentBranding?.logoUrl) {
-      deleteSavedFile(currentBranding.logoUrl);
-    }
-    updates.logoUrl = saveUploadedFile(files.logo[0]);
+    updates.logoUrl = fileToDataUri(files.logo[0]);
   }
 
   if (files.principalSignature?.[0]) {
-    // Delete old principal signature file
-    if (currentBranding?.principalSignatureUrl) {
-      deleteSavedFile(currentBranding.principalSignatureUrl);
-    }
-    updates.principalSignatureUrl = saveUploadedFile(files.principalSignature[0]);
+    updates.principalSignatureUrl = fileToDataUri(files.principalSignature[0]);
   }
 
   if (!Object.keys(updates).length) {
@@ -98,13 +71,11 @@ export async function upsertTeacherSignature(req: Request, res: Response): Promi
     return;
   }
 
-  const signatureUrl = saveUploadedFile(file);
+  const signatureUrl = fileToDataUri(file);
   const existing = await Branding.findOne({ key: BRANDING_KEY });
 
   if (existing) {
     const current = existing.teacherSignatures ?? [];
-    const prev = current.find((s) => s.teacherId === teacherId);
-    if (prev?.signatureUrl) deleteSavedFile(prev.signatureUrl);
 
     const next = [
       ...current.filter((s) => s.teacherId !== teacherId),
@@ -140,12 +111,10 @@ export async function removeBrandingAsset(req: Request, res: Response): Promise<
   }
 
   if (assetKey === 'logo') {
-    deleteSavedFile(branding.logoUrl);
     branding.logoUrl = undefined;
   }
 
   if (assetKey === 'principalSignature') {
-    deleteSavedFile(branding.principalSignatureUrl);
     branding.principalSignatureUrl = undefined;
   }
 
@@ -174,7 +143,6 @@ export async function removeTeacherSignature(req: Request, res: Response): Promi
     return;
   }
 
-  deleteSavedFile(target.signatureUrl);
   branding.teacherSignatures = current.filter((s) => s.teacherId !== teacherId);
   await branding.save();
 

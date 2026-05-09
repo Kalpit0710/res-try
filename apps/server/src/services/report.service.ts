@@ -16,10 +16,11 @@ type BrowserInstance = Awaited<ReturnType<typeof puppeteer.launch>>;
 let browserInstance: BrowserInstance | null = null;
 let browserLaunchPromise: Promise<BrowserInstance> | null = null;
 
-function resolveAssetDataUri(relativePath?: string): string | null {
-  if (!relativePath) return null;
+function resolveAssetDataUri(value?: string): string | null {
+  if (!value) return null;
+  if (value.startsWith('data:')) return value;
 
-  const normalized = relativePath.replace(/^\//, '');
+  const normalized = value.replace(/^\//, '');
   const absolutePath = path.resolve(process.cwd(), normalized);
   if (!fs.existsSync(absolutePath)) return null;
 
