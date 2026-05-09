@@ -14,7 +14,9 @@ export function ReportsPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggLoading, setSuggLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const searchBoxRef = useRef<HTMLDivElement>(null);
+  const suggestionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // ── Student list state ─────────────────────────────────────────────────
   const [students, setStudents] = useState<any[]>([]);
@@ -77,6 +79,7 @@ export function ReportsPage() {
       .then((res) => {
         if (!active) return;
         setSuggestions(res.data ?? []);
+        setHighlightedIndex(-1);
         setShowSuggestions(true);
       })
       .finally(() => { if (active) setSuggLoading(false); });
@@ -123,6 +126,7 @@ export function ReportsPage() {
     setSearchInput(student.name);
     setAppliedSearch(student.name);
     setShowSuggestions(false);
+    setHighlightedIndex(-1);
     setSelected(new Set([student._id]));   // auto-select the picked student
   }
 
@@ -130,22 +134,56 @@ export function ReportsPage() {
   function handleSearchInput(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
     setSearchInput(val);
+    setHighlightedIndex(-1);
     if (!val) {
-      // Clear → show all
       setAppliedSearch('');
       setSuggestions([]);
       setShowSuggestions(false);
     }
-    // appliedSearch only updates on suggestion pick or Enter
   }
 
-  function handleSearchKeyDown(e: React.KeyboardEvent) {
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // Total items = suggestions + optional "Search for X" row at bottom
+    const hasFreeSearch = !!searchInput;
+    const totalItems = suggestions.length + (hasFreeSearch ? 1 : 0);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!showSuggestions && suggestions.length > 0) { setShowSuggestions(true); return; }
+      const next = highlightedIndex < totalItems - 1 ? highlightedIndex + 1 : 0;
+      setHighlightedIndex(next);
+      // Scroll into view — suggestions refs; last item is free-search row
+      if (next < suggestions.length) {
+        suggestionRefs.current[next]?.scrollIntoView({ block: 'nearest' });
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!showSuggestions) return;
+      const prev = highlightedIndex > 0 ? highlightedIndex - 1 : totalItems - 1;
+      setHighlightedIndex(prev);
+      if (prev < suggestions.length) {
+        suggestionRefs.current[prev]?.scrollIntoView({ block: 'nearest' });
+      }
+      return;
+    }
     if (e.key === 'Enter') {
-      setAppliedSearch(searchInput);
-      setShowSuggestions(false);
+      e.preventDefault();
+      if (showSuggestions && highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+        // Pick highlighted suggestion
+        pickSuggestion(suggestions[highlightedIndex]);
+      } else {
+        // Commit raw typed text
+        setAppliedSearch(searchInput);
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+      }
+      return;
     }
     if (e.key === 'Escape') {
       setShowSuggestions(false);
+      setHighlightedIndex(-1);
     }
   }
 
@@ -154,6 +192,7 @@ export function ReportsPage() {
     setAppliedSearch('');
     setSuggestions([]);
     setShowSuggestions(false);
+    setHighlightedIndex(-1);
   }
 
   // ── Selection helpers ──────────────────────────────────────────────────
@@ -313,6 +352,16 @@ export function ReportsPage() {
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="Name or Reg No…"
                 autoComplete="off"
+                role="combobox"
+                aria-expanded={showSuggestions}
+                aria-haspopup="listbox"
+                aria-controls="report-suggestion-list"
+                aria-activedescendant={
+                  showSuggestions && highlightedIndex >= 0 && highlightedIndex < suggestions.length
+                    ? `report-suggestion-${highlightedIndex}`
+                    : undefined
+                }
+                aria-autocomplete="list"
                 className="rounded-md border border-black/15 px-3 py-2 pr-8 min-w-64 font-normal"
               />
               {searchInput && (
@@ -330,32 +379,60 @@ export function ReportsPage() {
 
             {/* Suggestion dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full min-w-[280px] rounded-xl border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.13)] overflow-hidden">
-                <div className="px-3 py-1.5 text-xs text-black/40 border-b border-black/5 bg-black/[0.02] font-medium tracking-wide">
-                  {suggestions.length} match{suggestions.length > 1 ? 'es' : ''} — click to filter
+              <div
+                id="report-suggestion-list"
+                role="listbox"
+                aria-label="Student suggestions"
+                className="absolute z-50 mt-1 w-full min-w-[280px] rounded-xl border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.13)] overflow-hidden max-h-72 overflow-y-auto"
+              >
+                <div className="px-3 py-1.5 text-xs text-black/40 border-b border-black/5 bg-black/[0.02] font-medium tracking-wide sticky top-0">
+                  {suggestions.length} match{suggestions.length > 1 ? 'es' : ''} — ↑↓ to navigate, ↵ to select
                 </div>
-                {suggestions.map((s) => (
-                  <button
-                    key={s._id}
-                    type="button"
-                    onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s); }}
-                    className="w-full text-left flex items-center gap-3 px-3 py-2.5 hover:bg-orange-50 transition-colors group border-b border-black/[0.04] last:border-0"
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-100 text-orange-700 font-bold text-sm flex items-center justify-center">
-                      {s.name?.[0]?.toUpperCase() ?? '?'}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-medium text-sm text-black group-hover:text-orange-700 truncate">{s.name}</div>
-                      <div className="text-xs text-black/50 font-mono">{s.regNo} · {s.classId?.name ?? '—'}</div>
-                    </div>
-                    <div className="ml-auto text-xs text-black/25 group-hover:text-orange-400 shrink-0">↵ select</div>
-                  </button>
-                ))}
+                {suggestions.map((s, idx) => {
+                  const isHighlighted = highlightedIndex === idx;
+                  return (
+                    <button
+                      key={s._id}
+                      id={`report-suggestion-${idx}`}
+                      ref={(el) => { suggestionRefs.current[idx] = el; }}
+                      role="option"
+                      aria-selected={isHighlighted}
+                      type="button"
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                      onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s); }}
+                      className={[
+                        'w-full text-left flex items-center gap-3 px-3 py-2.5 transition-colors group border-b border-black/[0.04] last:border-0',
+                        isHighlighted ? 'bg-orange-50' : 'hover:bg-orange-50',
+                      ].join(' ')}
+                    >
+                      <div className={[
+                        'flex-shrink-0 w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center transition-colors',
+                        isHighlighted ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-700',
+                      ].join(' ')}>
+                        {s.name?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className={['font-medium text-sm truncate transition-colors', isHighlighted ? 'text-orange-700' : 'text-black'].join(' ')}>
+                          {s.name}
+                        </div>
+                        <div className="text-xs text-black/50 font-mono">{s.regNo} · {s.classId?.name ?? '—'}</div>
+                      </div>
+                      <div className={['ml-auto text-xs shrink-0 transition-colors', isHighlighted ? 'text-orange-400' : 'text-black/20'].join(' ')}>↵</div>
+                    </button>
+                  );
+                })}
                 {searchInput && (
                   <button
                     type="button"
-                    onMouseDown={(e) => { e.preventDefault(); setAppliedSearch(searchInput); setShowSuggestions(false); }}
-                    className="w-full text-left px-3 py-2 text-sm text-black/50 hover:bg-black/[0.03] transition-colors border-t border-black/5 flex items-center gap-2"
+                    role="option"
+                    aria-selected={highlightedIndex === suggestions.length}
+                    id={`report-suggestion-${suggestions.length}`}
+                    onMouseEnter={() => setHighlightedIndex(suggestions.length)}
+                    onMouseDown={(e) => { e.preventDefault(); setAppliedSearch(searchInput); setShowSuggestions(false); setHighlightedIndex(-1); }}
+                    className={[
+                      'w-full text-left px-3 py-2 text-sm transition-colors border-t border-black/5 flex items-center gap-2',
+                      highlightedIndex === suggestions.length ? 'bg-black/[0.05] text-black/70' : 'text-black/50 hover:bg-black/[0.03]',
+                    ].join(' ')}
                   >
                     <span className="text-xs bg-black/5 rounded px-1.5 py-0.5 font-mono">↵</span>
                     Search for "<strong className="text-black/70">{searchInput}</strong>" across all results
