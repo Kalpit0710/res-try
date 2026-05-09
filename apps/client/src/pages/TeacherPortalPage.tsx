@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 import { extractClassId, useDebounce } from '../lib/utils';
-import toast from 'react-hot-toast';
 
 type StudentSearchMode = 'name' | 'regNo' | 'class';
 const ITEMS_PER_PAGE = 6;

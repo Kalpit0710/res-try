@@ -624,7 +624,7 @@ export function MarksEntryPage() {
               <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <button onClick={async () => { try { await saveAllMarks(); } catch { /* errors already surfaced */ } }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
+              <button onClick={async () => { await saveCurrentStep(); }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
               {studentId && (
                 <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
               )}

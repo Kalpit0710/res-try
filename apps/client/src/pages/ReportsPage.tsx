@@ -72,7 +72,6 @@ export function ReportsPage() {
   }
 
   // ── Selection helpers ──────────────────────────────────────────────────
-  const allIds = students.map((s) => s._id);
   const allSelected = total > 0 && selected.size === total;
   const someSelected = selected.size > 0 && !allSelected;
 
