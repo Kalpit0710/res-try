@@ -127,7 +127,8 @@ export function ReportsPage() {
     setAppliedSearch(student.name);
     setShowSuggestions(false);
     setHighlightedIndex(-1);
-    setSelected(new Set([student._id]));   // auto-select the picked student
+    // ADD to existing selection — don't replace it
+    setSelected((prev) => new Set([...prev, student._id]));
   }
 
   // ── Search input typing ────────────────────────────────────────────────
