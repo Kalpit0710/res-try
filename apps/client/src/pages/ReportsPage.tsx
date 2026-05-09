@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import toast from 'react-hot-toast';
 
 export function ReportsPage() {
   // ── Search / filter state ──────────────────────────────────────────────
@@ -61,7 +62,9 @@ export function ReportsPage() {
   }
 
   useEffect(() => {
-    loadStudents(page, search, classFilter);
+    if (hasSearched) {
+      loadStudents(page, search, classFilter);
+    }
   }, [page]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -79,20 +82,10 @@ export function ReportsPage() {
       return;
     }
 
-    if (selected.size === total && total > 0) {
-      setSelected(new Set(allIds));
-      return;
-    }
-
     setSelectAllLoading(true);
     try {
-      const res = await apiClient.getStudents({
-        page: 1,
-        limit: total || 1,
-        search,
-        ...(classFilter ? { classId: classFilter } : {}),
-      });
-      const ids = (res.data ?? []).map((student: any) => student._id);
+      const res = await apiClient.getStudentIds({ search, classId: classFilter || undefined });
+      const ids: string[] = res.data ?? [];
       setSelected(new Set(ids));
     } finally {
       setSelectAllLoading(false);
@@ -119,7 +112,7 @@ export function ReportsPage() {
       setPreviewUrl(url);
       setPreviewName(name);
     } catch (err: any) {
-      alert(err?.message ?? 'Failed to generate preview');
+      toast.error(err?.message ?? 'Failed to generate preview');
     } finally {
       setPreviewLoading(false);
     }
@@ -135,7 +128,7 @@ export function ReportsPage() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: any) {
-      alert(err?.message ?? 'Failed to download');
+      toast.error(err?.message ?? 'Failed to download');
     }
   }
 
@@ -159,8 +152,9 @@ export function ReportsPage() {
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
       setBulkProgress('');
+      toast.success(`Downloaded ${ids.length} report${ids.length > 1 ? 's' : ''} successfully`);
     } catch (err: any) {
-      alert(err?.message ?? 'Bulk download failed');
+      toast.error(err?.message ?? 'Bulk download failed');
       setBulkProgress('');
     } finally {
       setBulkLoading(false);
@@ -363,7 +357,7 @@ export function ReportsPage() {
               {!hasSearched && (
                 <tr>
                   <td colSpan={5} className="px-4 py-10 text-center text-black/40 text-sm">
-                    Loading students…
+                    Use the filters above and click <strong>Search</strong> to find students.
                   </td>
                 </tr>
               )}

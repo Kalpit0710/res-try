@@ -2,11 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 
-function StatCard(props: { label: string; value: number; accent: string; hint?: string }) {
+// ── Skeleton shimmer ─────────────────────────────────────────────────────────
+function Skeleton({ className = '' }: { className?: string }) {
+  return (
+    <div className={`animate-pulse rounded bg-black/[0.06] ${className}`} />
+  );
+}
+
+function StatCard(props: { label: string; value: number; accent: string; hint?: string; loading?: boolean }) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
       <div className="text-xs uppercase tracking-wide text-black/50">{props.label}</div>
-      <div className={`mt-2 text-3xl font-bold ${props.accent}`}>{props.value}</div>
+      {props.loading ? (
+        <Skeleton className="mt-2 h-9 w-20" />
+      ) : (
+        <div className={`mt-2 text-3xl font-bold ${props.accent}`}>{props.value}</div>
+      )}
       {props.hint ? <div className="mt-1 text-xs text-black/50">{props.hint}</div> : null}
     </div>
   );
@@ -14,31 +25,13 @@ function StatCard(props: { label: string; value: number; accent: string; hint?: 
 
 export function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const [studentsTotal, setStudentsTotal] = useState(0);
-  const [classesCount, setClassesCount] = useState(0);
-  const [subjectsCount, setSubjectsCount] = useState(0);
-  const [teachersCount, setTeachersCount] = useState(0);
-  const [locks, setLocks] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
 
   async function load() {
     setLoading(true);
     try {
-      const [students, classesRes, subjectsRes, teachersRes, locksRes, logsRes] = await Promise.all([
-        apiClient.getStudents({ page: 1, limit: 1 }),
-        apiClient.getClasses(),
-        apiClient.getSubjects(),
-        apiClient.getTeachers(),
-        apiClient.getLocks(),
-        apiClient.getLogs(),
-      ]);
-
-      setStudentsTotal(students.total ?? 0);
-      setClassesCount((classesRes.data ?? []).length);
-      setSubjectsCount((subjectsRes.data ?? []).length);
-      setTeachersCount((teachersRes.data ?? []).length);
-      setLocks(locksRes.data ?? []);
-      setLogs((logsRes.data ?? []).slice(0, 6));
+      const res = await apiClient.getDashboardStats();
+      setStats(res.data ?? null);
     } finally {
       setLoading(false);
     }
@@ -48,8 +41,8 @@ export function DashboardPage() {
     load();
   }, []);
 
-  const activeLocks = useMemo(() => locks.filter((lock) => lock.isLocked).length, [locks]);
-  const unlockedLocks = useMemo(() => locks.filter((lock) => !lock.isLocked).length, [locks]);
+  const activeLocks = useMemo(() => (stats?.locks ?? []).filter((l: any) => l.isLocked).length, [stats]);
+  const unlockedLocks = useMemo(() => (stats?.locks ?? []).filter((l: any) => !l.isLocked).length, [stats]);
 
   return (
     <div className="p-4 pb-24 sm:p-6 md:pb-6 space-y-6">
@@ -71,10 +64,10 @@ export function DashboardPage() {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Students" value={studentsTotal} accent="text-orange-700" hint="All registered students" />
-          <StatCard label="Classes" value={classesCount} accent="text-cyan-700" hint="Configured class groups" />
-          <StatCard label="Subjects" value={subjectsCount} accent="text-emerald-700" hint="Mapped to classes" />
-          <StatCard label="Teachers" value={teachersCount} accent="text-rose-700" hint="Available for marks entry" />
+          <StatCard loading={loading} label="Students" value={stats?.studentsTotal ?? 0} accent="text-orange-700" hint="All registered students" />
+          <StatCard loading={loading} label="Classes" value={stats?.classesCount ?? 0} accent="text-cyan-700" hint="Configured class groups" />
+          <StatCard loading={loading} label="Subjects" value={stats?.subjectsCount ?? 0} accent="text-emerald-700" hint="Mapped to classes" />
+          <StatCard loading={loading} label="Teachers" value={stats?.teachersCount ?? 0} accent="text-rose-700" hint="Available for marks entry" />
         </div>
       </div>
 
@@ -85,8 +78,15 @@ export function DashboardPage() {
             <Link to="/admin/logs" className="text-sm text-orange-700 hover:underline">View all logs</Link>
           </div>
           <div className="mt-3 divide-y divide-black/5">
-            {logs.length ? (
-              logs.map((log) => (
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="py-3 space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-72" />
+                </div>
+              ))
+            ) : (stats?.recentLogs ?? []).length ? (
+              (stats.recentLogs as any[]).map((log: any) => (
                 <div key={log._id} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-sm font-medium text-black">{log.action}</div>
@@ -108,27 +108,29 @@ export function DashboardPage() {
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-red-50 p-3">
               <div className="text-xs uppercase text-red-700/80">Locked</div>
-              <div className="mt-1 text-2xl font-bold text-red-700">{activeLocks}</div>
+              {loading ? <Skeleton className="mt-1 h-8 w-12" /> : <div className="mt-1 text-2xl font-bold text-red-700">{activeLocks}</div>}
             </div>
             <div className="rounded-xl bg-green-50 p-3">
               <div className="text-xs uppercase text-green-700/80">Unlocked</div>
-              <div className="mt-1 text-2xl font-bold text-green-700">{unlockedLocks}</div>
+              {loading ? <Skeleton className="mt-1 h-8 w-12" /> : <div className="mt-1 text-2xl font-bold text-green-700">{unlockedLocks}</div>}
             </div>
           </div>
 
           <div className="mt-4 space-y-2">
-            {locks.slice(0, 6).map((lock) => (
-              <div key={lock._id} className="flex items-center justify-between rounded-lg border border-black/10 px-3 py-2 text-sm">
-                <div>
-                  <span className="font-medium">{lock.type}</span>
-                  <span className="text-black/55"> / {lock.referenceId}</span>
-                </div>
-                <span className={lock.isLocked ? 'text-red-700' : 'text-green-700'}>
-                  {lock.isLocked ? 'Locked' : 'Unlocked'}
-                </span>
-              </div>
-            ))}
-            {!locks.length ? <div className="text-sm text-black/50">No locks configured.</div> : null}
+            {loading
+              ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)
+              : (stats?.locks ?? []).slice(0, 6).map((lock: any) => (
+                  <div key={lock._id} className="flex items-center justify-between rounded-lg border border-black/10 px-3 py-2 text-sm">
+                    <div>
+                      <span className="font-medium">{lock.type}</span>
+                      <span className="text-black/55"> / {lock.referenceId}</span>
+                    </div>
+                    <span className={lock.isLocked ? 'text-red-700' : 'text-green-700'}>
+                      {lock.isLocked ? 'Locked' : 'Unlocked'}
+                    </span>
+                  </div>
+                ))}
+            {!loading && !(stats?.locks ?? []).length ? <div className="text-sm text-black/50">No locks configured.</div> : null}
           </div>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">

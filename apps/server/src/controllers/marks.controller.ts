@@ -203,3 +203,73 @@ export async function updateMarks(req: Request, res: Response): Promise<void> {
 
   res.json({ success: true, data: doc });
 }
+
+// PUT /marks/batch  — save multiple subjects in one round-trip
+const BatchItemSchema = z.object({
+  studentId: z.string().min(1),
+  subjectId: z.string().min(1),
+  teacherName: z.string().trim().min(1),
+  term1: Term1Schema.optional(),
+  term2: Term2Schema.optional(),
+});
+
+const BatchSaveSchema = z.object({ items: z.array(BatchItemSchema).min(1) });
+
+export async function batchSaveMarks(req: Request, res: Response): Promise<void> {
+  const parsed = BatchSaveSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ success: false, message: parsed.error.issues[0]?.message ?? 'Invalid body' });
+    return;
+  }
+
+  const { items } = parsed.data;
+  const results: Array<{ subjectId: string; success: boolean; message?: string }> = [];
+
+  for (const item of items) {
+    const { studentId, subjectId, teacherName, term1, term2 } = item;
+
+    try {
+      const [student, subject, teacher] = await Promise.all([
+        Student.findById(studentId).lean(),
+        Subject.findById(subjectId).lean(),
+        Teacher.findOne({ name: teacherName }).lean(),
+      ]);
+
+      if (!student || !subject || !teacher) {
+        results.push({ subjectId, success: false, message: 'Student, subject, or teacher not found' });
+        continue;
+      }
+
+      const lock = await checkLocks({
+        studentId,
+        classId: student.classId.toString(),
+        teacherReference: teacherName,
+      });
+      if (lock.locked) {
+        results.push({ subjectId, success: false, message: lock.reason });
+        continue;
+      }
+
+      const maxError = assertWithinMax({ term1, term2, maxMarks: subject.maxMarks as any });
+      if (maxError) {
+        results.push({ subjectId, success: false, message: maxError });
+        continue;
+      }
+
+      await Marks.findOneAndUpdate(
+        { studentId, subjectId },
+        { $set: { teacherName, term1: term1 ?? {}, term2: term2 ?? {} } },
+        { new: true, upsert: true, runValidators: true }
+      );
+
+      await Log.create({ teacherName, action: 'marks_saved', studentId, subjectId });
+      results.push({ subjectId, success: true });
+    } catch (err: any) {
+      results.push({ subjectId, success: false, message: err?.message ?? 'Unknown error' });
+    }
+  }
+
+  const allOk = results.every((r) => r.success);
+  res.status(allOk ? 200 : 207).json({ success: allOk, data: results });
+}
+

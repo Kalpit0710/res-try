@@ -17,8 +17,7 @@ const CoScholasticMarksSchema = new Schema<ICoScholasticMarks>(
   { timestamps: true }
 );
 
-// Compound unique index: one doc per student+area
+// Compound unique index: one doc per student+area (studentId:1 prefix covers standalone studentId queries too)
 CoScholasticMarksSchema.index({ studentId: 1, area: 1 }, { unique: true });
-CoScholasticMarksSchema.index({ studentId: 1 });
 
 export const CoScholasticMarks = model<ICoScholasticMarks>('CoScholasticMarks', CoScholasticMarksSchema);

@@ -41,8 +41,7 @@ const MarksSchema = new Schema<IMarks>(
   { timestamps: true }
 );
 
-// Compound unique index: one marks doc per student+subject
+// Compound unique index: one marks doc per student+subject (studentId:1 prefix covers standalone studentId queries too)
 MarksSchema.index({ studentId: 1, subjectId: 1 }, { unique: true });
-MarksSchema.index({ studentId: 1 });
 
 export const Marks = model<IMarks>('Marks', MarksSchema);

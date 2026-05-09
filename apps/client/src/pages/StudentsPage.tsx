@@ -9,13 +9,19 @@ export function StudentsPage() {
   const [limit] = useState(15);
   const [total, setTotal] = useState(0);
   const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [showBulk, setShowBulk] = useState(false);
 
   async function loadStudents(pageToLoad: number, searchTerm: string) {
-    const res = await apiClient.getStudents({ page: pageToLoad, limit, search: searchTerm });
-    setStudents(res.data);
-    setTotal(res.total ?? 0);
+    setLoading(true);
+    try {
+      const res = await apiClient.getStudents({ page: pageToLoad, limit, search: searchTerm });
+      setStudents(res.data);
+      setTotal(res.total ?? 0);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -61,7 +67,17 @@ export function StudentsPage() {
             </tr>
           </thead>
           <tbody>
-            {students.map((s) => (
+            {loading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} className="border-t">
+                  {Array.from({ length: 5 }).map((__, j) => (
+                    <td key={j} className="p-2">
+                      <div className="animate-pulse h-4 bg-black/[0.06] rounded w-full" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : students.map((s) => (
               <tr key={s._id} className="border-t">
                 <td className="p-2">{s.regNo}</td>
                 <td className="p-2">{s.name}</td>
