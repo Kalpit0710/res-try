@@ -17,6 +17,9 @@ async function request(path: string, opts?: RequestInit) {
 }
 
 export const apiClient = {
+  // --- Dashboard (single round-trip stats) ---
+  getDashboardStats: () => request(`/dashboard/stats`, { headers: headers() }),
+
   // --- Public teacher portal data ---
   publicGetClasses: () => request(`/public/classes`, { headers: headers() }),
   publicGetStudents: (params: { classId?: string; search?: string } = {}) => {
@@ -36,6 +39,13 @@ export const apiClient = {
     qs.set('search', params.search ?? '');
     if (params.classId) qs.set('classId', params.classId);
     return request(`/students?${qs.toString()}`, { headers: headers() });
+  },
+
+  getStudentIds: (params: { search?: string; classId?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.search) qs.set('search', params.search);
+    if (params.classId) qs.set('classId', params.classId);
+    return request(`/students/ids${qs.toString() ? `?${qs.toString()}` : ''}`, { headers: headers() });
   },
 
   getStudent: (id: string) => request(`/students/${id}`, { headers: headers() }),
@@ -173,6 +183,7 @@ export const apiClient = {
   },
   createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  batchSaveMarks: (items: any[]) => request(`/marks/batch`, { method: 'PUT', headers: headers(), body: JSON.stringify({ items }) }),
   // --- Remarks (class teacher) ---
   getRemarkByStudent: (studentId: string) => request(`/remarks/student/${studentId}`, { headers: headers() }),
   createOrUpdateRemark: (body: any) => request(`/remarks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),

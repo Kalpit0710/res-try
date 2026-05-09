@@ -3,6 +3,7 @@ import multer from 'multer';
 import { authenticate } from '../middleware/auth';
 import {
   getStudents,
+  getStudentIds,
   getStudentById,
   createStudent,
   updateStudent,
@@ -16,6 +17,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
 router.get('/', authenticate, getStudents);
+router.get('/ids', authenticate, getStudentIds);
 router.get('/:id', authenticate, getStudentById);
 router.post('/', authenticate, createStudent);
 router.put('/:id', authenticate, updateStudent);

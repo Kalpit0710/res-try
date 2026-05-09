@@ -1,27 +1,12 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
+import { extractClassId, useDebounce } from '../lib/utils';
 
 type StudentSearchMode = 'name' | 'regNo' | 'class';
 const ITEMS_PER_PAGE = 6;
 
-function extractClassId(value: unknown): string {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value !== 'object') return '';
 
-  const candidate = value as Record<string, unknown>;
-  const nested = candidate._id ?? candidate.id;
-  if (typeof nested === 'string') return nested;
-
-  if (nested && typeof nested === 'object') {
-    const nestedObj = nested as Record<string, unknown>;
-    if (typeof nestedObj.$oid === 'string') return nestedObj.$oid;
-  }
-
-  if (typeof candidate.$oid === 'string') return candidate.$oid;
-  return '';
-}
 
 export function TeacherPortalPage() {
   const navigate = useNavigate();
@@ -36,6 +21,7 @@ export function TeacherPortalPage() {
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const debouncedSearchText = useDebounce(searchText, 400);
 
   useEffect(() => {
     Promise.all([apiClient.publicGetTeachers(), apiClient.publicGetClasses()]).then(([teachersRes, classesRes]) => {
@@ -101,7 +87,7 @@ export function TeacherPortalPage() {
 
     setLoading(true);
     apiClient
-      .publicGetStudents({ search: query })
+      .publicGetStudents({ search: debouncedSearchText })
       .then((res) => {
         if (active) {
           const students = res.data ?? res;
@@ -116,7 +102,7 @@ export function TeacherPortalPage() {
     return () => {
       active = false;
     };
-  }, [classId, searchMode, searchText, teacherId]);
+  }, [classId, searchMode, debouncedSearchText, teacherId]);
 
   // Update displayed students based on current page
   useEffect(() => {
@@ -127,7 +113,7 @@ export function TeacherPortalPage() {
 
   useEffect(() => {
     setSelectedStudentId('');
-  }, [classId, searchMode, searchText, teacherId]);
+  }, [classId, searchMode, debouncedSearchText, teacherId]);
 
   const selectedTeacher = useMemo(() => teachers.find((t) => t._id === teacherId), [teachers, teacherId]);
   const selectedStudent = useMemo(() => allStudents.find((s) => s._id === selectedStudentId), [allStudents, selectedStudentId]);
@@ -176,11 +162,6 @@ export function TeacherPortalPage() {
     if (!selectedTeacher || !selectedStudent) return;
 
     const resolvedClassId = extractClassId(selectedStudent.classId) || classId;
-    if (!resolvedClassId) {
-      alert('Unable to determine class for selected student. Please search by class and try again.');
-      return;
-    }
-
     navigate(
       `/marks-entry?teacherId=${encodeURIComponent(selectedTeacher._id)}&teacherName=${encodeURIComponent(selectedTeacher.name)}&classId=${encodeURIComponent(resolvedClassId)}&studentId=${encodeURIComponent(selectedStudent._id)}`
     );

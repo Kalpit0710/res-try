@@ -23,6 +23,7 @@ import lockRoutes from './routes/lock.routes';
 import brandingRoutes from './routes/branding.routes';
 import publicRoutes from './routes/public.routes';
 import coScholasticMarksRoutes from './routes/coScholasticMarks.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 dotenv.config();
 
@@ -79,6 +80,7 @@ app.use(`${API}/logs`, logRoutes);
 app.use(`${API}/locks`, lockRoutes);
 app.use(`${API}/settings`, brandingRoutes);
 app.use(`${API}/public`, publicRoutes);
+app.use(`${API}/dashboard`, dashboardRoutes);
 
 // ── Global error handler ──────────────────────────────────────────────────────
 app.use(errorHandler);

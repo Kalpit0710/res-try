@@ -1,31 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
+import { extractClassId, isObjectId } from '../lib/utils';
+import toast from 'react-hot-toast';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
 const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
 
-function isObjectId(value: string): boolean {
-  return /^[a-f\d]{24}$/i.test(value);
-}
-
-function extractClassId(value: unknown): string {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value !== 'object') return '';
-
-  const candidate = value as Record<string, unknown>;
-  const nested = candidate._id ?? candidate.id;
-  if (typeof nested === 'string') return nested;
-
-  if (nested && typeof nested === 'object') {
-    const nestedObj = nested as Record<string, unknown>;
-    if (typeof nestedObj.$oid === 'string') return nestedObj.$oid;
-  }
-
-  if (typeof candidate.$oid === 'string') return candidate.$oid;
-  return '';
-}
 
 interface TermMarks {
   periodicTest?: number | '';
@@ -239,24 +220,72 @@ export function MarksEntryPage() {
     }
   }
 
-  async function saveAllMarks() {
-    if (!studentId) {
-      alert('Select a student first.');
+  async function saveAllSubjects() {
+    if (!studentId) { toast.error('Select a student first.'); return false; }
+    if (!teacherName.trim()) { toast.error('Select a teacher first.'); return false; }
+
+    // Build batch payload
+    function clean(obj: TermMarks) {
+      const result: Record<string, number> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (v !== '' && v !== undefined && v !== null) result[k] = Number(v);
+      }
+      return result;
+    }
+
+    const items = subjectStates.map((s) => ({
+      studentId,
+      subjectId: s.subjectId,
+      teacherName: teacherName.trim(),
+      term1: clean(s.term1),
+      term2: clean(s.term2),
+    }));
+
+    // Mark all as saving
+    setSubjectStates((prev) => prev.map((s) => ({ ...s, saving: true, error: null })));
+
+    try {
+      const res = await apiClient.batchSaveMarks(items);
+      const results: Array<{ subjectId: string; success: boolean; message?: string }> = res.data ?? [];
+
+      setSubjectStates((prev) =>
+        prev.map((s) => {
+          const r = results.find((x) => x.subjectId === s.subjectId);
+          return { ...s, saving: false, saved: r?.success ?? false, error: r?.message ?? null };
+        })
+      );
+
+      const failed = results.filter((r) => !r.success);
+      if (failed.length) {
+        toast.error(`${failed.length} subject(s) failed to save`);
+        return false;
+      }
+      return true;
+    } catch (err: any) {
+      setSubjectStates((prev) => prev.map((s) => ({ ...s, saving: false, error: err?.message ?? 'Failed' })));
+      toast.error(err?.message ?? 'Failed to save marks');
       return false;
     }
+  }
 
-    if (teacherName.trim()) {
-      await Promise.all(subjectStates.map((_, idx) => saveSubject(idx, true)));
+  async function saveAllCoScholastic() {
+    if (!studentId) return false;
+    if (coScholasticStates.length === 0) return true;
+    const results = await Promise.allSettled(
+      coScholasticStates.map((_, idx) => saveCoScholasticArea(idx, false))
+    );
+    return results.every((r) => r.status === 'fulfilled');
+  }
+
+  async function saveCurrentStep(): Promise<boolean> {
+    if (currentStep === 1) return saveAllSubjects();
+    if (currentStep === 2) return saveAllCoScholastic();
+    if (currentStep === 3) {
+      if (remarkState.text.trim()) {
+        try { await saveRemark(); return true; } catch { return false; }
+      }
+      return true;
     }
-
-    if (coScholasticStates.length > 0) {
-      await Promise.all(coScholasticStates.map((_, idx) => saveCoScholasticArea(idx, true)));
-    }
-
-    if (remarkState.text.trim() || remarkState.saved) {
-      await saveRemark();
-    }
-
     return true;
   }
 
@@ -280,7 +309,7 @@ export function MarksEntryPage() {
 
   async function saveSubject(idx: number, shouldThrow = false) {
     if (!teacherName.trim()) {
-      alert('Please enter teacher name before saving.');
+      toast.error('Please select a teacher before saving.');
       return;
     }
     const s = subjectStates[idx];
@@ -402,15 +431,13 @@ export function MarksEntryPage() {
   }
 
   async function generateReport() {
-    if (!studentId) {
-      alert('Select a student first.');
-      return;
-    }
+    if (!studentId) { toast.error('Select a student first.'); return; }
 
-    try {
-      await saveAllMarks();
-    } catch {
-      return;
+    // Save only subjects that have unsaved changes (don't re-save already saved ones)
+    const unsavedSubjects = subjectStates.filter((s) => !s.saved);
+    if (unsavedSubjects.length > 0) {
+      const ok = await saveAllSubjects();
+      if (!ok) return;
     }
 
     setReportLoading(true);
@@ -420,7 +447,7 @@ export function MarksEntryPage() {
       window.open(url, '_blank', 'noopener,noreferrer');
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (err: any) {
-      alert(err?.message ?? 'Failed to generate report');
+      toast.error(err?.message ?? 'Failed to generate report');
     } finally {
       setReportLoading(false);
     }
@@ -554,7 +581,7 @@ export function MarksEntryPage() {
           ))}
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <button onClick={async () => { try { await saveAllMarks(); setCurrentStep(2); } catch { /* errors already surfaced */ } }} className="rounded-md bg-black text-white px-4 py-2">Save & Next</button>
+            <button onClick={async () => { const ok = await saveCurrentStep(); if (ok) setCurrentStep(2); }} className="rounded-md bg-black text-white px-4 py-2">Save &amp; Next</button>
           </div>
         </div>
       )}
@@ -574,7 +601,7 @@ export function MarksEntryPage() {
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button onClick={() => setCurrentStep(1)} className="rounded-md border px-4 py-2">Previous</button>
-            <button onClick={async () => { try { await saveAllMarks(); setCurrentStep(3); } catch { /* errors already surfaced */ } }} className="rounded-md bg-black text-white px-4 py-2">Save & Next</button>
+            <button onClick={async () => { const ok = await saveCurrentStep(); if (ok) setCurrentStep(3); }} className="rounded-md bg-black text-white px-4 py-2">Save &amp; Next</button>
           </div>
         </div>
       )}
@@ -597,7 +624,7 @@ export function MarksEntryPage() {
               <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <button onClick={async () => { try { await saveAllMarks(); } catch { /* errors already surfaced */ } }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
+              <button onClick={async () => { await saveCurrentStep(); }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
               {studentId && (
                 <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
               )}

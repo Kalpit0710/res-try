@@ -74,6 +74,23 @@ export async function getStudents(req: Request, res: Response): Promise<void> {
   res.json({ success: true, data, total, page: parseInt(page), limit: parseInt(limit) });
 }
 
+// GET /students/ids?search=&classId=  — returns only _id array, for Select-All in Reports
+export async function getStudentIds(req: Request, res: Response): Promise<void> {
+  const { search, classId } = req.query as Record<string, string>;
+  const query: Record<string, unknown> = {};
+
+  if (classId) query.classId = classId;
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { regNo: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  const ids = await Student.find(query).select('_id').lean();
+  res.json({ success: true, data: ids.map((s) => s._id.toString()) });
+}
+
 export async function getStudentById(req: Request, res: Response): Promise<void> {
   const student = await Student.findById(req.params.id).populate('classId', 'name').lean();
   if (!student) { res.status(404).json({ success: false, message: 'Student not found' }); return; }
