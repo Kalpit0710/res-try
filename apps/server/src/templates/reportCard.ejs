@@ -1,630 +1,898 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Progress Report</title>
-    <style>
-      @page {
-        size: A4 portrait;
-        margin: 8mm 8mm 8mm 8mm;
-      }
 
-      * { box-sizing: border-box; margin: 0; padding: 0; }
+<head>
+  <meta charset="utf-8" />
+  <title>Progress Report</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm 8mm 8mm 8mm;
+    }
 
-      html, body {
-        width: 100%;
-        height: 100%;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 9px;
-        color: #111;
-        background: #fff;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      /* ── Layout wrapper fills full page ── */
-      .page {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        border: 2px solid #1a3a5c;
-      }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9px;
+      color: #111;
+      background: #fff;
+    }
 
-      /* ── Utilities ── */
-      .c  { text-align: center; }
-      .r  { text-align: right; }
-      .b  { font-weight: 700; }
-      .ub { text-decoration: underline; }
+    /* ── Layout wrapper fills full page ── */
+    .page {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      border: 2px solid #1a3a5c;
+    }
 
-      /* ── HEADER ── */
-      .header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 18px;
-        padding: 12px 14px;
-        border-bottom: 2px solid #1a3a5c;
-        background: #fff;
-      }
-      .school-logo {
-        width: 88px;
-        height: 88px;
-        object-fit: contain;
-        flex-shrink: 0;
-      }
-      .logo-placeholder {
-        width: 88px;
-        height: 88px;
-        border: 1.5px solid #ccc;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: #aaa;
-        flex-shrink: 0;
-      }
-      .header-text { text-align: center; line-height: 1.1; width: auto; }
-      .school-name {
-        font-size: 24px;
-        font-weight: 900;
-        letter-spacing: 0.6px;
-        color: #1a3a5c;
-        text-transform: uppercase;
-      }
-      .progress-badge {
-        display: inline-block;
-        background: #1a3a5c;
-        color: #fff;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        padding: 5px 18px;
-        border-radius: 2px;
-        margin: 4px 0;
-        text-transform: uppercase;
-      }
-      .session-line {
-        font-size: 12px;
-        font-weight: 700;
-        color: #333;
-        letter-spacing: 0.55px;
-      }
+    /* ── Utilities ── */
+    .c {
+      text-align: center;
+    }
 
-      /* ── SECTION LABEL BAR ── */
-      .section-label {
-        background: #1a3a5c;
-        color: #fff;
-        font-weight: 700;
-        font-size: 10px;
-        letter-spacing: 0.8px;
-        padding: 3px 8px;
-        text-transform: uppercase;
-      }
+    .r {
+      text-align: right;
+    }
 
-      /* ── STUDENT PROFILE ── */
-      .student-profile {
-        border-bottom: 1.5px solid #1a3a5c;
-        width: 100%;
-      }
-      /* spacing between major sections (tighter to fit single page) */
-      .student-profile { margin-bottom: 8px; }
-      .marks-section { margin-top: 6px; }
-      .marks-table { margin-bottom: 8px; }
-      .marks-section + .section-label { margin-top: 6px; }
-      .section-label { padding-top: 6px; padding-bottom: 6px; }
-      .summary-table { margin-top: 8px; }
-      .instructions-bar { margin-top: 8px; }
-      .instructions-note { margin-top: 4px; margin-bottom: 6px; }
-      .student-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        column-gap: 8px;
-        row-gap: 4px;
-        padding: 4px 4px 3px;
-      }
-      .student-field {
-        display: grid;
-        grid-template-columns: auto 6px minmax(0, 1fr);
-        align-items: center;
-        gap: 2px;
-        padding: 3px 0 1px;
-        font-size: 11.5px;
-      }
-      .student-field .fl {
-        font-weight: 700;
-        white-space: nowrap;
-        min-width: 70px;
-        letter-spacing: 0.2px;
-      }
-      .student-field .fv {
-        display: block;
-        width: 100%;
-        border-bottom: 1px solid #333;
-        min-height: 18px;
-        padding-bottom: 2px;
-        font-size: 11.5px;
-        color: #111;
-      }
-      .adm-row {
-        display: flex;
-        justify-content: flex-end;
-        padding: 4px 8px 0;
-        font-size: 11px;
-        font-weight: 700;
-      }
+    .b {
+      font-weight: 700;
+    }
 
-      /* ── MARKS TABLE ── */
-      .marks-section {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
+    .ub {
+      text-decoration: underline;
+    }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9.25px;
-      }
-      th, td {
-        border: 1px solid #555;
-        padding: 2px 3px;
-        vertical-align: middle;
-        text-align: center;
-      }
-      .marks-table th {
-        background: #e8b84b;
-        color: #111;
-        font-weight: 700;
-        font-size: 9px;
-      }
-      .marks-table .term-header {
-        background: #f5d98b;
-        font-weight: 700;
-        font-size: 10px;
-        letter-spacing: 0.4px;
-      }
-      .marks-table .max-row td {
-        background: #fffae8;
-        font-style: italic;
-        font-size: 9px;
-        color: #555;
-        padding: 1.5px 3px;
-      }
-      .marks-table .max-row .max-label {
-        font-style: italic;
-        font-size: 9px;
-        color: #555;
-        text-align: left;
-      }
-      .marks-table .data-row td { text-align: center; }
-      .marks-table .data-row td.subj-name { text-align: left; padding-left: 4px; }
-      .marks-table .total-row td {
-        background: #fff3cd;
-        font-weight: 700;
-        font-size: 10.5px;
-      }
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      padding: 20px 20px;
+      border-bottom: 2px solid #1a3a5c;
+      background: #fff;
+    }
 
-      /* ── SUMMARY BAR ── */
-      .summary-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 10px;
-      }
-      .summary-table td {
-        border: 1.5px solid #555;
-        padding: 3px 6px;
-        font-weight: 700;
-      }
-      .summary-table .s-label {
-        background: #e8b84b;
-        text-align: center;
-        font-size: 10px;
-        letter-spacing: 0.4px;
-        width: 22%;
-      }
-      .summary-table .s-val {
-        text-align: center;
-        font-size: 12px;
-      }
+    .school-logo {
+      width: 98px;
+      height: 98px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
 
-      /* ── REMARKS + PROMOTE ── */
-      .remarks-row {
-        display: flex;
-        border-top: 1.5px solid #555;
-        border-bottom: 1.5px solid #555;
-      }
-      .remarks-box {
-        flex: 1;
-        padding: 4px 8px;
-        min-height: 52px;
-      }
-      .remarks-box .rl {
-        font-weight: 700;
-        font-size: 10px;
-        margin-bottom: 2px;
-      }
+    .logo-placeholder {
+      width: 98px;
+      height: 98px;
+      border: 1.5px solid #ccc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #aaa;
+      flex-shrink: 0;
+    }
 
-      /* ── SIGNATURES ── */
-      .sig-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      .sig-table td {
-        border: 1px solid #555;
-        padding: 28px 6px 5px;
-        text-align: center;
-        font-size: 10px;
-        font-weight: 700;
-        width: 50%;
-      }
-      .sig-img {
-        max-width: 110px;
-        max-height: 32px;
-        object-fit: contain;
-        display: block;
-        margin: 0 auto 4px;
-      }
+    .header-text {
+      text-align: center;
+      line-height: 1.2;
+      width: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-      /* ── INSTRUCTIONS ── */
-      .instructions-bar {
-        background: #1a3a5c;
-        color: #fff;
-        text-align: center;
-        font-weight: 700;
-        font-size: 10px;
-        letter-spacing: 0.8px;
-        padding: 3px;
-        text-transform: uppercase;
-        border-top: 1.5px solid #1a3a5c;
-      }
-      .instructions-note {
-        text-align: center;
-        font-size: 9.5px;
-        padding: 3px 6px;
-        background: #f9f9f9;
-        border-bottom: 1px solid #ccc;
-      }
-      .grade-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
-        table-layout: fixed;
-      }
-      .grade-table th {
-        background: #e8b84b;
-        font-weight: 700;
-        padding: 2px 6px;
-        border: 1px solid #555;
-        text-align: center;
-        font-size: 9px;
-      }
-      .grade-table td {
-        border: 1px solid #555;
-        padding: 2px 6px;
-        text-align: center;
-        vertical-align: middle;
-        white-space: normal;
-      }
-      .grade-table .range { width: 31%; text-align: center; }
-      .grade-table .grade { width: 19%; font-weight: 700; text-align: center; }
-      .grade-table .grade.long { font-size: 9px; line-height: 1.1; }
-      /* ----------------- Layout refinements (overrides) ----------------- */
-      /* Improve vertical rhythm between major sections and table cells for print (compact)
+    .school-name {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #1a3a5c;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .progress-badge {
+      display: inline-block;
+      background: #1a3a5c;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 6px 20px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .session-line {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── SECTION LABEL BAR ── */
+    .section-label {
+      background: #1a3a5c;
+      color: #fff;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      padding: 3px 8px;
+      text-transform: uppercase;
+    }
+
+    /* ── STUDENT PROFILE ── */
+    .student-profile {
+      border-bottom: 1.5px solid #1a3a5c;
+      width: 100%;
+      padding: 0;
+      margin-bottom: 10px;
+    }
+
+    /* spacing between major sections (tighter to fit single page) */
+    .marks-section {
+      margin-top: 6px;
+    }
+
+    .marks-table {
+      margin-bottom: 8px;
+    }
+
+    .marks-section+.section-label {
+      margin-top: 6px;
+    }
+
+    .section-label {
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .summary-table {
+      margin-top: 8px;
+    }
+
+    .instructions-bar {
+      margin-top: 8px;
+    }
+
+    .instructions-note {
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: 55% 45%;
+      column-gap: 16px;
+      row-gap: 14px;
+      padding: 6px 16px 14px;
+    }
+
+    .student-field {
+      display: grid;
+      grid-template-columns: 125px 12px 1fr;
+      align-items: center;
+      gap: 0;
+    }
+
+    .student-field .fl {
+      font-weight: 700;
+      white-space: nowrap;
+      font-size: 13.5px;
+      letter-spacing: 0.3px;
+      color: #111;
+    }
+
+    .student-field .fc {
+      text-align: center;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #111;
+    }
+
+    .student-field .fv {
+      display: block;
+      width: 100%;
+      font-size: 14.5px;
+      color: #111;
+      text-transform: uppercase;
+    }
+
+    .adm-row {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 16px 2px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── MARKS TABLE ── */
+    .marks-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.25px;
+    }
+
+    th,
+    td {
+      border: 1px solid #555;
+      padding: 2px 3px;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .marks-table th {
+      background: #e8b84b;
+      color: #111;
+      font-weight: 700;
+      font-size: 9px;
+    }
+
+    .marks-table .term-header {
+      background: #f5d98b;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+    }
+
+    .marks-table .max-row td {
+      background: #fffae8;
+      font-style: italic;
+      font-size: 9px;
+      color: #555;
+      padding: 1.5px 3px;
+    }
+
+    .marks-table .max-row .max-label {
+      font-style: italic;
+      font-size: 9px;
+      color: #555;
+      text-align: left;
+    }
+
+    .marks-table .data-row td {
+      text-align: center;
+    }
+
+    .marks-table .data-row td.subj-name {
+      text-align: left;
+      padding-left: 4px;
+    }
+
+    .marks-table .total-row td {
+      background: #fff3cd;
+      font-weight: 700;
+      font-size: 10.5px;
+    }
+
+    /* ── SUMMARY BAR ── */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .summary-table td {
+      border: 1.5px solid #555;
+      padding: 3px 6px;
+      font-weight: 700;
+    }
+
+    .summary-table .s-label {
+      background: #e8b84b;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+      width: 22%;
+    }
+
+    .summary-table .s-val {
+      text-align: center;
+      font-size: 12px;
+    }
+
+    /* ── REMARKS + PROMOTE ── */
+    .remarks-row {
+      display: flex;
+      border-top: 1.5px solid #555;
+      border-bottom: 1.5px solid #555;
+    }
+
+    .remarks-box {
+      flex: 1;
+      padding: 4px 8px;
+      min-height: 52px;
+    }
+
+    .remarks-box .rl {
+      font-weight: 700;
+      font-size: 10px;
+      margin-bottom: 2px;
+    }
+
+    /* ── SIGNATURES ── */
+    .sig-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sig-table td {
+      border: 1px solid #555;
+      padding: 10px 6px 6px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      width: 50%;
+      height: 75px;
+      vertical-align: bottom;
+    }
+
+    .sig-img {
+      max-width: 120px;
+      max-height: 36px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 6px;
+    }
+
+    /* ── INSTRUCTIONS ── */
+    .instructions-bar {
+      background: #1a3a5c;
+      color: #fff;
+      text-align: center;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.8px;
+      padding: 3px;
+      text-transform: uppercase;
+      border-top: 1.5px solid #1a3a5c;
+    }
+
+    .instructions-note {
+      text-align: center;
+      font-size: 9.5px;
+      padding: 3px 6px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .grade-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+      table-layout: fixed;
+    }
+
+    .grade-table th {
+      background: #e8b84b;
+      font-weight: 700;
+      padding: 2px 6px;
+      border: 1px solid #555;
+      text-align: center;
+      font-size: 9px;
+    }
+
+    .grade-table td {
+      border: 1px solid #555;
+      padding: 2px 6px;
+      text-align: center;
+      vertical-align: middle;
+      white-space: normal;
+    }
+
+    .grade-table .range {
+      width: 31%;
+      text-align: center;
+    }
+
+    .grade-table .grade {
+      width: 19%;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .grade-table .grade.long {
+      font-size: 9px;
+      line-height: 1.1;
+    }
+
+    /* ----------------- Layout refinements (overrides) ----------------- */
+    /* Improve vertical rhythm between major sections and table cells for print (compact)
         Adjusted to keep entire report on one A4 page */
-      .page { padding: 4px; transform: scale(0.97); transform-origin: top left; }
-      .header { padding: 10px 12px; justify-content: center; }
-      .school-logo { width: 88px; height: 88px; }
-      .header-text { line-height: 1.05; text-align: center; }
-      .school-name { font-size: 24px; }
-      .progress-badge { font-size: 11px; padding: 4px 16px; }
-      .session-line { font-size: 11px; }
+    .page {
+      padding: 4px;
+      transform: scale(0.97);
+      transform-origin: top left;
+    }
 
-      /* Student profile spacing */
-      .student-profile { padding: 8px 10px; margin-bottom: 8px; }
-      .student-grid { gap: 5px; }
-      .student-field { padding: 4px 0; font-size: 10px; }
-      .student-field .fl { min-width: 78px; }
-      .student-field .fv { padding-bottom: 2px; }
+    /* Header overrides removed to utilize maximum space for branding */
 
-      /* Section label spacing */
-      .section-label { padding: 6px 10px; margin-top: 8px; margin-bottom: 6px; }
+    /* Section label spacing */
+    .section-label {
+      font-size: 12px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      margin-bottom: 0px;
+    }
 
-      /* Table cell paddings and alignment for compact print */
-      th, td { padding: 3px 5px; }
-      .marks-table th { padding: 5px 6px; }
-      .marks-table .max-row td { padding: 3px 5px; }
-      .marks-table .data-row td.subj-name { text-align: left; padding-left: 6px; }
-      .marks-table .data-row td { vertical-align: middle; }
+    .marks-section .section-label {
+      margin-bottom: 6px;
+    }
 
-      /* Make TOTAL row visually distinct and align numbers */
-      .marks-table .total-row td { background: #f5d98b; font-weight: 800; }
-      .marks-table .total-row td.subj-name { text-align: left; padding-left: 6px; }
+    /* Table cell paddings and alignment for compact print */
+    th,
+    td {
+      padding: 3px 5px;
+    }
 
-      /* Summary and signature spacing */
-      .summary-table { margin-top: 8px; }
-      .sig-table td { padding: 10px 6px; }
+    .marks-table th {
+      padding: 5px 6px;
+    }
 
-      /* Instructions spacing */
-      .instructions-bar { margin-top: 10px; padding: 4px 6px; }
-      .instructions-note { padding: 6px 8px; margin-bottom: 6px; }
+    .marks-table .max-row td {
+      padding: 3px 5px;
+    }
 
-      /* Allow table page-breaks if needed but try to keep rows together */
-      table, tr, td, th { page-break-inside: avoid; }
-      .marks-table { page-break-inside: auto; }
+    .marks-table .data-row td.subj-name {
+      text-align: left;
+      padding-left: 6px;
+    }
 
-      /* Slight typographic tweaks */
-      .marks-table { font-size: 9.5px; }
-      .summary-table td { font-size: 10px; }
-    </style>
-  </head>
-  <body>
-    <div class="page">
+    .marks-table .data-row td {
+      vertical-align: middle;
+    }
 
-      <!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
-      <div class="header">
-        <% if (schoolLogoDataUri) { %>
-          <img src="<%= schoolLogoDataUri %>" alt="Logo" class="school-logo" />
+    /* Make TOTAL row visually distinct and align numbers */
+    .marks-table .total-row td {
+      background: #f5d98b;
+      font-weight: 800;
+    }
+
+    .marks-table .total-row td.subj-name {
+      text-align: left;
+      padding-left: 6px;
+    }
+
+    /* Summary and signature spacing */
+    .summary-table {
+      margin-top: 8px;
+    }
+
+    /* Instructions spacing */
+    .instructions-bar {
+      margin-top: 10px;
+      padding: 4px 6px;
+    }
+
+    .instructions-note {
+      padding: 6px 8px;
+      margin-bottom: 6px;
+    }
+
+    /* Allow table page-breaks if needed but try to keep rows together */
+    table,
+    tr,
+    td,
+    th {
+      page-break-inside: avoid;
+    }
+
+    .marks-table {
+      page-break-inside: auto;
+    }
+
+    /* Slight typographic tweaks */
+    .marks-table {
+      font-size: 9.5px;
+    }
+
+    .summary-table td {
+      font-size: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+    <div class="header">
+      <% if (schoolLogoDataUri) { %>
+        <img src="<%= schoolLogoDataUri %>" alt="Logo" class="school-logo" />
         <% } else { %>
           <div class="logo-placeholder">LOGO</div>
-        <% } %>
-        <div class="header-text">
-          <div class="school-name"><%= schoolName %></div>
-          <div class="progress-badge">Progress Report</div>
-          <div class="session-line">Academic Session : <%= academicSession %></div>
+          <% } %>
+            <div class="header-text">
+              <div class="school-name">
+                <%= schoolName %>
+              </div>
+              <div class="progress-badge">Progress Report</div>
+              <div class="session-line">Academic Session : <%= academicSession %>
+              </div>
+            </div>
+    </div>
+
+    <!-- ═══════════════════════ STUDENT PROFILE ══════════════════════════════ -->
+    <div class="section-label">Student Profile</div>
+    <div class="student-profile">
+      <div class="adm-row">Admn. No. &nbsp;:&nbsp; <span>
+          <%= student.regNo %>
+        </span></div>
+      <div class="student-grid">
+        <div class="student-field">
+          <span class="fl">Name of Student</span>
+          <span class="fc">:</span>
+          <span class="fv b">
+            <%= student.name %>
+          </span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Class</span>
+          <span class="fc">:</span>
+          <span class="fv b">
+            <%= className %>
+          </span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Mother's Name</span>
+          <span class="fc">:</span>
+          <span class="fv">
+            <%= student.motherName ?? '—' %>
+          </span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Date of Birth</span>
+          <span class="fc">:</span>
+          <span class="fv">
+            <%= student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '—' %>
+          </span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Father's Name</span>
+          <span class="fc">:</span>
+          <span class="fv">
+            <%= student.fatherName ?? '—' %>
+          </span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Roll No.</span>
+          <span class="fc">:</span>
+          <span class="fv">
+            <%= student.rollNo ?? '—' %>
+          </span>
         </div>
       </div>
+    </div>
 
-      <!-- ═══════════════════════ STUDENT PROFILE ══════════════════════════════ -->
-      <div class="student-profile">
-        <div class="section-label">Student Profile</div>
-        <div class="adm-row">Adm. No. : &nbsp;<span><%= student.regNo %></span></div>
-        <div class="student-grid">
-          <div class="student-field">
-            <span class="fl">Name of Student</span>
-            <span style="margin:0 3px;">:</span>
-            <span class="fv b"><%= student.name %></span>
-          </div>
-          <div class="student-field">
-            <span class="fl">Class</span>
-            <span style="margin:0 3px;">:</span>
-            <span class="fv b"><%= className %></span>
-          </div>
-          <div class="student-field">
-            <span class="fl">Mother's Name</span>
-            <span style="margin:0 3px;">:</span>
-            <span class="fv"><%= student.motherName ?? '—' %></span>
-          </div>
-          <div class="student-field">
-            <span class="fl">Date of Birth</span>
-            <span style="margin:0 3px;">:</span>
-            <span class="fv"><%= student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '—' %></span>
-          </div>
-          <div class="student-field">
-            <span class="fl">Father's Name</span>
-            <span style="margin:0 3px;">:</span>
-            <span class="fv"><%= student.fatherName ?? '—' %></span>
-          </div>
-          <div class="student-field">
-            <span class="fl">Roll No.</span>
-            <span style="margin:0 3px;">:</span>
-            <span class="fv"><%= student.rollNo ?? '—' %></span>
-          </div>
-        </div>
-      </div>
+    <!-- ═══════════════════════ SCHOLASTIC AREA ══════════════════════════════ -->
+    <div class="marks-section">
+      <div class="section-label">Scholastic Area</div>
 
-      <!-- ═══════════════════════ SCHOLASTIC AREA ══════════════════════════════ -->
-      <div class="marks-section">
-        <div class="section-label">Scholastic Area</div>
-
-        <table class="marks-table">
-          <thead>
-            <!-- Row 1: Term spans -->
-            <tr>
-              <th rowspan="3" style="width:13%; text-align:left; padding-left:4px; vertical-align:top; padding-top:4px;">
-                Subject<br>
-                <span style="font-size:8px; font-weight:400; font-style:italic; color:#555;">Max ↓</span>
-              </th>
-              <th colspan="5" class="term-header">TERM - 1</th>
-              <th colspan="5" class="term-header">TERM - 2</th>
-              <th rowspan="3" style="width:5%; background:#e8b84b; font-size:9px; line-height:1.2;">Overall<br>Assessment<br><span style="font-size:8.5px; font-weight:700;">Term I &amp; II</span><br><span style="font-size:8px; font-weight:400;">(Out of 100)</span></th>
-              <th rowspan="3" style="width:4%; background:#e8b84b;">Grade</th>
-            </tr>
-            <!-- Row 2: Sub-column labels -->
-            <tr>
-              <th style="width:5%;">Per<br>Test</th>
-              <th style="width:5%;">Note<br>Book</th>
-              <th style="width:6%;">Sub.<br>Enrich.</th>
-              <th style="width:7%;">Half<br>Yearly</th>
-              <th style="width:5%;">Total</th>
-              <th style="width:5%;">Per<br>Test</th>
-              <th style="width:5%;">Note<br>Book</th>
-              <th style="width:6%;">Sub.<br>Enrich.</th>
-              <th style="width:7%;">Yearly<br>Exam</th>
-              <th style="width:5%;">Total</th>
-            </tr>
-            <!-- Row 3: Max marks — ONLY 10 cells (Subject, Overall, Grade are rowspan=3) -->
-            <tr class="max-row">
-              <%
-                const firstSub = subjectResults[0];
-                const mm = firstSub ? firstSub.subject.maxMarks : null;
-              %>
-              <td><%= mm ? mm.term1.periodicTest : '' %></td>
-              <td><%= mm ? mm.term1.notebook : '' %></td>
-              <td><%= mm ? mm.term1.subEnrichment : '' %></td>
-              <td><%= mm ? mm.term1.halfYearlyExam : '' %></td>
-              <td><b><%= mm ? (mm.term1.periodicTest + mm.term1.notebook + mm.term1.subEnrichment + mm.term1.halfYearlyExam) : '' %></b></td>
-              <td><%= mm ? mm.term2.periodicTest : '' %></td>
-              <td><%= mm ? mm.term2.notebook : '' %></td>
-              <td><%= mm ? mm.term2.subEnrichment : '' %></td>
-              <td><%= mm ? mm.term2.yearlyExam : '' %></td>
-              <td><b><%= mm ? (mm.term2.periodicTest + mm.term2.notebook + mm.term2.subEnrichment + mm.term2.yearlyExam) : '' %></b></td>
-              <!-- Overall Assessment and Grade columns are rowspan=3 — NO extra cells here -->
-            </tr>
-          </thead>
-          <tbody>
-            <% subjectResults.forEach(({ subject, marks, result }) => { %>
-            <tr class="data-row">
-              <td class="subj-name"><%= subject.name %></td>
-              <td><%= marks?.term1?.periodicTest ?? '' %></td>
-              <td><%= marks?.term1?.notebook ?? '' %></td>
-              <td><%= marks?.term1?.subEnrichment ?? '' %></td>
-              <td><%= marks?.term1?.halfYearlyExam ?? '' %></td>
-              <td class="b"><%= result.term1Total %></td>
-              <td><%= marks?.term2?.periodicTest ?? '' %></td>
-              <td><%= marks?.term2?.notebook ?? '' %></td>
-              <td><%= marks?.term2?.subEnrichment ?? '' %></td>
-              <td><%= marks?.term2?.yearlyExam ?? '' %></td>
-              <td class="b"><%= result.term2Total %></td>
-              <td class="b"><%= result.grandTotal %></td>
-              <td class="b"><%= result.grade %></td>
-            </tr>
-            <% }) %>
-            <!-- TOTAL ROW -->
-            <tr class="total-row">
-              <td class="subj-name b">TOTAL</td>
-              <%
-                const t1pt  = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.periodicTest??0),0);
-                const t1nb  = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.notebook??0),0);
-                const t1se  = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.subEnrichment??0),0);
-                const t1hy  = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.halfYearlyExam??0),0);
-                const t1tot = subjectResults.reduce((s,r)=>s+r.result.term1Total,0);
-                const t2pt  = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.periodicTest??0),0);
-                const t2nb  = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.notebook??0),0);
-                const t2se  = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.subEnrichment??0),0);
-                const t2ye  = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.yearlyExam??0),0);
-                const t2tot = subjectResults.reduce((s,r)=>s+r.result.term2Total,0);
-              %>
-              <td><%= t1pt %></td>
-              <td><%= t1nb %></td>
-              <td><%= t1se %></td>
-              <td><%= t1hy %></td>
-              <td><%= t1tot %></td>
-              <td><%= t2pt %></td>
-              <td><%= t2nb %></td>
-              <td><%= t2se %></td>
-              <td><%= t2ye %></td>
-              <td><%= t2tot %></td>
-              <td class="b" style="background:#f5d98b;"><%= overall.totalObtained %></td>
-              <td class="b" style="background:#f5d98b;"><%= overall.overallGrade %></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- ─── CO-SCHOLASTIC AREA ────────────────────────────────────────── -->
-        <div class="section-label">Co-Scholastic Area</div>
-        <table class="marks-table">
-          <thead>
-            <tr>
-              <th style="text-align:left; padding-left:4px; width:40%;">Co-Scholastic Area</th>
-              <th style="width:20%; background:#e8b84b;">TERM - 1 (Out of 100)</th>
-              <th style="width:20%; background:#e8b84b;">TERM - 2 (Out of 100)</th>
-              <th style="width:20%; background:#e8b84b;">Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% (coScholasticMarks || []).forEach(mark => { %>
-            <tr class="data-row">
-              <td style="text-align:left; padding-left:4px;"><%= mark.area %></td>
-              <td><%= mark.term1 ?? '—' %></td>
-              <td><%= mark.term2 ?? '—' %></td>
-              <td class="b"><%= mark.grade ?? '—' %></td>
-            </tr>
-            <% }) %>
-          </tbody>
-        </table>
-
-        <!-- Overall Assessment (Out of 100) moved into scholastic table header -->
-
-        <!-- ─── SUMMARY BAR ─────────────────────────────────────────────────────────────────────── -->
-        <table class="summary-table" style="margin-top:0; border-top:none;">
+      <table class="marks-table">
+        <thead>
+          <!-- Row 1: Term spans -->
           <tr>
-            <td class="s-label">Total Marks</td>
-            <td class="s-val"><%= overall.totalObtained %> / <%= overall.totalMax %></td>
-            <td class="s-label">Percentage</td>
-            <td class="s-val"><%= overall.percentage %>%</td>
-            <td class="s-label">Grade</td>
-            <td class="s-val b" style="font-size:14px;"><%= overall.overallGrade %></td>
+            <th rowspan="3"
+              style="width:13%; text-align:left; padding-left:4px; vertical-align:top; padding-top:4px; font-size: 13px;">
+              SUBJECT<br>
+              <span style="font-size:10px; font-weight:400; font-style:italic; color:#555;">Max ↓</span>
+            </th>
+            <th colspan="5" class="term-header">TERM - 1</th>
+            <th colspan="5" class="term-header">TERM - 2</th>
+            <th rowspan="3" style="width:5%; background:#e8b84b; font-size:9px; line-height:1.2;">
+              Overall<br>Assessment<br><span style="font-size:8.5px; font-weight:700;">Term I &amp; II</span><br><span
+                style="font-size:8px; font-weight:400;">(Out of 100)</span></th>
+            <th rowspan="3" style="width:4%; background:#e8b84b;">Grade</th>
           </tr>
-        </table>
+          <!-- Row 2: Sub-column labels -->
+          <tr>
+            <th style="width:5%;">Per<br>Test</th>
+            <th style="width:5%;">Note<br>Book</th>
+            <th style="width:6%;">Sub.<br>Enrich.</th>
+            <th style="width:7%;">Half<br>Yearly</th>
+            <th style="width:5%;">Total</th>
+            <th style="width:5%;">Per<br>Test</th>
+            <th style="width:5%;">Note<br>Book</th>
+            <th style="width:6%;">Sub.<br>Enrich.</th>
+            <th style="width:7%;">Yearly<br>Exam</th>
+            <th style="width:5%;">Total</th>
+          </tr>
+          <!-- Row 3: Max marks — ONLY 10 cells (Subject, Overall, Grade are rowspan=3) -->
+          <tr class="max-row">
+            <% const firstSub=subjectResults[0]; const mm=firstSub ? firstSub.subject.maxMarks : null; %>
+              <td>
+                <%= mm ? mm.term1.periodicTest : '' %>
+              </td>
+              <td>
+                <%= mm ? mm.term1.notebook : '' %>
+              </td>
+              <td>
+                <%= mm ? mm.term1.subEnrichment : '' %>
+              </td>
+              <td>
+                <%= mm ? mm.term1.halfYearlyExam : '' %>
+              </td>
+              <td><b>
+                  <%= mm ? (mm.term1.periodicTest + mm.term1.notebook + mm.term1.subEnrichment +
+                    mm.term1.halfYearlyExam) : '' %>
+                </b></td>
+              <td>
+                <%= mm ? mm.term2.periodicTest : '' %>
+              </td>
+              <td>
+                <%= mm ? mm.term2.notebook : '' %>
+              </td>
+              <td>
+                <%= mm ? mm.term2.subEnrichment : '' %>
+              </td>
+              <td>
+                <%= mm ? mm.term2.yearlyExam : '' %>
+              </td>
+              <td><b>
+                  <%= mm ? (mm.term2.periodicTest + mm.term2.notebook + mm.term2.subEnrichment + mm.term2.yearlyExam)
+                    : '' %>
+                </b></td>
+              <!-- Overall Assessment and Grade columns are rowspan=3 — NO extra cells here -->
+          </tr>
+        </thead>
+        <tbody>
+          <% subjectResults.forEach(({ subject, marks, result })=> { %>
+            <tr class="data-row">
+              <td class="subj-name">
+                <%= subject.name %>
+              </td>
+              <td>
+                <%= marks?.term1?.periodicTest ?? '' %>
+              </td>
+              <td>
+                <%= marks?.term1?.notebook ?? '' %>
+              </td>
+              <td>
+                <%= marks?.term1?.subEnrichment ?? '' %>
+              </td>
+              <td>
+                <%= marks?.term1?.halfYearlyExam ?? '' %>
+              </td>
+              <td class="b">
+                <%= result.term1Total %>
+              </td>
+              <td>
+                <%= marks?.term2?.periodicTest ?? '' %>
+              </td>
+              <td>
+                <%= marks?.term2?.notebook ?? '' %>
+              </td>
+              <td>
+                <%= marks?.term2?.subEnrichment ?? '' %>
+              </td>
+              <td>
+                <%= marks?.term2?.yearlyExam ?? '' %>
+              </td>
+              <td class="b">
+                <%= result.term2Total %>
+              </td>
+              <td class="b">
+                <%= result.grandTotal %>
+              </td>
+              <td class="b">
+                <%= result.grade %>
+              </td>
+            </tr>
+            <% }) %>
+              <!-- TOTAL ROW -->
+              <tr class="total-row">
+                <td class="subj-name b">TOTAL</td>
+                <% const t1pt=subjectResults.reduce((s,r)=>s+(r.marks?.term1?.periodicTest??0),0);
+                  const t1nb = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.notebook??0),0);
+                  const t1se = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.subEnrichment??0),0);
+                  const t1hy = subjectResults.reduce((s,r)=>s+(r.marks?.term1?.halfYearlyExam??0),0);
+                  const t1tot = subjectResults.reduce((s,r)=>s+r.result.term1Total,0);
+                  const t2pt = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.periodicTest??0),0);
+                  const t2nb = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.notebook??0),0);
+                  const t2se = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.subEnrichment??0),0);
+                  const t2ye = subjectResults.reduce((s,r)=>s+(r.marks?.term2?.yearlyExam??0),0);
+                  const t2tot = subjectResults.reduce((s,r)=>s+r.result.term2Total,0);
+                  %>
+                  <td>
+                    <%= t1pt %>
+                  </td>
+                  <td>
+                    <%= t1nb %>
+                  </td>
+                  <td>
+                    <%= t1se %>
+                  </td>
+                  <td>
+                    <%= t1hy %>
+                  </td>
+                  <td>
+                    <%= t1tot %>
+                  </td>
+                  <td>
+                    <%= t2pt %>
+                  </td>
+                  <td>
+                    <%= t2nb %>
+                  </td>
+                  <td>
+                    <%= t2se %>
+                  </td>
+                  <td>
+                    <%= t2ye %>
+                  </td>
+                  <td>
+                    <%= t2tot %>
+                  </td>
+                  <td class="b" style="background:#f5d98b;">
+                    <%= overall.totalObtained %>
+                  </td>
+                  <td class="b" style="background:#f5d98b;">
+                    <%= overall.overallGrade %>
+                  </td>
+              </tr>
+        </tbody>
+      </table>
 
-        <!-- ─── PROMOTE / REMARKS ──────────────────────────────────────────── -->
-        <div style="border:1px solid #555; border-top:none; padding:4px 8px 3px; font-size:10px;">
-          <span class="b">Result :</span>&nbsp;
-          <% if (overall.percentage >= 33) { %>
-            <span style="color:#1a6e1a; font-weight:700;">Promoted to Next Class</span>
+      <!-- ─── CO-SCHOLASTIC AREA ────────────────────────────────────────── -->
+      <div class="section-label">Co-Scholastic Area</div>
+      <table class="marks-table">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding-left:4px; width:40%;">Co-Scholastic Area</th>
+            <th style="width:20%; background:#e8b84b;">TERM - 1 (Out of 100)</th>
+            <th style="width:20%; background:#e8b84b;">TERM - 2 (Out of 100)</th>
+            <th style="width:20%; background:#e8b84b;">Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% (coScholasticMarks || []).forEach(mark=> { %>
+            <tr class="data-row">
+              <td style="text-align:left; padding-left:4px;">
+                <%= mark.area %>
+              </td>
+              <td>
+                <%= mark.term1 ?? '—' %>
+              </td>
+              <td>
+                <%= mark.term2 ?? '—' %>
+              </td>
+              <td class="b">
+                <%= mark.grade ?? '—' %>
+              </td>
+            </tr>
+            <% }) %>
+        </tbody>
+      </table>
+
+      <!-- Overall Assessment (Out of 100) moved into scholastic table header -->
+
+      <!-- ─── SUMMARY BAR ─────────────────────────────────────────────────────────────────────── -->
+      <table class="summary-table" style="margin-top:0; border-top:none;">
+        <tr>
+          <td class="s-label">Total Marks</td>
+          <td class="s-val">
+            <%= overall.totalObtained %> / <%= overall.totalMax %>
+          </td>
+          <td class="s-label">Percentage</td>
+          <td class="s-val">
+            <%= overall.percentage %>%
+          </td>
+          <td class="s-label">Grade</td>
+          <td class="s-val b" style="font-size:14px;">
+            <%= overall.overallGrade %>
+          </td>
+        </tr>
+      </table>
+
+      <!-- ─── PROMOTE / REMARKS ──────────────────────────────────────────── -->
+      <div style="border:1px solid #555; border-top:none; padding:4px 8px 3px; font-size:10px;">
+        <span class="b">Result :</span>&nbsp;
+        <% if (overall.percentage>= 33) { %>
+          <span style="color:#1a6e1a; font-weight:700;">Promoted to Next Class</span>
           <% } else { %>
             <span style="color:#c0392b; font-weight:700;">Not Promoted</span>
-          <% } %>
-        </div>
+            <% } %>
+      </div>
 
-        <!-- ─── CLASS TEACHER'S REMARKS ───────────────────────────────────── -->
-        <table style="width:100%; border-collapse:collapse; border:1px solid #555; border-top:none; margin-top:0;">
-          <tr>
-            <td style="width:28%; background:#e8b84b; font-weight:700; font-size:10px; padding:4px 6px; border-right:1px solid #555; vertical-align:top;">
-              Class Teacher's Remarks
-            </td>
-            <td style="padding:6px; height:44px; vertical-align:top;"><%= (remark?.text ?? '').trim() %></td>
-          </tr>
-        </table>
+      <!-- ─── CLASS TEACHER'S REMARKS ───────────────────────────────────── -->
+      <table style="width:100%; border-collapse:collapse; border:1px solid #555; border-top:none; margin-top:0;">
+        <tr>
+          <td
+            style="width:28%; background:#e8b84b; font-weight:700; font-size:10px; padding:4px 6px; border-right:1px solid #555; vertical-align:top;">
+            Class Teacher's Remarks
+          </td>
+          <td style="padding:6px; height:44px; vertical-align:top;">
+            <%= (remark?.text ?? '' ).trim() %>
+          </td>
+        </tr>
+      </table>
 
-        <!-- ─── SIGNATURES ─────────────────────────────────────────────────── -->
-        <table class="sig-table" style="border-top: none;">
-          <tr>
-            <td>
-              <% if (teacherSignatureDataUri) { %>
-                <img src="<%= teacherSignatureDataUri %>" alt="Teacher Sig" class="sig-img" />
+      <!-- ─── SIGNATURES ─────────────────────────────────────────────────── -->
+      <table class="sig-table" style="border-top: none;">
+        <tr>
+          <td>
+            <% if (teacherSignatureDataUri) { %>
+              <img src="<%= teacherSignatureDataUri %>" alt="Teacher Sig" class="sig-img" />
               <% } %>
-              <div>Signature of Class Teacher</div>
-            </td>
-            <td>
-              <% if (principalSignatureDataUri) { %>
-                <img src="<%= principalSignatureDataUri %>" alt="Principal Sig" class="sig-img" />
+                <div>Signature of Class Teacher</div>
+          </td>
+          <td>
+            <% if (principalSignatureDataUri) { %>
+              <img src="<%= principalSignatureDataUri %>" alt="Principal Sig" class="sig-img" />
               <% } %>
-              <div>Signature of Principal</div>
-            </td>
+                <div>Signature of Principal</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- ─── INSTRUCTIONS ───────────────────────────────────────────────── -->
+      <div class="instructions-bar">Instructions</div>
+      <div class="instructions-note">
+        Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.
+      </div>
+      <table class="grade-table">
+        <colgroup>
+          <col style="width:31%" />
+          <col style="width:19%" />
+          <col style="width:31%" />
+          <col style="width:19%" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Marks Range</th>
+            <th>Grade</th>
+            <th>Marks Range</th>
+            <th>Grade</th>
           </tr>
-        </table>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="range">91 – 100</td>
+            <td class="grade">A1</td>
+            <td class="range">51 – 60</td>
+            <td class="grade">C1</td>
+          </tr>
+          <tr>
+            <td class="range">81 – 90</td>
+            <td class="grade">A2</td>
+            <td class="range">41 – 50</td>
+            <td class="grade">C2</td>
+          </tr>
+          <tr>
+            <td class="range">71 – 80</td>
+            <td class="grade">B1</td>
+            <td class="range">33 – 40</td>
+            <td class="grade">D</td>
+          </tr>
+          <tr>
+            <td class="range">61 – 70</td>
+            <td class="grade">B2</td>
+            <td class="range">32 &amp; Below</td>
+            <td class="grade long">E (Need Improvement)</td>
+          </tr>
+        </tbody>
+      </table>
 
-        <!-- ─── INSTRUCTIONS ───────────────────────────────────────────────── -->
-        <div class="instructions-bar">Instructions</div>
-        <div class="instructions-note">
-          Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.
-        </div>
-        <table class="grade-table">
-          <colgroup>
-            <col style="width:31%" />
-            <col style="width:19%" />
-            <col style="width:31%" />
-            <col style="width:19%" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Marks Range</th>
-              <th>Grade</th>
-              <th>Marks Range</th>
-              <th>Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="range">91 – 100</td><td class="grade">A1</td>
-              <td class="range">51 – 60</td><td class="grade">C1</td>
-            </tr>
-            <tr>
-              <td class="range">81 – 90</td><td class="grade">A2</td>
-              <td class="range">41 – 50</td><td class="grade">C2</td>
-            </tr>
-            <tr>
-              <td class="range">71 – 80</td><td class="grade">B1</td>
-              <td class="range">33 – 40</td><td class="grade">D</td>
-            </tr>
-            <tr>
-              <td class="range">61 – 70</td><td class="grade">B2</td>
-              <td class="range">32 &amp; Below</td><td class="grade long">E (Need Improvement)</td>
-            </tr>
-          </tbody>
-        </table>
+    </div><!-- /marks-section -->
+  </div><!-- /page -->
+</body>
 
-      </div><!-- /marks-section -->
-    </div><!-- /page -->
-  </body>
 </html>
