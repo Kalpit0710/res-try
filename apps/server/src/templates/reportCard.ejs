@@ -599,7 +599,7 @@
             <th colspan="5" class="term-header">TERM - 2</th>
             <th rowspan="3" style="width:5%; background:#e8b84b; font-size:9px; line-height:1.2;">
               Overall<br>Assessment<br><span style="font-size:8.5px; font-weight:700;">Term I &amp; II</span><br><span
-                style="font-size:8px; font-weight:400;">(Out of 100)</span></th>
+                style="font-size:8px; font-weight:400;">(Out of 200)</span></th>
             <th rowspan="3" style="width:4%; background:#e8b84b;">Grade</th>
           </tr>
           <!-- Row 2: Sub-column labels -->
@@ -756,10 +756,9 @@
       <table class="marks-table">
         <thead>
           <tr>
-            <th style="text-align:left; padding-left:4px; width:40%;">Co-Scholastic Area</th>
-            <th style="width:20%; background:#e8b84b;">TERM - 1 (Out of 100)</th>
-            <th style="width:20%; background:#e8b84b;">TERM - 2 (Out of 100)</th>
-            <th style="width:20%; background:#e8b84b;">Grade</th>
+            <th style="text-align:left; padding-left:4px; width:50%;">Co-Scholastic Area</th>
+            <th style="width:25%; background:#e8b84b;">TERM - 1</th>
+            <th style="width:25%; background:#e8b84b;">TERM - 2</th>
           </tr>
         </thead>
         <tbody>
@@ -773,9 +772,6 @@
               </td>
               <td>
                 <%= mark.term2 ?? '—' %>
-              </td>
-              <td class="b">
-                <%= mark.grade ?? '—' %>
               </td>
             </tr>
             <% }) %>
@@ -846,7 +842,8 @@
       <!-- ─── INSTRUCTIONS ───────────────────────────────────────────────── -->
       <div class="instructions-bar">Instructions</div>
       <div class="instructions-note">
-        Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.
+        Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.<br/>
+        Co-Scholastic activities are assessed on a 3 Points Grading Scale (A, B, C).
       </div>
       <table class="grade-table">
         <colgroup>

@@ -3,16 +3,16 @@ import { Schema, model, Document } from 'mongoose';
 export interface ICoScholasticMarks extends Document {
   studentId: Schema.Types.ObjectId;
   area: string; // e.g., "Work Education", "Art Education"
-  term1?: number;
-  term2?: number;
+  term1?: string;
+  term2?: string;
 }
 
 const CoScholasticMarksSchema = new Schema<ICoScholasticMarks>(
   {
     studentId: { type: Schema.Types.ObjectId, ref: 'Student', required: true },
     area: { type: String, required: true }, // co-scholastic area name
-    term1: { type: Number, min: 0, max: 100 },
-    term2: { type: Number, min: 0, max: 100 },
+    term1: { type: String, trim: true },
+    term2: { type: String, trim: true },
   },
   { timestamps: true }
 );

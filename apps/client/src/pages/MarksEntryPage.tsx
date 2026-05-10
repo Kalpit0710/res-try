@@ -34,8 +34,8 @@ interface SubjectMarksState {
 interface CoScholasticMarksState {
   area: string;
   existingId?: string;
-  term1: number | '';
-  term2: number | '';
+  term1: string;
+  term2: string;
   saving: boolean;
   saved: boolean;
   error: string | null;
@@ -188,8 +188,8 @@ export function MarksEntryPage() {
           return {
             area,
             existingId: existing?._id,
-            term1: numOrEmpty(existing?.term1),
-            term2: numOrEmpty(existing?.term2),
+            term1: existing?.term1 ?? '',
+            term2: existing?.term2 ?? '',
             saving: false,
             saved: false,
             error: null,
@@ -379,8 +379,8 @@ export function MarksEntryPage() {
     const body = {
       studentId,
       area: s.area,
-      ...(s.term1 !== '' && { term1: Number(s.term1) }),
-      ...(s.term2 !== '' && { term2: Number(s.term2) }),
+      ...(s.term1 !== '' && { term1: s.term1 }),
+      ...(s.term2 !== '' && { term2: s.term2 }),
     };
 
     setCoScholasticStates((prev) => {
@@ -421,8 +421,7 @@ export function MarksEntryPage() {
     setCoScholasticStates((prev) => {
       const next = [...prev];
       const s = { ...next[idx] };
-      const parsed = value === '' ? '' : Number(value);
-      s[term] = parsed;
+      s[term] = value;
       s.saved = false;
       s.error = null;
       next[idx] = s;
@@ -804,9 +803,6 @@ function CoScholasticCard({
   onSave: () => void;
 }) {
   const { area, term1, term2, saving, saved, error } = state;
-  const term1Invalid = term1 !== '' && (Number(term1) < 0 || Number(term1) > 100);
-  const term2Invalid = term2 !== '' && (Number(term2) < 0 || Number(term2) > 100);
-  const hasValidationError = term1Invalid || term2Invalid;
 
   return (
     <div className="rounded-lg border border-black/10 bg-white overflow-hidden">
@@ -822,7 +818,7 @@ function CoScholasticCard({
           )}
           <button
             onClick={onSave}
-            disabled={saving || hasValidationError}
+            disabled={saving}
             className="rounded-md bg-orange-500 text-white px-4 py-1.5 text-sm disabled:opacity-60 hover:bg-orange-600 transition-colors"
           >
             {saving ? 'Saving…' : 'Save'}
@@ -838,22 +834,17 @@ function CoScholasticCard({
             Term 1
           </div>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-black/70">Marks / 100</span>
-            <input
-              type="number"
-              min={0}
-              max={100}
+            <span className="font-medium text-black/70">Grade (A, B, C)</span>
+            <select
               value={term1}
               onChange={(e) => onFieldChange('term1', e.target.value)}
-              className={[
-                'rounded-md border px-3 py-1.5 font-normal w-full',
-                term1Invalid ? 'border-red-400 bg-red-50 text-red-700' : 'border-black/15 bg-white',
-              ].join(' ')}
-              placeholder="—"
-            />
-            {term1Invalid && (
-              <span className="text-xs text-red-500">Must be between 0 and 100</span>
-            )}
+              className="rounded-md border border-black/15 bg-white px-3 py-1.5 font-normal w-full"
+            >
+              <option value="">—</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
           </label>
         </div>
 
@@ -863,22 +854,17 @@ function CoScholasticCard({
             Term 2
           </div>
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-black/70">Marks / 100</span>
-            <input
-              type="number"
-              min={0}
-              max={100}
+            <span className="font-medium text-black/70">Grade (A, B, C)</span>
+            <select
               value={term2}
               onChange={(e) => onFieldChange('term2', e.target.value)}
-              className={[
-                'rounded-md border px-3 py-1.5 font-normal w-full',
-                term2Invalid ? 'border-red-400 bg-red-50 text-red-700' : 'border-black/15 bg-white',
-              ].join(' ')}
-              placeholder="—"
-            />
-            {term2Invalid && (
-              <span className="text-xs text-red-500">Must be between 0 and 100</span>
-            )}
+              className="rounded-md border border-black/15 bg-white px-3 py-1.5 font-normal w-full"
+            >
+              <option value="">—</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
           </label>
         </div>
       </div>

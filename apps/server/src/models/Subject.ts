@@ -22,11 +22,11 @@ const SubjectSchema = new Schema<ISubject>(
     maxMarks: {
       term1: {
         ...ComponentMarks,
-        halfYearlyExam: { type: Number, default: 30 },
+        halfYearlyExam: { type: Number, default: 80 },
       },
       term2: {
         ...ComponentMarks,
-        yearlyExam: { type: Number, default: 30 },
+        yearlyExam: { type: Number, default: 80 },
       },
     },
   },

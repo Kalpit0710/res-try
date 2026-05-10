@@ -92,17 +92,7 @@ export async function getReportBrowser(): Promise<BrowserInstance> {
 
 const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
 
-function getCoScholasticGrade(marks: number | undefined): string {
-  if (marks === undefined || marks === null) return '—';
-  if (marks >= 91) return 'A1';
-  if (marks >= 81) return 'A2';
-  if (marks >= 71) return 'B1';
-  if (marks >= 61) return 'B2';
-  if (marks >= 51) return 'C1';
-  if (marks >= 41) return 'C2';
-  if (marks >= 33) return 'D';
-  return 'E';
-}
+// Removed getCoScholasticGrade since grades are A-C strings directly
 
 export async function generateStudentReportPdf(studentId: string, browser?: BrowserInstance): Promise<Buffer> {
   const student = await Student.findById(studentId).lean();
@@ -111,7 +101,32 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
   const cls = await Class.findById(student.classId).lean();
   if (!cls) throw new Error('Class not found');
 
-  const subjects = await Subject.find({ classId: cls._id }).sort({ name: 1 }).lean();
+  const subjects = await Subject.find({ classId: cls._id }).lean();
+  
+  const SUBJECT_ORDER = [
+    'english',
+    'hindi',
+    'mathematics',
+    'science',
+    'social studies',
+    'sanskrit',
+    'general knowledge',
+    'computer',
+    'value education'
+  ];
+
+  subjects.sort((a, b) => {
+    const aName = a.name.toLowerCase().trim();
+    const bName = b.name.toLowerCase().trim();
+    let aIndex = SUBJECT_ORDER.indexOf(aName);
+    let bIndex = SUBJECT_ORDER.indexOf(bName);
+    
+    if (aIndex === -1) aIndex = 999;
+    if (bIndex === -1) bIndex = 999;
+    
+    if (aIndex === bIndex) return a.name.localeCompare(b.name);
+    return aIndex - bIndex;
+  });
   const marks = await Marks.find({ studentId: student._id }).lean();
   const coScholasticMarks = await CoScholasticMarks.find({ studentId: student._id }).lean();
   const marksMap = new Map<string, any>(marks.map(m => [m.subjectId.toString(), m]));
@@ -139,15 +154,10 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
 
   const coScholasticData = CO_SCHOLASTIC_AREAS.map((area) => {
     const found = coScholasticMarks.find((m: any) => m.area === area);
-    const term1 = found?.term1;
-    const term2 = found?.term2;
     return {
       area,
-      term1,
-      term2,
-      grade: term1 !== undefined || term2 !== undefined
-        ? getCoScholasticGrade(term1 ?? term2)
-        : '—',
+      term1: found?.term1,
+      term2: found?.term2,
     };
   }).concat(
     coScholasticMarks
@@ -156,7 +166,6 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
         area: m.area,
         term1: m.term1,
         term2: m.term2,
-        grade: m.term1 || m.term2 ? getCoScholasticGrade(m.term1 ?? m.term2) : '—',
       }))
   );
 
