@@ -90,7 +90,7 @@ export async function getReportBrowser(): Promise<BrowserInstance> {
   return browserLaunchPromise;
 }
 
-const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
+const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education'];
 
 // Removed getCoScholasticGrade since grades are A-C strings directly
 

@@ -8,12 +8,12 @@ export async function getRemarkByStudent(req: Request, res: Response) {
 }
 
 export async function createOrUpdateRemark(req: Request, res: Response) {
-  const { studentId, teacherName, text } = req.body;
+  const { studentId, teacherName, remark, term1, term2 } = req.body;
   if (!studentId) return res.status(400).json({ message: 'studentId is required' });
 
-  const remark = await Remark.findOneAndUpdate(
+  const remarkDoc = await Remark.findOneAndUpdate(
     { studentId },
-    { studentId, teacherName, text },
+    { studentId, teacherName, remark, term1, term2 },
     { upsert: true, new: true, runValidators: true }
   );
 

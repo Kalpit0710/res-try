@@ -5,7 +5,7 @@ import { extractClassId, isObjectId } from '../lib/utils';
 import toast from 'react-hot-toast';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
-const CO_SCHOLASTIC_AREAS = ['Work Education', 'Art Education', 'Health & Physical Education', 'Discipline'];
+const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education'];
 
 
 interface TermMarks {
@@ -64,14 +64,21 @@ export function MarksEntryPage() {
   const [teacherTouched, setTeacherTouched] = useState(false);
   const [classTouched, setClassTouched] = useState(false);
 
+  interface TermRemark {
+    attendanceAttended: string;
+    attendanceTotal: string;
+  }
   interface RemarkState {
-    text: string;
+    term1: TermRemark;
+    term2: TermRemark;
+    remark: string;
     teacherName?: string;
     saving: boolean;
     saved: boolean;
     error: string | null;
   }
-  const [remarkState, setRemarkState] = useState<RemarkState>({ text: '', teacherName: '', saving: false, saved: false, error: null });
+  const defaultTermRemark: TermRemark = { attendanceAttended: '', attendanceTotal: '' };
+  const [remarkState, setRemarkState] = useState<RemarkState>({ term1: defaultTermRemark, term2: defaultTermRemark, remark: '', teacherName: '', saving: false, saved: false, error: null });
   const initialStudentId = searchParams.get('studentId') ?? '';
 
   // Load classes on mount
@@ -198,22 +205,56 @@ export function MarksEntryPage() {
 
         setSubjectStates(states);
         setCoScholasticStates(coScholasticStates);
-        setRemarkState({ text: remarkRes?.data?.text ?? remarkRes?.text ?? '', teacherName: remarkRes?.data?.teacherName ?? remarkRes?.teacherName ?? '', saving: false, saved: false, error: null });
+        const remarkData = remarkRes?.data ?? remarkRes ?? {};
+        const [att1A = '', att1T = ''] = (remarkData.term1?.attendance ?? '').split('/');
+        const [att2A = '', att2T = ''] = (remarkData.term2?.attendance ?? '').split('/');
+        setRemarkState({ 
+          term1: { attendanceAttended: att1A, attendanceTotal: att1T },
+          term2: { attendanceAttended: att2A, attendanceTotal: att2T },
+          remark: remarkData.remark ?? '',
+          teacherName: remarkData.teacherName ?? '', 
+          saving: false, 
+          saved: false, 
+          error: null 
+        });
       })
       .finally(() => setLoadingSubjects(false));
   }, [studentId, classId]);
 
-  function updateRemarkField(text: string) {
-    setRemarkState((p) => ({ ...p, text, saved: false, error: null }));
+  function updateRemarkField(term: 'term1' | 'term2', field: keyof TermRemark, value: string) {
+    setRemarkState((p) => ({
+      ...p,
+      [term]: { ...p[term], [field]: value },
+      saved: false,
+      error: null
+    }));
   }
 
   async function saveRemark() {
     if (!studentId) { alert('Select a student first.'); return; }
     setRemarkState((p) => ({ ...p, saving: true, error: null }));
     try {
-      const payload = { studentId, teacherName: teacherName?.trim() ?? '', text: remarkState.text };
+      function getAttendanceStr(att: string, tot: string) {
+        if (!att && !tot) return '';
+        return `${att}/${tot}`;
+      }
+      const payload = { 
+        studentId, 
+        teacherName: teacherName?.trim() ?? '', 
+        remark: remarkState.remark,
+        term1: { attendance: getAttendanceStr(remarkState.term1.attendanceAttended, remarkState.term1.attendanceTotal) }, 
+        term2: { attendance: getAttendanceStr(remarkState.term2.attendanceAttended, remarkState.term2.attendanceTotal) }
+      };
       const res = await apiClient.createOrUpdateRemark(payload);
-      setRemarkState((p) => ({ ...p, saving: false, saved: true, error: null, text: res?.data?.text ?? res?.text ?? p.text }));
+      const remarkData = res?.data ?? res ?? {};
+      setRemarkState((p) => ({ 
+        ...p, 
+        saving: false, 
+        saved: true, 
+        error: null, 
+        term1: remarkData.term1 ?? p.term1,
+        term2: remarkData.term2 ?? p.term2
+      }));
     } catch (err: any) {
       setRemarkState((p) => ({ ...p, saving: false, saved: false, error: err?.message ?? 'Failed to save' }));
       throw err;
@@ -281,10 +322,7 @@ export function MarksEntryPage() {
     if (currentStep === 1) return saveAllSubjects();
     if (currentStep === 2) return saveAllCoScholastic();
     if (currentStep === 3) {
-      if (remarkState.text.trim()) {
-        try { await saveRemark(); return true; } catch { return false; }
-      }
-      return true;
+      try { await saveRemark(); return true; } catch { return false; }
     }
     return true;
   }
@@ -608,17 +646,75 @@ export function MarksEntryPage() {
       {/* Remarks — step 3 */}
       {currentStep === 3 && (
         <div className="mt-8 rounded-lg border border-black/10 p-4 bg-white">
-          <h3 className="text-base font-semibold">Class Teacher's Remarks</h3>
-          <p className="text-sm text-black/60 mb-3">Enter remarks that will appear on the report card.</p>
-          <textarea
-            value={remarkState.text}
-            onChange={(e) => updateRemarkField(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-black/15 p-3"
-            placeholder="Write class teacher's remarks here..."
-          />
+          <h3 className="text-base font-semibold mb-1">Attendance &amp; Remarks</h3>
+          <p className="text-sm text-black/60 mb-5">Enter attendance, remarks, and result status for each term.</p>
 
-          <div className="mt-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Term 1 */}
+            <div className="space-y-4">
+              <h4 className="font-medium border-b pb-1">Term 1</h4>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-black/70 font-medium">Attendance</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={remarkState.term1.attendanceAttended}
+                    onChange={(e) => updateRemarkField('term1', 'attendanceAttended', e.target.value)}
+                    className="rounded-md border border-black/15 p-2 w-full text-center"
+                    placeholder="Attended"
+                  />
+                  <span className="text-black/50 font-medium">/</span>
+                  <input
+                    type="text"
+                    value={remarkState.term1.attendanceTotal}
+                    onChange={(e) => updateRemarkField('term1', 'attendanceTotal', e.target.value)}
+                    className="rounded-md border border-black/15 p-2 w-full text-center"
+                    placeholder="Total"
+                  />
+                </div>
+              </label>
+            </div>
+
+            {/* Term 2 */}
+            <div className="space-y-4">
+              <h4 className="font-medium border-b pb-1">Term 2</h4>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-black/70 font-medium">Attendance</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={remarkState.term2.attendanceAttended}
+                    onChange={(e) => updateRemarkField('term2', 'attendanceAttended', e.target.value)}
+                    className="rounded-md border border-black/15 p-2 w-full text-center"
+                    placeholder="Attended"
+                  />
+                  <span className="text-black/50 font-medium">/</span>
+                  <input
+                    type="text"
+                    value={remarkState.term2.attendanceTotal}
+                    onChange={(e) => updateRemarkField('term2', 'attendanceTotal', e.target.value)}
+                    className="rounded-md border border-black/15 p-2 w-full text-center"
+                    placeholder="Total"
+                  />
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-black/70 font-medium">Class Teacher's Remark</span>
+              <textarea
+                value={remarkState.remark}
+                onChange={(e) => setRemarkState(p => ({ ...p, remark: e.target.value, saved: false, error: null }))}
+                rows={3}
+                className="rounded-md border border-black/15 p-2 w-full"
+                placeholder="e.g. Excellent overall performance..."
+              />
+            </label>
+          </div>
+
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
             <div>
               <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
             </div>

@@ -50,8 +50,8 @@ export function calcSubjectResult(
 ): SubjectResult {
   const term1Total = calcTerm1Total(term1Marks);
   const term2Total = calcTerm2Total(term2Marks);
-  const grandTotal = term1Total + term2Total;
-  const maxGrandTotal = calcTerm1Max(term1Max) + calcTerm2Max(term2Max);
+  const grandTotal = (term1Total / 2) + (term2Total / 2);
+  const maxGrandTotal = (calcTerm1Max(term1Max) / 2) + (calcTerm2Max(term2Max) / 2);
   const pct = maxGrandTotal > 0 ? (grandTotal / maxGrandTotal) * 100 : 0;
 
   return {

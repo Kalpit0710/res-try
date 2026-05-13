@@ -115,10 +115,9 @@ export interface OverallResult {
 export type CoScholasticGrade = 'A' | 'B' | 'C' | 'D' | 'E';
 
 export interface CoScholastic {
-  workEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
-  artEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
   healthPE: { term1: CoScholasticGrade; term2: CoScholasticGrade };
-  discipline: { term1: CoScholasticGrade; term2: CoScholasticGrade };
+  artEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
+  workEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
 }
 
 // ── API response wrapper ──────────────────────────────────────────────────────

@@ -3,15 +3,25 @@ import PDFMerger from 'pdf-merger-js';
 import archiver from 'archiver';
 import { generateStudentReportPdf, getReportBrowser } from '../services/report.service';
 import { Student } from '../models/Student';
+import { Class } from '../models/Class';
 
 const BULK_BATCH_SIZE = 4;
 
 // GET /reports/student/:studentId
 export async function getStudentReport(req: Request, res: Response): Promise<void> {
+  const student = await Student.findById(req.params.studentId).lean();
+  let filename = "report-card.pdf";
+  if (student) {
+    const cls = await Class.findById(student.classId).lean();
+    const safeName = student.name.replace(/[^a-z0-9_\-\s]/gi, '_').trim();
+    const safeClass = (cls?.name ?? '').replace(/[^a-z0-9_\-\s]/gi, '_').trim();
+    filename = `${safeName}_${safeClass}.pdf`;
+  }
+
   const pdf = await generateStudentReportPdf(req.params.studentId);
 
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'inline; filename="report-card.pdf"');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
   res.send(pdf);
 }
 

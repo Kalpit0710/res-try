@@ -7,7 +7,7 @@
   <style>
     @page {
       size: A4 portrait;
-      margin: 8mm 8mm 8mm 8mm;
+      margin: 5mm;
     }
 
     * {
@@ -56,22 +56,22 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 32px;
-      padding: 20px 20px;
+      gap: 20px;
+      padding: 8px 16px;
       border-bottom: 2px solid #1a3a5c;
       background: #fff;
     }
 
     .school-logo {
-      width: 98px;
-      height: 98px;
+      width: 75px;
+      height: 75px;
       object-fit: contain;
       flex-shrink: 0;
     }
 
     .logo-placeholder {
-      width: 98px;
-      height: 98px;
+      width: 75px;
+      height: 75px;
       border: 1.5px solid #ccc;
       border-radius: 50%;
       display: flex;
@@ -92,12 +92,12 @@
     }
 
     .school-name {
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 900;
       letter-spacing: 1px;
       color: #1a3a5c;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .progress-badge {
@@ -107,9 +107,9 @@
       font-size: 13px;
       font-weight: 700;
       letter-spacing: 1.5px;
-      padding: 6px 20px;
+      padding: 4px 16px;
       border-radius: 3px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       text-transform: uppercase;
     }
 
@@ -136,7 +136,7 @@
       border-bottom: 1.5px solid #1a3a5c;
       width: 100%;
       padding: 0;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     /* spacing between major sections (tighter to fit single page) */
@@ -174,8 +174,8 @@
       display: grid;
       grid-template-columns: 55% 45%;
       column-gap: 16px;
-      row-gap: 14px;
-      padding: 6px 16px 14px;
+      row-gap: 8px;
+      padding: 4px 16px 8px;
     }
 
     .student-field {
@@ -188,7 +188,7 @@
     .student-field .fl {
       font-weight: 700;
       white-space: nowrap;
-      font-size: 13.5px;
+      font-size: 12.5px;
       letter-spacing: 0.3px;
       color: #111;
     }
@@ -196,14 +196,14 @@
     .student-field .fc {
       text-align: center;
       font-weight: 700;
-      font-size: 13.5px;
+      font-size: 12.5px;
       color: #111;
     }
 
     .student-field .fv {
       display: block;
       width: 100%;
-      font-size: 14.5px;
+      font-size: 13.5px;
       color: #111;
       text-transform: uppercase;
     }
@@ -548,7 +548,7 @@
           <span class="fl">Class</span>
           <span class="fc">:</span>
           <span class="fv b">
-            <%= className %>
+            <%= className.replace(/^class\s*/i, '').trim() %>
           </span>
         </div>
         <div class="student-field">
@@ -599,7 +599,7 @@
             <th colspan="5" class="term-header">TERM - 2</th>
             <th rowspan="3" style="width:5%; background:#e8b84b; font-size:9px; line-height:1.2;">
               Overall<br>Assessment<br><span style="font-size:8.5px; font-weight:700;">Term I &amp; II</span><br><span
-                style="font-size:8px; font-weight:400;">(Out of 200)</span></th>
+                style="font-size:8px; font-weight:400;">(Out of 100)</span></th>
             <th rowspan="3" style="width:4%; background:#e8b84b;">Grade</th>
           </tr>
           <!-- Row 2: Sub-column labels -->
@@ -753,6 +753,7 @@
 
       <!-- ─── CO-SCHOLASTIC AREA ────────────────────────────────────────── -->
       <div class="section-label">Co-Scholastic Area</div>
+      <div style="font-size: 9px; text-align: center; margin-bottom: 6px; font-weight: bold; color: #333;">Assessed on a 3 Points Grading Scale (A, B, C).</div>
       <table class="marks-table">
         <thead>
           <tr>
@@ -778,6 +779,43 @@
         </tbody>
       </table>
 
+      <!-- ─── ATTENDANCE, REMARKS, AND RESULT ───────────────────────────────────── -->
+      <table
+        style="width:100%; border-collapse:collapse; border:1px solid #555; border-top:none; margin-top:0; text-align:center; font-size:10px;">
+        <thead>
+          <tr style="background:#e8b84b; font-weight:700;">
+            <th style="width:15%; padding:4px 6px; border-right:1px solid #555;">Term</th>
+            <th style="width:20%; padding:4px 6px; border-right:1px solid #555;">Attendance</th>
+            <th style="width:40%; padding:4px 6px; border-right:1px solid #555;">Class Teacher's Remark</th>
+            <th style="width:25%; padding:4px 6px;">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top:1px solid #555;">
+            <td style="padding:6px; border-right:1px solid #555; font-weight:bold;">TERM I</td>
+            <td style="padding:6px; border-right:1px solid #555;">
+              <%= remark?.term1?.attendance ?? '' %>
+            </td>
+            <td rowspan="2" style="padding:6px; border-right:1px solid #555; text-align:left; vertical-align:top;">
+              <%= remark?.remark ?? '' %>
+            </td>
+            <td style="padding:6px; font-weight:bold; vertical-align:middle;" rowspan="2">
+              <% if (overall.percentage>= 33) { %>
+                <span style="color:#1a6e1a; font-weight:700;">Promoted to Next Class</span>
+                <% } else { %>
+                  <span style="color:#c0392b; font-weight:700;">FAIL</span>
+                  <% } %>
+            </td>
+          </tr>
+          <tr style="border-top:1px solid #555;">
+            <td style="padding:6px; border-right:1px solid #555; font-weight:bold;">TERM II</td>
+            <td style="padding:6px; border-right:1px solid #555;">
+              <%= remark?.term2?.attendance ?? '' %>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
       <!-- Overall Assessment (Out of 100) moved into scholastic table header -->
 
       <!-- ─── SUMMARY BAR ─────────────────────────────────────────────────────────────────────── -->
@@ -798,28 +836,6 @@
         </tr>
       </table>
 
-      <!-- ─── PROMOTE / REMARKS ──────────────────────────────────────────── -->
-      <div style="border:1px solid #555; border-top:none; padding:4px 8px 3px; font-size:10px;">
-        <span class="b">Result :</span>&nbsp;
-        <% if (overall.percentage>= 33) { %>
-          <span style="color:#1a6e1a; font-weight:700;">Promoted to Next Class</span>
-          <% } else { %>
-            <span style="color:#c0392b; font-weight:700;">Not Promoted</span>
-            <% } %>
-      </div>
-
-      <!-- ─── CLASS TEACHER'S REMARKS ───────────────────────────────────── -->
-      <table style="width:100%; border-collapse:collapse; border:1px solid #555; border-top:none; margin-top:0;">
-        <tr>
-          <td
-            style="width:28%; background:#e8b84b; font-weight:700; font-size:10px; padding:4px 6px; border-right:1px solid #555; vertical-align:top;">
-            Class Teacher's Remarks
-          </td>
-          <td style="padding:6px; height:44px; vertical-align:top;">
-            <%= (remark?.text ?? '' ).trim() %>
-          </td>
-        </tr>
-      </table>
 
       <!-- ─── SIGNATURES ─────────────────────────────────────────────────── -->
       <table class="sig-table" style="border-top: none;">
@@ -842,8 +858,7 @@
       <!-- ─── INSTRUCTIONS ───────────────────────────────────────────────── -->
       <div class="instructions-bar">Instructions</div>
       <div class="instructions-note">
-        Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.<br/>
-        Co-Scholastic activities are assessed on a 3 Points Grading Scale (A, B, C).
+        Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.
       </div>
       <table class="grade-table">
         <colgroup>
