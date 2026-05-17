@@ -183,14 +183,8 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     });
   }
   
-  // Fallback: use first marked teacher's signature if class teacher doesn't have one
-  if (!teacherSignature) {
-    const firstMarkedTeacher = marks.find((m) => Boolean(m.teacherName))?.teacherName?.trim();
-    teacherSignature = branding?.teacherSignatures?.find((s) => {
-      if (!firstMarkedTeacher) return false;
-      return s.teacherId === firstMarkedTeacher || s.teacherName.toLowerCase() === firstMarkedTeacher.toLowerCase();
-    }) ?? branding?.teacherSignatures?.[0];
-  }
+  // Only use the class teacher's signature if they have one uploaded
+  // If no signature exists for the class teacher, leave it blank
 
   const templatePath = path.join(__dirname, '../templates/reportCard.ejs');
   const html = await ejs.renderFile(templatePath, {

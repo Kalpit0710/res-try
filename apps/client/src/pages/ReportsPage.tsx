@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
 import { useDebounce } from '../lib/utils';
 import toast from 'react-hot-toast';
+import { FullScreenLoader } from '../components/FullScreenLoader';
 
 export function ReportsPage() {
   // ── Filter / search state ──────────────────────────────────────────────
@@ -33,6 +34,7 @@ export function ReportsPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [singleDownloadLoading, setSingleDownloadLoading] = useState(false);
 
   // ── Bulk download state ────────────────────────────────────────────────
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -237,6 +239,7 @@ export function ReportsPage() {
   }
 
   async function downloadSingle(studentId: string, name: string, regNo: string) {
+    setSingleDownloadLoading(true);
     try {
       const blob = await apiClient.getStudentReportPdf(studentId);
       const url = URL.createObjectURL(blob);
@@ -247,6 +250,8 @@ export function ReportsPage() {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to download');
+    } finally {
+      setSingleDownloadLoading(false);
     }
   }
 
@@ -284,6 +289,7 @@ export function ReportsPage() {
 
   return (
     <div className="p-6">
+      {(bulkLoading || singleDownloadLoading) && <FullScreenLoader message={bulkProgress || 'Generating...'} />}
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

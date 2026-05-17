@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { FullScreenLoader } from './FullScreenLoader';
+import toast from 'react-hot-toast';
 
 export function BulkUpload({ onClose }: { onClose: () => void }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -42,8 +44,9 @@ export function BulkUpload({ onClose }: { onClose: () => void }) {
       const sel: Record<number, boolean> = {};
       parsed.forEach((r: any, idx: number) => { if (r.__valid) sel[idx] = true; });
       setSelected(sel);
+      toast.success(`Parsed ${parsed.length} row(s)`);
     } catch (err: unknown) {
-      alert((err as Error)?.message ?? 'Parse failed');
+      toast.error((err as Error)?.message ?? 'Parse failed');
     } finally { setParsing(false); }
   }
 
@@ -61,18 +64,22 @@ export function BulkUpload({ onClose }: { onClose: () => void }) {
 
   async function commitSelected() {
     const rowsToCommit = Object.keys(selected).filter(k => selected[Number(k)]).map(k => parsedRows[Number(k)]);
-    if (rowsToCommit.length === 0) return alert('No rows selected');
+    if (rowsToCommit.length === 0) return toast.error('No rows selected');
     setCommitting(true);
     try {
       const res = await apiClient.commitBulkStudents(rowsToCommit);
       setCommitResult(res);
+      toast.success(`Successfully imported students`);
     } catch (err: unknown) {
-      alert((err as Error)?.message ?? 'Commit failed');
+      toast.error((err as Error)?.message ?? 'Commit failed');
     } finally { setCommitting(false); }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      {(parsing || committing) && (
+        <FullScreenLoader message={parsing ? "Parsing file..." : "Importing students..."} />
+      )}
       <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold mb-2">Bulk Upload Students</h3>

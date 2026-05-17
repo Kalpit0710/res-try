@@ -10,9 +10,20 @@ function headers(isJson = true) {
   } as Record<string, string>;
 }
 
+function formatErrorMsg(raw: string) {
+  if (!raw) return 'An unexpected error occurred.';
+  if (raw.toLowerCase().includes('timed out')) return 'The operation timed out. Please try again.';
+  if (raw.toLowerCase().includes('failed to fetch')) return 'Network error. Please check your connection.';
+  if (raw.toLowerCase().includes('networkerror')) return 'Network error. Please check your connection.';
+  return raw;
+}
+
 async function request(path: string, opts?: RequestInit) {
   const res = await fetch(`${API_URL}${path}`, opts);
-  if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(formatErrorMsg(err.message || res.statusText));
+  }
   return res.json().catch(() => null);
 }
 
@@ -60,7 +71,10 @@ export const apiClient = {
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch(`${API_URL}/students/bulk-upload`, { method: 'POST', body: fd, headers: { ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) } });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.json();
   },
   // staged bulk upload: parse (validate) then commit selected rows
@@ -68,13 +82,19 @@ export const apiClient = {
     const fd = new FormData();
     fd.append('file', file);
     const res = await fetch(`${API_URL}/students/bulk-parse`, { method: 'POST', body: fd, headers: { ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) } });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.json();
   },
   commitBulkStudents: async (rows: any[]) => {
     const token = getToken();
     const res = await fetch(`${API_URL}/students/bulk-commit`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ rows }) });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.json();
   },
   // --- Classes ---
@@ -102,7 +122,10 @@ export const apiClient = {
     const res = await fetch(`${API_URL}/reports/student/${studentId}`, {
       headers: headers(false),
     });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.blob();
   },
   bulkDownloadReports: async (studentIds: string[]) => {
@@ -111,7 +134,10 @@ export const apiClient = {
       headers: headers(),
       body: JSON.stringify({ studentIds }),
     });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.blob();
   },
   bulkDownloadReportsPdf: async (studentIds: string[]) => {
@@ -120,7 +146,10 @@ export const apiClient = {
       headers: headers(),
       body: JSON.stringify({ studentIds }),
     });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.blob();
   },
   // --- Settings (branding assets) ---
@@ -137,7 +166,10 @@ export const apiClient = {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
 
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.json();
   },
   uploadTeacherSignature: async (teacherId: string, signature: File) => {
@@ -152,7 +184,10 @@ export const apiClient = {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     });
 
-    if (!res.ok) throw new Error((await res.json().catch(() => ({ message: res.statusText }))).message || res.statusText);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(formatErrorMsg(err.message || res.statusText));
+    }
     return res.json();
   },
   removeBrandingAsset: (assetKey: 'logo' | 'principalSignature') =>

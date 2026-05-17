@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api, ApiError } from '../lib/api';
 import { setToken } from '../lib/auth';
+import { FullScreenLoader } from '../components/FullScreenLoader';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white text-black flex items-center justify-center px-4">
+      {loading && <FullScreenLoader message="Authenticating..." />}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}

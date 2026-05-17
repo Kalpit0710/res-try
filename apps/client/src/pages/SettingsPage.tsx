@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
+import { FullScreenLoader } from '../components/FullScreenLoader';
 
 const LOCK_TYPES = ['system', 'class', 'student', 'teacher'] as const;
 const API_BASE = ((import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/api\/v1\/?$/, '') ?? 'http://localhost:5000').replace(/\/$/, '');
@@ -120,6 +121,9 @@ export function SettingsPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+      {(uploading || teacherUploading || busy) && (
+        <FullScreenLoader message={busy ? "Saving changes..." : "Uploading assets..."} />
+      )}
       <div>
         <h2 className="text-xl font-semibold">Settings</h2>
         <p className="text-sm text-black/60">Manage locks and branding assets used in report PDFs.</p>

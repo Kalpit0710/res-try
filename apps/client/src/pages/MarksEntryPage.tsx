@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 import { extractClassId, isObjectId } from '../lib/utils';
 import toast from 'react-hot-toast';
+import { FullScreenLoader } from '../components/FullScreenLoader';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
 const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education'];
@@ -494,6 +495,7 @@ export function MarksEntryPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
+      {reportLoading && <FullScreenLoader message="Generating Report..." />}
       {/* Header */}
       <div className="mb-6">
         <button onClick={() => navigate(-1)} className="mb-3 text-sm text-orange-600 hover:underline">← Back</button>
