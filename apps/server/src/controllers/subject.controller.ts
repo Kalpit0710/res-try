@@ -1,10 +1,17 @@
 import { Request, Response } from 'express';
 import { Subject } from '../models/Subject';
+import { LowerClassSubject } from '../models/LowerClassSubject';
 
 export async function getSubjects(req: Request, res: Response): Promise<void> {
   const { classId } = req.query;
   const query = classId ? { classId } : {};
-  const subjects = await Subject.find(query).populate('classId', 'name').lean();
+  
+  const [standardSubjects, lowerSubjects] = await Promise.all([
+    Subject.find(query).populate('classId', 'name').lean(),
+    LowerClassSubject.find(query).populate('classId', 'name').lean()
+  ]);
+  
+  const subjects = [...standardSubjects, ...lowerSubjects].sort((a, b) => a.name.localeCompare(b.name));
   res.json({ success: true, data: subjects });
 }
 

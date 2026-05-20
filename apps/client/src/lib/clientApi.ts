@@ -111,6 +111,13 @@ export const apiClient = {
   createSubject: (body: any) => request(`/subjects`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateSubject: (id: string, body: any) => request(`/subjects/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
   deleteSubject: (id: string) => request(`/subjects/${id}`, { method: 'DELETE', headers: headers() }),
+  
+  // --- Lower Class Subjects ---
+  getLowerClassSubjects: (params: { classId?: string } = {}) => request(`/lower-class-subjects${params.classId ? `?classId=${params.classId}` : ''}`, { headers: headers() }),
+  createLowerClassSubject: (body: any) => request(`/lower-class-subjects`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  updateLowerClassSubject: (id: string, body: any) => request(`/lower-class-subjects/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  deleteLowerClassSubject: (id: string) => request(`/lower-class-subjects/${id}`, { method: 'DELETE', headers: headers() }),
+
   // --- Teachers ---
   getTeachers: () => request(`/teachers`, { headers: headers() }),
   getTeacher: (id: string) => request(`/teachers/${id}`, { headers: headers() }),
@@ -219,6 +226,12 @@ export const apiClient = {
   createMarks: (body: any) => request(`/marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateMarks: (id: string, body: any) => request(`/marks/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
   batchSaveMarks: (items: any[]) => request(`/marks/batch`, { method: 'PUT', headers: headers(), body: JSON.stringify({ items }) }),
+  
+  // --- Lower Class Marks ---
+  getLowerClassMarksByStudent: (studentId: string) => request(`/lower-class-marks/student/${studentId}`, { headers: headers() }),
+  upsertLowerClassMarks: (body: any) => request(`/lower-class-marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  batchUpsertLowerClassMarks: (classId: string, marksData: any[]) => request(`/lower-class-marks/bulk`, { method: 'POST', headers: headers(), body: JSON.stringify({ classId, marksData }) }),
+
   // --- Remarks (class teacher) ---
   getRemarkByStudent: (studentId: string) => request(`/remarks/student/${studentId}`, { headers: headers() }),
   createOrUpdateRemark: (body: any) => request(`/remarks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),

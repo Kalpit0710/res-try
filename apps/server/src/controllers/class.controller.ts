@@ -1,10 +1,21 @@
 import { Request, Response } from 'express';
 import { Class } from '../models/Class';
 import { Subject } from '../models/Subject';
+import { LowerClassSubject } from '../models/LowerClassSubject';
 
 export async function getClasses(_req: Request, res: Response): Promise<void> {
   const classes = await Class.find().populate('subjects', 'name').lean();
-  res.json({ success: true, data: classes });
+  const lowerClassSubjects = await LowerClassSubject.find().select('name classId').lean();
+  
+  const mappedClasses = classes.map(cls => {
+    if (cls.reportCardType === 'lowerClass') {
+      const lowerSubjects = lowerClassSubjects.filter(s => String(s.classId) === String(cls._id));
+      cls.subjects = [...(cls.subjects || []), ...lowerSubjects] as any;
+    }
+    return cls;
+  });
+  
+  res.json({ success: true, data: mappedClasses });
 }
 
 export async function getClassById(req: Request, res: Response): Promise<void> {
@@ -58,11 +69,19 @@ export async function addSubjectToClass(req: Request, res: Response): Promise<vo
 }
 
 export async function removeSubjectFromClass(req: Request, res: Response): Promise<void> {
-  const cls = await Class.findByIdAndUpdate(
-    req.params.id,
-    { $pull: { subjects: req.params.subjectId } },
-    { new: true }
-  );
+  const { id, subjectId } = req.params;
+  
+  const cls = await Class.findById(id);
   if (!cls) { res.status(404).json({ success: false, message: 'Class not found' }); return; }
+
+  if (cls.reportCardType === 'lowerClass') {
+    await LowerClassSubject.findByIdAndDelete(subjectId);
+  } else {
+    await Class.findByIdAndUpdate(
+      id,
+      { $pull: { subjects: subjectId } }
+    );
+  }
+
   res.json({ success: true, data: cls });
 }

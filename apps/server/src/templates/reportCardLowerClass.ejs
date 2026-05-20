@@ -1,0 +1,512 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Progress Report</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 5mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      color: #111;
+      background: #fff;
+    }
+
+    .page {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      border: 2px solid #a32a2a;
+      padding: 4px;
+      transform: scale(0.97);
+      transform-origin: top left;
+    }
+
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      padding: 8px 16px;
+      border-bottom: 2px solid #a32a2a;
+      background: #fff;
+    }
+
+    .school-logo {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .header-text {
+      text-align: center;
+      line-height: 1.2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .school-name {
+      font-size: 26px;
+      font-weight: 900;
+      color: #a32a2a;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .progress-badge {
+      display: inline-block;
+      background: #a32a2a;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 16px;
+      border-radius: 3px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .session-line {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .school-address {
+      font-size: 15px;
+      font-weight: 700;
+      color: #a32a2a;
+      margin-bottom: 4px;
+    }
+
+    .section-label {
+      background: #a32a2a;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      text-transform: uppercase;
+    }
+
+    .student-profile {
+      border-bottom: 1.5px solid #a32a2a;
+      width: 100%;
+      margin-bottom: 6px;
+    }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: 55% 45%;
+      column-gap: 16px;
+      row-gap: 8px;
+      padding: 4px 16px 8px;
+    }
+
+    .student-field {
+      display: grid;
+      grid-template-columns: 125px 12px 1fr;
+      align-items: center;
+    }
+
+    .student-field .fl {
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    .student-field .fc {
+      text-align: center;
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    .student-field .fv {
+      font-size: 13.5px;
+      text-transform: uppercase;
+    }
+
+    .adm-row {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 16px 2px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    th, td {
+      border: 1px solid #111;
+      padding: 4px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .marks-table th {
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .marks-table .header-row-1 th:nth-child(1) { background: #e06666; color: white; }
+    .marks-table .header-row-1 th:nth-child(2) { background: #e69138; color: white; }
+    .marks-table .header-row-1 th:nth-child(3) { background: #f1c232; color: white; }
+    .marks-table .header-row-1 th:nth-child(4) { background: #d5a6bd; color: white; }
+    .marks-table .header-row-1 th:nth-child(5) { background: #8e7cc3; color: white; }
+
+    .marks-table .header-row-2 th { background: #fce5cd; }
+
+    .subject-name {
+      font-weight: bold;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: center;
+      white-space: nowrap;
+      letter-spacing: 2px;
+      padding: 10px 4px;
+    }
+    
+    .subject-name-bg-0 { background: #d5a6bd; }
+    .subject-name-bg-1 { background: #ffd966; }
+    .subject-name-bg-2 { background: #e06666; color: white; }
+    .subject-name-bg-3 { background: #9fc5e8; }
+    .subject-name-bg-4 { background: #b6d7a8; }
+    
+    .component-name {
+      text-align: left;
+      padding-left: 8px;
+      background: #d9ead3;
+    }
+
+    .marks-max { background: #fce5cd; color: #a32a2a; font-weight: bold; }
+    .marks-obt { background: #ead1dc; font-weight: bold; }
+
+    .summary-row td { background: #d9ead3; font-weight: bold; text-align: left; padding-left: 8px; }
+    .summary-val { background: #fce5cd; text-align: center !important; color: #a32a2a; font-weight: bold; }
+    .summary-val-obt { background: #ead1dc; text-align: center !important; font-weight: bold; }
+
+    .sig-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .sig-table td {
+      border: 1px solid #111;
+      padding: 10px 6px 6px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      width: 50%;
+      height: 75px;
+      vertical-align: bottom;
+    }
+
+    .sig-img {
+      max-width: 120px;
+      max-height: 36px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 6px;
+    }
+
+    /* ── INSTRUCTIONS ── */
+    .instructions-bar {
+      background: #a32a2a;
+      color: #fff;
+      text-align: center;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      padding: 3px;
+      text-transform: uppercase;
+      border-top: 1.5px solid #a32a2a;
+    }
+
+    .instructions-note {
+      text-align: center;
+      font-size: 10px;
+      padding: 3px 6px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .grade-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      table-layout: fixed;
+    }
+
+    .grade-table th {
+      background: #a32a2a;
+      color: #fff;
+      font-weight: 700;
+      padding: 3px 6px;
+      border: 1px solid #111;
+      text-align: center;
+      font-size: 10px;
+    }
+
+    .grade-table td {
+      border: 1px solid #111;
+      padding: 2px 6px;
+      text-align: center;
+      vertical-align: middle;
+      white-space: normal;
+    }
+
+    .grade-table .range { width: 31%; text-align: center; }
+    .grade-table .grade { width: 19%; font-weight: 700; text-align: center; }
+    .grade-table .grade.long { font-size: 10px; line-height: 1.1; }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">
+      <% if (schoolLogoDataUri) { %>
+        <img src="<%= schoolLogoDataUri %>" alt="Logo" class="school-logo" />
+      <% } else { %>
+        <div class="school-logo" style="border: 1px solid #ccc; display: flex; align-items: center; justify-content: center;">LOGO</div>
+      <% } %>
+      <div class="header-text">
+        <div class="school-name"><%= schoolName %></div>
+        <div class="school-address"> Moh. Ganeshganj, Puranpur (U.P.) </div>
+        <div class="progress-badge">Progress Report</div>
+        <div class="session-line">Academic Session : <%= academicSession %></div>
+      </div>
+    </div>
+
+    <div class="section-label">Student Profile</div>
+    <div class="student-profile">
+      <div class="adm-row">Admn. No. &nbsp;:&nbsp; <span><%= student.regNo %></span></div>
+      <div class="student-grid">
+        <div class="student-field">
+          <span class="fl">Name of Student</span><span class="fc">:</span><span class="fv b"><%= student.name %></span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Class</span><span class="fc">:</span><span class="fv b"><%= className.replace(/^class\s*/i, '').trim() %></span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Mother's Name</span><span class="fc">:</span><span class="fv"><%= student.motherName ?? '—' %></span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Date of Birth</span><span class="fc">:</span><span class="fv"><%= student.dob ? new Date(student.dob).toLocaleDateString('en-GB') : '—' %></span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Father's Name</span><span class="fc">:</span><span class="fv"><%= student.fatherName ?? '—' %></span>
+        </div>
+        <div class="student-field">
+          <span class="fl">Roll No.</span><span class="fc">:</span><span class="fv"><%= student.rollNo ?? '—' %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-bottom: 8px;">Scholastic Area</div>
+
+    <table class="marks-table">
+      <thead>
+        <tr class="header-row-1">
+          <th colspan="2" rowspan="2">SUBJECTS NAME</th>
+          <th colspan="2">HALF YEARLY</th>
+          <th colspan="2">ANNUAL</th>
+          <th colspan="2">GRAND TOTAL</th>
+          <th rowspan="2" style="width: 8%;">GRADE</th>
+        </tr>
+        <tr class="header-row-2">
+          <th style="width: 10%;">Max<br>Marks</th>
+          <th style="width: 10%;">Marks<br>Obtd.</th>
+          <th style="width: 10%;">Max<br>Marks</th>
+          <th style="width: 10%;">Marks<br>Obtd.</th>
+          <th style="width: 10%;">Max<br>Marks</th>
+          <th style="width: 10%;">Marks<br>Obtd.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% subjectResults.forEach((sResult, index) => { %>
+          <% const isSingleRow = sResult.components.length === 0 || (sResult.components.length === 1 && (sResult.components[0].name.toUpperCase() === sResult.subject.name.toUpperCase() || sResult.components[0].name === '-')); %>
+          <% if (!isSingleRow) { %>
+            <% sResult.components.forEach((comp, cIndex) => { %>
+              <tr>
+                <% if (cIndex === 0) { %>
+                  <td rowspan="<%= sResult.components.length %>" class="subject-name subject-name-bg-<%= index % 5 %>" style="width: 5%;">
+                    <%= sResult.subject.name.toUpperCase() %>
+                  </td>
+                <% } %>
+                <td class="component-name"><%= comp.name %></td>
+                <td class="marks-max"><%= comp.maxMarks %></td>
+                <td class="marks-obt"><%= comp.term1Marks %></td>
+                <td class="marks-max"><%= comp.maxMarks %></td>
+                <td class="marks-obt"><%= comp.term2Marks %></td>
+                <td class="marks-max"><%= comp.totalMax %></td>
+                <td class="marks-obt"><%= comp.totalMarks %></td>
+                <% if (cIndex === 0) { %>
+                  <td rowspan="<%= sResult.components.length %>"><%= sResult.grade %></td>
+                <% } %>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <% const singleComp = sResult.components[0]; %>
+            <tr class="summary-row">
+              <td colspan="2"><%= sResult.subject.name.toUpperCase() %></td>
+              <% if (singleComp) { %>
+                <td class="summary-val"><%= singleComp.maxMarks %></td>
+                <td class="summary-val-obt"><%= singleComp.term1Marks %></td>
+                <td class="summary-val"><%= singleComp.maxMarks %></td>
+                <td class="summary-val-obt"><%= singleComp.term2Marks %></td>
+                <td class="summary-val"><%= singleComp.totalMax %></td>
+                <td class="summary-val-obt"><%= singleComp.totalMarks %></td>
+              <% } else { %>
+                <td class="summary-val"><%= sResult.term1SubjectMax %></td>
+                <td class="summary-val-obt"><%= sResult.term1SubjectObtained %></td>
+                <td class="summary-val"><%= sResult.term2SubjectMax %></td>
+                <td class="summary-val-obt"><%= sResult.term2SubjectObtained %></td>
+                <td class="summary-val"><%= sResult.subjectTotalMax %></td>
+                <td class="summary-val-obt"><%= sResult.subjectTotalObtained %></td>
+              <% } %>
+              <td><%= sResult.grade %></td>
+            </tr>
+          <% } %>
+        <% }); %>
+
+        <tr class="summary-row">
+          <td colspan="6" style="text-align: right; padding-right: 15px; font-size: 12px; font-weight: bold;">TOTAL MARKS</td>
+          <td class="summary-val" style="font-size: 12px;"><%= overall.totalMax %></td>
+          <td class="summary-val-obt" style="font-size: 12px;"><%= overall.totalObtained %></td>
+          <td style="background: #d9ead3;"></td>
+        </tr>
+        
+        <tr class="summary-row">
+          <td colspan="6" style="text-align: right; padding-right: 15px; font-size: 12px; font-weight: bold;">PERCENTAGE</td>
+          <td colspan="2" class="summary-val-obt" style="font-size: 12px; text-align: center;"><%= overall.percentage %> %</td>
+          <td style="font-size: 12px; font-weight: bold; background: #d9ead3; text-align: center;"><%= overall.overallGrade %></td>
+        </tr>
+      </tbody>
+    </table>
+
+          <!-- ─── ATTENDANCE, REMARKS, AND RESULT ───────────────────────────────────── -->
+      <table style="width:100%; border-collapse:collapse; border:1px solid #111; border-top:none; margin-top:0; text-align:center; font-size:11px;">
+        <thead>
+          <tr style="background:#a32a2a; color:#fff; font-weight:700;">
+            <th style="width:15%; padding:4px 6px; border-right:1px solid #111;"></th>
+            <th style="width:20%; padding:4px 6px; border-right:1px solid #111;">Attendance</th>
+            <th style="width:40%; padding:4px 6px; border-right:1px solid #111;">Class Teacher's Remark</th>
+            <th style="width:25%; padding:4px 6px;">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top:1px solid #111;">
+            <td style="padding:6px; border-right:1px solid #111; font-weight:bold;">TERM 1</td>
+            <td style="padding:6px; border-right:1px solid #111;">
+              <%= remark?.term1?.attendance ?? '' %>
+            </td>
+            <td rowspan="2" style="padding:6px; border-right:1px solid #111; text-align:left; vertical-align:top;">
+              <%= remark?.remark ?? '' %>
+            </td>
+            <td style="padding:6px; font-weight:bold; vertical-align:middle;" rowspan="2">
+              <% if (overall.percentage>= 33) { %>
+                <span style="color:#1a6e1a; font-weight:700;">Promoted to Next Class</span>
+              <% } else { %>
+                <span style="color:#c0392b; font-weight:700;">FAIL</span>
+              <% } %>
+            </td>
+          </tr>
+          <tr style="border-top:1px solid #111;">
+            <td style="padding:6px; border-right:1px solid #111; font-weight:bold;">TERM 2</td>
+            <td style="padding:6px; border-right:1px solid #111;">
+              <%= remark?.term2?.attendance ?? '' %>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      
+
+      <!-- ─── SIGNATURES ─────────────────────────────────────────────────── -->
+      <table class="sig-table" style="border-top: none;">
+        <tr>
+          <td>
+            <% if (teacherSignatureDataUri) { %>
+              <img src="<%= teacherSignatureDataUri %>" alt="Teacher Sig" class="sig-img" />
+            <% } %>
+            <div>Signature of Class Teacher</div>
+          </td>
+          <td>
+            <% if (principalSignatureDataUri) { %>
+              <img src="<%= principalSignatureDataUri %>" alt="Principal Sig" class="sig-img" />
+            <% } %>
+            <div>Signature of Principal</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- ─── INSTRUCTIONS ───────────────────────────────────────────────── -->
+      <div class="instructions-bar">Instructions</div>
+      <div class="instructions-note">
+        Grading scale for scholastic areas: Grades are awarded on an 8-point grading scale as follows.
+      </div>
+      <table class="grade-table">
+        <colgroup>
+          <col style="width:31%" />
+          <col style="width:19%" />
+          <col style="width:31%" />
+          <col style="width:19%" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Marks Range</th>
+            <th>Grade</th>
+            <th>Marks Range</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="range">91 – 100</td>
+            <td class="grade">A1</td>
+            <td class="range">51 – 60</td>
+            <td class="grade">C1</td>
+          </tr>
+          <tr>
+            <td class="range">81 – 90</td>
+            <td class="grade">A2</td>
+            <td class="range">41 – 50</td>
+            <td class="grade">C2</td>
+          </tr>
+          <tr>
+            <td class="range">71 – 80</td>
+            <td class="grade">B1</td>
+            <td class="range">33 – 40</td>
+            <td class="grade">D</td>
+          </tr>
+          <tr>
+            <td class="range">61 – 70</td>
+            <td class="grade">B2</td>
+            <td class="range">32 &amp; Below</td>
+            <td class="grade long">E (Need Improvement)</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+</body>
+</html>

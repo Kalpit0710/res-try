@@ -15,11 +15,14 @@ interface TermMarks {
   subEnrichment?: number | '';
   halfYearlyExam?: number | '';
   yearlyExam?: number | '';
+  [key: string]: number | '' | undefined;
 }
 
 interface SubjectMarksState {
   subjectId: string;
   subjectName: string;
+  isLowerClass?: boolean;
+  components?: any[];
   maxMarks: {
     term1: { periodicTest: number; notebook: number; subEnrichment: number; halfYearlyExam: number };
     term2: { periodicTest: number; notebook: number; subEnrichment: number; yearlyExam: number };
@@ -155,15 +158,42 @@ export function MarksEntryPage() {
     Promise.all([
       apiClient.publicGetSubjects({ classId }),
       apiClient.getMarks({ studentId }),
+      apiClient.getLowerClassMarksByStudent(studentId),
       apiClient.getCoScholasticMarksByStudent(studentId),
       apiClient.getRemarkByStudent(studentId),
     ])
-      .then(([subjectsRes, marksRes, coScholasticRes, remarkRes]) => {
+      .then(([subjectsRes, marksRes, lowerMarksRes, coScholasticRes, remarkRes]) => {
         const subjects: any[] = subjectsRes.data ?? subjectsRes;
         const marks: any[] = marksRes.data ?? marksRes;
+        const lowerMarks: any[] = lowerMarksRes.data ?? lowerMarksRes;
         const coScholasticMarks: any[] = coScholasticRes.data ?? coScholasticRes;
 
         const states: SubjectMarksState[] = subjects.map((sub) => {
+          if (sub.components) {
+            const existing = lowerMarks.find((m) => (m.subjectId?._id ?? m.subjectId) === sub._id);
+            const term1: any = {};
+            const term2: any = {};
+            sub.components.forEach((c: any) => {
+              const t1 = existing?.term1Marks?.find((x: any) => x.name === c.name);
+              const t2 = existing?.term2Marks?.find((x: any) => x.name === c.name);
+              term1[c.name] = numOrEmpty(t1?.marksObtained);
+              term2[c.name] = numOrEmpty(t2?.marksObtained);
+            });
+            return {
+              isLowerClass: true,
+              subjectId: sub._id,
+              subjectName: sub.name,
+              maxMarks: {} as any,
+              components: sub.components,
+              existingId: existing?._id,
+              term1,
+              term2,
+              saving: false,
+              saved: false,
+              error: null,
+            };
+          }
+
           const existing = marks.find(
             (m) =>
               (m.subjectId?._id ?? m.subjectId) === sub._id
@@ -275,7 +305,10 @@ export function MarksEntryPage() {
       return result;
     }
 
-    const items = subjectStates.map((s) => ({
+    const standardStates = subjectStates.filter(s => !s.isLowerClass);
+    const lowerStates = subjectStates.filter(s => s.isLowerClass);
+
+    const standardItems = standardStates.map((s) => ({
       studentId,
       subjectId: s.subjectId,
       teacherName: teacherName.trim(),
@@ -283,12 +316,31 @@ export function MarksEntryPage() {
       term2: clean(s.term2),
     }));
 
+    const lowerItems = lowerStates.map(s => {
+       const term1Marks = Object.entries(s.term1).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
+       const term2Marks = Object.entries(s.term2).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
+       return {
+          studentId,
+          subjectId: s.subjectId,
+          teacherName: teacherName.trim(),
+          term1Marks,
+          term2Marks
+       };
+    });
+
     // Mark all as saving
     setSubjectStates((prev) => prev.map((s) => ({ ...s, saving: true, error: null })));
 
     try {
-      const res = await apiClient.batchSaveMarks(items);
-      const results: Array<{ subjectId: string; success: boolean; message?: string }> = res.data ?? [];
+      let results: Array<{ subjectId: string; success: boolean; message?: string }> = [];
+      if (standardItems.length > 0) {
+        const res = await apiClient.batchSaveMarks(standardItems);
+        results = [...results, ...(res.data ?? [])];
+      }
+      if (lowerItems.length > 0) {
+        const res = await apiClient.batchUpsertLowerClassMarks(classId, lowerItems);
+        results = [...results, ...(res.data ?? [])];
+      }
 
       setSubjectStates((prev) =>
         prev.map((s) => {
@@ -353,23 +405,6 @@ export function MarksEntryPage() {
     }
     const s = subjectStates[idx];
 
-    // Build term objects with only numeric values
-    function clean(obj: TermMarks) {
-      const result: Record<string, number> = {};
-      for (const [k, v] of Object.entries(obj)) {
-        if (v !== '' && v !== undefined && v !== null) result[k] = Number(v);
-      }
-      return result;
-    }
-
-    const body = {
-      studentId,
-      subjectId: s.subjectId,
-      teacherName: teacherName.trim(),
-      term1: clean(s.term1),
-      term2: clean(s.term2),
-    };
-
     setSubjectStates((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], saving: true, error: null };
@@ -378,14 +413,43 @@ export function MarksEntryPage() {
 
     try {
       let result: any;
-      if (s.existingId) {
-        result = await apiClient.updateMarks(s.existingId, {
-          teacherName: body.teacherName,
-          term1: body.term1,
-          term2: body.term2,
-        });
+      if (s.isLowerClass) {
+        const term1Marks = Object.entries(s.term1).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
+        const term2Marks = Object.entries(s.term2).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
+        const body = {
+          studentId,
+          subjectId: s.subjectId,
+          teacherName: teacherName.trim(),
+          term1Marks,
+          term2Marks
+        };
+        result = await apiClient.upsertLowerClassMarks(body);
       } else {
-        result = await apiClient.createMarks(body);
+        // Build term objects with only numeric values
+        function clean(obj: TermMarks) {
+          const result: Record<string, number> = {};
+          for (const [k, v] of Object.entries(obj)) {
+            if (v !== '' && v !== undefined && v !== null) result[k] = Number(v);
+          }
+          return result;
+        }
+
+        const body = {
+          studentId,
+          subjectId: s.subjectId,
+          teacherName: teacherName.trim(),
+          term1: clean(s.term1),
+          term2: clean(s.term2),
+        };
+        if (s.existingId) {
+          result = await apiClient.updateMarks(s.existingId, {
+            teacherName: body.teacherName,
+            term1: body.term1,
+            term2: body.term2,
+          });
+        } else {
+          result = await apiClient.createMarks(body);
+        }
       }
       setSubjectStates((prev) => {
         const next = [...prev];
@@ -611,12 +675,21 @@ export function MarksEntryPage() {
         <div className="mt-6 space-y-4">
           <h3 className="text-base font-semibold">Scholastic Marks</h3>
           {subjectStates.map((s, idx) => (
-            <SubjectCard
-              key={s.subjectId}
-              state={s}
-              onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
-              onSave={() => saveSubject(idx)}
-            />
+            s.isLowerClass ? (
+              <LowerClassSubjectCard
+                key={s.subjectId}
+                state={s}
+                onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
+                onSave={() => saveSubject(idx)}
+              />
+            ) : (
+              <SubjectCard
+                key={s.subjectId}
+                state={s}
+                onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
+                onSave={() => saveSubject(idx)}
+              />
+            )
           ))}
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
@@ -983,5 +1056,91 @@ function StepDot({ step, current, children, onClick }: { step: number; current: 
       ].join(' ')}>{step}</div>
       <div className="text-sm">{children}</div>
     </button>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// LowerClassSubjectCard component
+// ────────────────────────────────────────────────────────────────────────────
+function LowerClassSubjectCard({
+  state,
+  onFieldChange,
+  onSave,
+}: {
+  state: SubjectMarksState;
+  onFieldChange: (term: 'term1' | 'term2', field: string, val: string) => void;
+  onSave: () => void;
+}) {
+  const { subjectName, components, term1, term2, saving, saved, error } = state;
+
+  return (
+    <div className="rounded-lg border border-black/10 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-black/8 bg-black/[0.02]">
+        <div className="font-semibold text-sm">{subjectName} <span className="ml-2 text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">Component-based</span></div>
+        <div className="flex items-center gap-3">
+          {saved && !saving && (
+            <span className="text-xs text-green-600 font-medium">✓ Saved</span>
+          )}
+          {error && (
+            <span className="text-xs text-red-600 font-medium">{error}</span>
+          )}
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="rounded-md bg-orange-500 text-white px-4 py-1.5 text-sm disabled:opacity-60 hover:bg-orange-600 transition-colors"
+          >
+            {saving ? 'Saving…' : state.existingId ? 'Update' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-black/8">
+        <div className="p-4">
+          <div className="text-xs font-semibold text-black/50 uppercase tracking-wider mb-3">
+            Term 1
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {components && components.length > 0 ? components.map((c) => (
+              <MarksInput
+                key={c.name}
+                label={c.name === '-' ? 'Marks' : c.name}
+                max={c.maxMarks > 0 ? c.maxMarks : undefined}
+                value={term1[c.name] ?? ''}
+                onChange={(v) => onFieldChange('term1', c.name, v)}
+              />
+            )) : (
+              <MarksInput
+                label="Total Marks"
+                value={term1['-'] ?? ''}
+                onChange={(v) => onFieldChange('term1', '-', v)}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className="text-xs font-semibold text-black/50 uppercase tracking-wider mb-3">
+            Term 2
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {components && components.length > 0 ? components.map((c) => (
+              <MarksInput
+                key={c.name}
+                label={c.name === '-' ? 'Marks' : c.name}
+                max={c.maxMarks > 0 ? c.maxMarks : undefined}
+                value={term2[c.name] ?? ''}
+                onChange={(v) => onFieldChange('term2', c.name, v)}
+              />
+            )) : (
+              <MarksInput
+                label="Total Marks"
+                value={term2['-'] ?? ''}
+                onChange={(v) => onFieldChange('term2', '-', v)}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

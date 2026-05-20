@@ -4,6 +4,7 @@ import { Student } from '../models/Student';
 import { Subject } from '../models/Subject';
 import { Teacher } from '../models/Teacher';
 import { Types } from 'mongoose';
+import { LowerClassSubject } from '../models/LowerClassSubject';
 
 export async function getPublicClasses(_req: Request, res: Response): Promise<void> {
   const classes = await Class.find().sort({ name: 1 }).lean();
@@ -36,7 +37,11 @@ export async function getPublicSubjects(req: Request, res: Response): Promise<vo
   const { classId } = req.query as Record<string, string>;
 
   if (!classId) {
-    const subjects = await Subject.find().sort({ name: 1 }).lean();
+    const [standardSubjects, lowerSubjects] = await Promise.all([
+      Subject.find().sort({ name: 1 }).lean(),
+      LowerClassSubject.find().sort({ order: 1, name: 1 }).lean()
+    ]);
+    const subjects = [...standardSubjects, ...lowerSubjects].sort((a, b) => a.name.localeCompare(b.name));
     res.json({ success: true, data: subjects });
     return;
   }
@@ -46,10 +51,15 @@ export async function getPublicSubjects(req: Request, res: Response): Promise<vo
     return;
   }
 
-  const [directSubjects, cls] = await Promise.all([
-    Subject.find({ classId }).sort({ name: 1 }).lean(),
-    Class.findById(classId).select('subjects').lean(),
-  ]);
+  const cls = await Class.findById(classId).select('subjects reportCardType').lean();
+  
+  if (cls?.reportCardType === 'lowerClass') {
+    const subjects = await LowerClassSubject.find({ classId }).sort({ order: 1, name: 1 }).lean();
+    res.json({ success: true, data: subjects });
+    return;
+  }
+
+  const directSubjects = await Subject.find({ classId }).sort({ name: 1 }).lean();
 
   if (!cls?.subjects?.length) {
     res.json({ success: true, data: directSubjects });

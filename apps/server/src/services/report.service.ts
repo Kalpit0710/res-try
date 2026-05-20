@@ -10,6 +10,8 @@ import { Marks } from '../models/Marks';
 import { CoScholasticMarks } from '../models/CoScholasticMarks';
 import { Remark } from '../models/Remarks';
 import { Teacher } from '../models/Teacher';
+import { LowerClassSubject } from '../models/LowerClassSubject';
+import { LowerClassMarks } from '../models/LowerClassMarks';
 import { calcOverallResult, calcSubjectResult } from '@srms/shared';
 
 type BrowserInstance = Awaited<ReturnType<typeof puppeteer.launch>>;
@@ -101,6 +103,124 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
   const cls = await Class.findById(student.classId).lean();
   if (!cls) throw new Error('Class not found');
 
+  const branding = await Branding.findOne({ key: 'singleton' }).lean();
+  const classTeacher = await Teacher.findOne({ classId: cls._id }).lean();
+  let teacherSignature = undefined;
+  if (classTeacher) {
+    teacherSignature = branding?.teacherSignatures?.find((s) => {
+      return s.teacherId === classTeacher._id.toString() || 
+             s.teacherName.toLowerCase() === classTeacher.name.toLowerCase();
+    });
+  }
+
+  const getGrade = (percentage: number) => {
+    if (percentage >= 91) return 'A1';
+    if (percentage >= 81) return 'A2';
+    if (percentage >= 71) return 'B1';
+    if (percentage >= 61) return 'B2';
+    if (percentage >= 51) return 'C1';
+    if (percentage >= 41) return 'C2';
+    if (percentage >= 33) return 'D';
+    return 'E';
+  };
+
+  if (cls.reportCardType === 'lowerClass') {
+    const subjects = await LowerClassSubject.find({ classId: cls._id }).sort({ order: 1 }).lean();
+    const marks = await LowerClassMarks.find({ studentId: student._id }).lean();
+    const marksMap = new Map<string, any>(marks.map(m => [m.subjectId.toString(), m]));
+
+    let grandTotalMax = 0;
+    let grandTotalObtained = 0;
+
+    const subjectResults = subjects.map(s => {
+      const m = marksMap.get(s._id.toString());
+      
+      let term1SubjectMax = 0;
+      let term1SubjectObtained = 0;
+      let term2SubjectMax = 0;
+      let term2SubjectObtained = 0;
+
+      const components = s.components.map(comp => {
+        const t1Marks = m?.term1?.[comp.name] ?? 0;
+        const t2Marks = m?.term2?.[comp.name] ?? 0;
+
+        term1SubjectMax += comp.maxMarks;
+        term1SubjectObtained += t1Marks;
+        term2SubjectMax += comp.maxMarks;
+        term2SubjectObtained += t2Marks;
+
+        return {
+          name: comp.name,
+          maxMarks: comp.maxMarks,
+          term1Marks: t1Marks,
+          term2Marks: t2Marks,
+          totalMax: comp.maxMarks * 2,
+          totalMarks: t1Marks + t2Marks,
+        };
+      });
+
+      const subjectTotalMax = term1SubjectMax + term2SubjectMax;
+      const subjectTotalObtained = term1SubjectObtained + term2SubjectObtained;
+      
+      grandTotalMax += subjectTotalMax;
+      grandTotalObtained += subjectTotalObtained;
+
+      const percentage = subjectTotalMax > 0 ? (subjectTotalObtained / subjectTotalMax) * 100 : 0;
+
+      return {
+        subject: s,
+        components,
+        term1SubjectMax,
+        term1SubjectObtained,
+        term2SubjectMax,
+        term2SubjectObtained,
+        subjectTotalMax,
+        subjectTotalObtained,
+        grade: getGrade(percentage),
+      };
+    });
+
+    const overallPercentage = grandTotalMax > 0 ? (grandTotalObtained / grandTotalMax) * 100 : 0;
+    const overall = {
+      totalMax: grandTotalMax,
+      totalObtained: grandTotalObtained,
+      percentage: overallPercentage.toFixed(2),
+      overallGrade: getGrade(overallPercentage),
+    };
+
+    const templatePath = path.join(__dirname, '../templates/reportCardLowerClass.ejs');
+    const html = await ejs.renderFile(templatePath, {
+      schoolName: process.env.SCHOOL_NAME ?? 'School Name',
+      academicSession: process.env.ACADEMIC_SESSION ?? '2025-26',
+      student,
+      className: cls.name,
+      subjectResults,
+      overall,
+      schoolLogoDataUri: resolveAssetDataUri(branding?.logoUrl),
+      principalSignatureDataUri: resolveAssetDataUri(branding?.principalSignatureUrl),
+      teacherSignatureDataUri: resolveAssetDataUri(teacherSignature?.signatureUrl),
+      remark: (await Remark.findOne({ studentId: student._id }).lean()) ?? null,
+      generatedAt: new Date(),
+    });
+
+    const activeBrowser = browser ?? await getReportBrowser();
+    const page = await activeBrowser.newPage();
+    try {
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      const pdf = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' },
+        preferCSSPageSize: true,
+      });
+
+      return Buffer.from(pdf);
+    } finally {
+      await page.close().catch(() => undefined);
+    }
+  }
+
   const subjects = await Subject.find({ classId: cls._id }).lean();
   
   const SUBJECT_ORDER = [
@@ -169,19 +289,7 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
       }))
   );
 
-  const branding = await Branding.findOne({ key: 'singleton' }).lean();
-  
-  // Fetch the teacher linked to this class
-  const classTeacher = await Teacher.findOne({ classId: cls._id }).lean();
-  
-  // Find the teacher's signature from branding
-  let teacherSignature = undefined;
-  if (classTeacher) {
-    teacherSignature = branding?.teacherSignatures?.find((s) => {
-      return s.teacherId === classTeacher._id.toString() || 
-             s.teacherName.toLowerCase() === classTeacher.name.toLowerCase();
-    });
-  }
+  // Teacher signature logic has been moved up
   
   // Only use the class teacher's signature if they have one uploaded
   // If no signature exists for the class teacher, leave it blank

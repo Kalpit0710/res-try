@@ -28,9 +28,10 @@ export function SubjectsPage() {
     return dispose;
   }, []);
 
-  async function remove(id: string) {
+  async function remove(id: string, isLowerClass: boolean) {
     if (!confirm('Delete subject?')) return;
-    await apiClient.deleteSubject(id);
+    if (isLowerClass) await apiClient.deleteLowerClassSubject(id);
+    else await apiClient.deleteSubject(id);
     await load();
     emitDataChange({ type: 'subjects' });
   }
@@ -103,12 +104,20 @@ export function SubjectsPage() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                       <div>
                         <div className="font-semibold">{s.name} <span className="text-sm text-black/60">({subjectClassName(s)})</span></div>
-                        <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
-                        <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                        {s.components ? (
+                          <div className="text-sm text-black/60 mt-1">
+                            Components: {s.components.length > 0 ? s.components.map((c: any) => `${c.name} (${c.maxMarks})`).join(', ') : 'None'}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
+                            <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                          </>
+                        )}
                       </div>
                       <div className="flex flex-wrap gap-2 shrink-0">
                         <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
-                        <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
+                        <button onClick={() => remove(s._id, !!s.components)} className="text-red-600">Delete</button>
                       </div>
                     </div>
                   </div>
@@ -133,12 +142,20 @@ export function SubjectsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <div>
                       <div className="font-semibold">{s.name} <span className="text-sm text-black/60">(—)</span></div>
-                      <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
-                      <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                      {s.components ? (
+                        <div className="text-sm text-black/60 mt-1">
+                          Components: {s.components.length > 0 ? s.components.map((c: any) => `${c.name} (${c.maxMarks})`).join(', ') : 'None'}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-sm text-black/60">Max T1: {s.maxMarks?.term1 && Object.values(s.maxMarks.term1).join('/')}</div>
+                          <div className="text-sm text-black/60">Max T2: {s.maxMarks?.term2 && Object.values(s.maxMarks.term2).join('/')}</div>
+                        </>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
                       <button onClick={() => setEditing(s)} className="text-orange-600">Edit</button>
-                      <button onClick={() => remove(s._id)} className="text-red-600">Delete</button>
+                      <button onClick={() => remove(s._id, !!s.components)} className="text-red-600">Delete</button>
                     </div>
                   </div>
                 </div>
@@ -158,13 +175,24 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
   const [classId, setClassId] = useState(subject.classId?._id ?? subject.classId ?? '');
   const [maxT1, setMaxT1] = useState({ periodicTest: subject.maxMarks?.term1?.periodicTest ?? 10, notebook: subject.maxMarks?.term1?.notebook ?? 5, subEnrichment: subject.maxMarks?.term1?.subEnrichment ?? 5, halfYearlyExam: subject.maxMarks?.term1?.halfYearlyExam ?? 30 });
   const [maxT2, setMaxT2] = useState({ periodicTest: subject.maxMarks?.term2?.periodicTest ?? 10, notebook: subject.maxMarks?.term2?.notebook ?? 5, subEnrichment: subject.maxMarks?.term2?.subEnrichment ?? 5, yearlyExam: subject.maxMarks?.term2?.yearlyExam ?? 30 });
+  const [components, setComponents] = useState<{name: string, maxMarks: number}[]>(subject.components ?? []);
   const [loading, setLoading] = useState(false);
+
+  const selectedClass = classes.find(c => c._id === classId);
+  const isLowerClass = selectedClass?.reportCardType === 'lowerClass';
 
   async function save() {
     setLoading(true);
     try {
-      const body = { name, classId, maxMarks: { term1: maxT1, term2: maxT2 } };
-      if (subject && subject._id) await apiClient.updateSubject(subject._id, body); else await apiClient.createSubject(body);
+      if (isLowerClass) {
+        const body = { name, classId, components };
+        if (subject && subject._id) await apiClient.updateLowerClassSubject(subject._id, body); 
+        else await apiClient.createLowerClassSubject(body);
+      } else {
+        const body = { name, classId, maxMarks: { term1: maxT1, term2: maxT2 } };
+        if (subject && subject._id) await apiClient.updateSubject(subject._id, body); 
+        else await apiClient.createSubject(body);
+      }
       onClose();
     } catch (err: unknown) { alert((err as Error)?.message ?? 'Failed'); } finally { setLoading(false); }
   }
@@ -187,50 +215,82 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
           </label>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <div className="font-semibold">Term 1 Max Marks</div>
-            <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Periodic Test</span>
-                <input type="number" value={maxT1.periodicTest} onChange={e=>setMaxT1(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Notebook</span>
-                <input type="number" value={maxT1.notebook} onChange={e=>setMaxT1(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Sub Enrichment</span>
-                <input type="number" value={maxT1.subEnrichment} onChange={e=>setMaxT1(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Half Yearly Exam</span>
-                <input type="number" value={maxT1.halfYearlyExam} onChange={e=>setMaxT1(s=>({...s, halfYearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
+        {isLowerClass ? (
+          <div className="mt-4 border border-black/10 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-semibold">Components</div>
+              <button 
+                onClick={() => setComponents([...components, { name: '', maxMarks: 0 }])}
+                className="text-xs bg-black/5 hover:bg-black/10 px-2 py-1 rounded"
+              >
+                + Add Component
+              </button>
+            </div>
+            {components.length === 0 && (
+              <div className="text-sm text-black/50 mb-3">No components added. Subject will have a single "Total Marks" field.</div>
+            )}
+            <div className="space-y-3">
+              {components.map((c, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <label className="flex-1 flex flex-col gap-1 text-sm font-medium text-black/80">
+                    <span className="sr-only">Name</span>
+                    <input value={c.name} onChange={e => { const copy = [...components]; copy[i].name = e.target.value; setComponents(copy); }} placeholder="e.g. Written" className="border px-2 py-2 rounded font-normal w-full" />
+                  </label>
+                  <label className="w-24 flex flex-col gap-1 text-sm font-medium text-black/80">
+                    <span className="sr-only">Max Marks</span>
+                    <input type="number" value={c.maxMarks} onChange={e => { const copy = [...components]; copy[i].maxMarks = Number(e.target.value); setComponents(copy); }} placeholder="Max" className="border px-2 py-2 rounded font-normal w-full" />
+                  </label>
+                  <button onClick={() => setComponents(components.filter((_, idx) => idx !== i))} className="text-red-500 p-2 mt-0.5 hover:bg-red-50 rounded">×</button>
+                </div>
+              ))}
             </div>
           </div>
-          <div>
-            <div className="font-semibold">Term 2 Max Marks</div>
-            <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Periodic Test</span>
-                <input type="number" value={maxT2.periodicTest} onChange={e=>setMaxT2(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Notebook</span>
-                <input type="number" value={maxT2.notebook} onChange={e=>setMaxT2(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Sub Enrichment</span>
-                <input type="number" value={maxT2.subEnrichment} onChange={e=>setMaxT2(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
-                <span>Yearly Exam</span>
-                <input type="number" value={maxT2.yearlyExam} onChange={e=>setMaxT2(s=>({...s, yearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
-              </label>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <div className="font-semibold">Term 1 Max Marks</div>
+              <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Periodic Test</span>
+                  <input type="number" value={maxT1.periodicTest} onChange={e=>setMaxT1(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Notebook</span>
+                  <input type="number" value={maxT1.notebook} onChange={e=>setMaxT1(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Sub Enrichment</span>
+                  <input type="number" value={maxT1.subEnrichment} onChange={e=>setMaxT1(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Half Yearly Exam</span>
+                  <input type="number" value={maxT1.halfYearlyExam} onChange={e=>setMaxT1(s=>({...s, halfYearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+              </div>
+            </div>
+            <div>
+              <div className="font-semibold">Term 2 Max Marks</div>
+              <div className="grid grid-cols-1 gap-2 mt-2 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Periodic Test</span>
+                  <input type="number" value={maxT2.periodicTest} onChange={e=>setMaxT2(s=>({...s, periodicTest: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Notebook</span>
+                  <input type="number" value={maxT2.notebook} onChange={e=>setMaxT2(s=>({...s, notebook: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Sub Enrichment</span>
+                  <input type="number" value={maxT2.subEnrichment} onChange={e=>setMaxT2(s=>({...s, subEnrichment: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-black/80">
+                  <span>Yearly Exam</span>
+                  <input type="number" value={maxT2.yearlyExam} onChange={e=>setMaxT2(s=>({...s, yearlyExam: Number(e.target.value)}))} className="border px-2 py-2 rounded font-normal" />
+                </label>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>

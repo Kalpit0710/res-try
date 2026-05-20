@@ -24,6 +24,8 @@ import brandingRoutes from './routes/branding.routes';
 import publicRoutes from './routes/public.routes';
 import coScholasticMarksRoutes from './routes/coScholasticMarks.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import lowerClassSubjectRoutes from './routes/lowerClassSubject.routes';
+import lowerClassMarksRoutes from './routes/lowerClassMarks.routes';
 
 dotenv.config();
 
@@ -73,6 +75,8 @@ app.use(`${API}/classes`, classRoutes);
 app.use(`${API}/subjects`, subjectRoutes);
 app.use(`${API}/teachers`, teacherRoutes);
 app.use(`${API}/marks`, marksRoutes);
+app.use(`${API}/lower-class-subjects`, lowerClassSubjectRoutes);
+app.use(`${API}/lower-class-marks`, lowerClassMarksRoutes);
 app.use(`${API}/co-scholastic-marks`, coScholasticMarksRoutes);
 app.use(`${API}/remarks`, remarksRoutes);
 app.use(`${API}/reports`, reportRoutes);
