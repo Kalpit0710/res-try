@@ -27,7 +27,7 @@ jobs:
         run: npm run build
 
   deploy-client:
-    name: Deploy Frontend (Vercel CLI)
+    name: Deploy Frontend
     runs-on: ubuntu-latest
     needs: validate-and-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -55,7 +55,7 @@ jobs:
           vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
 
   deploy-backend:
-    name: Deploy Backend (Render API)
+    name: Deploy Backend
     runs-on: ubuntu-latest
     needs: validate-and-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

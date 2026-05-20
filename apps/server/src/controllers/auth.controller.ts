@@ -15,10 +15,18 @@ async function getHashedPassword(): Promise<string> {
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
-  const { username, password } = req.body as { username: string; password: string };
+  let username = '';
+  let password = '';
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Basic ')) {
+    const base64Credentials = authHeader.substring(6);
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+    [username, password] = credentials.split(':');
+  }
 
   if (!username || !password) {
-    res.status(400).json({ success: false, message: 'Username and password are required' });
+    res.status(400).json({ success: false, message: 'Username and password must be provided via Basic Authentication' });
     return;
   }
 
@@ -27,7 +35,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   const validPass = await bcrypt.compare(password, hashed);
 
   if (!validUser || !validPass) {
-    res.status(200).json({ success: false, message: 'Invalid username or password' });
+    res.status(401).json({ success: false, message: 'Invalid username or password' });
     return;
   }
 
