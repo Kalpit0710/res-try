@@ -1,6 +1,6 @@
 import path from 'path';
 import ejs from 'ejs';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import fs from 'fs';
 import { Branding } from '../models/Branding';
 import { Student } from '../models/Student';
@@ -37,35 +37,17 @@ function resolveAssetDataUri(value?: string): string | null {
   return `data:${mime};base64,${bytes.toString('base64')}`;
 }
 
-function resolveBrowserExecutablePath(): string {
-  const candidates = [
-    process.env.PUPPETEER_EXECUTABLE_PATH?.trim(),
-    '/usr/bin/chromium-browser',
-    '/usr/bin/chromium',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/microsoft-edge',
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
-    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-  ].filter((candidate): candidate is string => Boolean(candidate));
+export async function launchReportBrowser(): Promise<BrowserInstance> {
+  const options: puppeteer.PuppeteerLaunchOptions = {
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  };
 
-  for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+    options.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
   }
 
-  throw new Error(
-    'No browser executable found. Set PUPPETEER_EXECUTABLE_PATH to a Chrome/Edge executable path.'
-  );
-}
-
-export async function launchReportBrowser(): Promise<BrowserInstance> {
-  return puppeteer.launch({
-    headless: true,
-    executablePath: resolveBrowserExecutablePath(),
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  return puppeteer.launch(options);
 }
 
 export async function getReportBrowser(): Promise<BrowserInstance> {
