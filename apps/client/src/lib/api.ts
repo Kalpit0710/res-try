@@ -33,8 +33,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     let msg = json?.message ?? res.statusText ?? 'Request failed';
-    if (msg.toLowerCase().includes('timed out')) msg = 'The operation timed out. Please try again.';
-    else if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) msg = 'Network error. Please check your connection.';
+    const lowerMsg = msg.toLowerCase();
+    if (lowerMsg.includes('timed out')) msg = 'The operation timed out. Please try again.';
+    else if (lowerMsg.includes('failed to fetch') || lowerMsg.includes('networkerror')) msg = 'Network error. Please check your connection.';
+    else if (lowerMsg.includes('navigation failed') || lowerMsg.includes('browser has disconnected') || lowerMsg.includes('puppeteer')) {
+      msg = 'Failed to generate the document. The service might be under heavy load. Please try again in a few moments.';
+    }
     
     throw new ApiError(res.status, msg);
   }

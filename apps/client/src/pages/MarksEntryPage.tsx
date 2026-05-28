@@ -546,7 +546,12 @@ export function MarksEntryPage() {
     try {
       const blob = await apiClient.getStudentReportPdf(studentId);
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Report_Card.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to generate report');

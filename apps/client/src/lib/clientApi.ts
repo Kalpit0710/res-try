@@ -12,9 +12,13 @@ function headers(isJson = true) {
 
 function formatErrorMsg(raw: string) {
   if (!raw) return 'An unexpected error occurred.';
-  if (raw.toLowerCase().includes('timed out')) return 'The operation timed out. Please try again.';
-  if (raw.toLowerCase().includes('failed to fetch')) return 'Network error. Please check your connection.';
-  if (raw.toLowerCase().includes('networkerror')) return 'Network error. Please check your connection.';
+  const lower = raw.toLowerCase();
+  if (lower.includes('timed out')) return 'The operation timed out. Please try again.';
+  if (lower.includes('failed to fetch')) return 'Network error. Please check your connection.';
+  if (lower.includes('networkerror')) return 'Network error. Please check your connection.';
+  if (lower.includes('navigation failed') || lower.includes('browser has disconnected') || lower.includes('puppeteer')) {
+    return 'Failed to generate the document. The service might be under heavy load. Please try again in a few moments.';
+  }
   return raw;
 }
 
