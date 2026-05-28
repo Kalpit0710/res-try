@@ -51,7 +51,7 @@ export async function launchReportBrowser(): Promise<BrowserInstance> {
 }
 
 export async function getReportBrowser(): Promise<BrowserInstance> {
-  if (browserInstance?.isConnected()) {
+  if (browserInstance?.connected) {
     return browserInstance;
   }
 
