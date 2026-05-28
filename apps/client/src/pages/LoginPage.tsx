@@ -5,6 +5,7 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { api, ApiError } from '../lib/api';
 import { setToken } from '../lib/auth';
 import { FullScreenLoader } from '../components/FullScreenLoader';
+import toast from 'react-hot-toast';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -25,14 +26,23 @@ export function LoginPage() {
     try {
       const res = await api.googleLogin(credentialResponse.credential);
       if (!res.success || !res.data.token) {
-        setError(res.message ?? 'Google Login failed. Please try again.');
+        const msg = res.message ?? 'Google Login failed. Please try again.';
+        if (msg.toLowerCase().includes('unauthorized email') || msg.toLowerCase().includes('not configured')) {
+          toast.error('You are not an authorised admin');
+        } else {
+          setError(msg);
+        }
         return;
       }
       setToken(res.data.token);
       navigate('/admin', { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof ApiError ? err.message : 'Google Login failed';
-      setError(msg);
+      if (msg.toLowerCase().includes('unauthorized email') || msg.toLowerCase().includes('not configured')) {
+        toast.error('You are not an authorised admin');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }

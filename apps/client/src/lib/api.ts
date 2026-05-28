@@ -23,7 +23,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !path.startsWith('/auth/')) {
     clearToken();
     window.location.assign('/login');
     throw new ApiError(401, 'Unauthorized');
