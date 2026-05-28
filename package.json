@@ -20,6 +20,8 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
+    "extend": "^3.0.2",
+    "json-bigint": "^1.0.0",
     "mongoose": "^9.6.1"
   }
 }
