@@ -52,4 +52,9 @@ export const api = {
       },
     });
   },
+  googleLogin: (credential: string) =>
+    request<{ success: boolean; message?: string; data: { token?: string; expiresIn: number } }>(`/auth/google`, {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    }),
 };

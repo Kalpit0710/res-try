@@ -4,6 +4,9 @@ import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+
+dotenv.config();
+
 import { connectDB } from './config/db';
 import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
@@ -26,8 +29,6 @@ import coScholasticMarksRoutes from './routes/coScholasticMarks.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import lowerClassSubjectRoutes from './routes/lowerClassSubject.routes';
 import lowerClassMarksRoutes from './routes/lowerClassMarks.routes';
-
-dotenv.config();
 
 const app = express();
 

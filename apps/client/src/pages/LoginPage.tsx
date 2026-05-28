@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { api, ApiError } from '../lib/api';
 import { setToken } from '../lib/auth';
 import { FullScreenLoader } from '../components/FullScreenLoader';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +16,27 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = useMemo(() => username.trim().length > 0 && password.length > 0, [username, password]);
+
+  async function handleGoogleSuccess(credentialResponse: any) {
+    if (!credentialResponse.credential) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.googleLogin(credentialResponse.credential);
+      if (!res.success || !res.data.token) {
+        setError(res.message ?? 'Google Login failed. Please try again.');
+        return;
+      }
+      setToken(res.data.token);
+      navigate('/admin', { replace: true });
+    } catch (err: unknown) {
+      const msg = err instanceof ApiError ? err.message : 'Google Login failed';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,6 +117,28 @@ export function LoginPage() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        {GOOGLE_CLIENT_ID && (
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-black/10" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-black/50">Or continue with</span>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-center">
+              <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google Login Failed')}
+                  useOneTap
+                />
+              </GoogleOAuthProvider>
+            </div>
+          </div>
+        )}
       </motion.div>
     </div>
   );
