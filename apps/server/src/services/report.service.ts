@@ -38,7 +38,7 @@ function resolveAssetDataUri(value?: string): string | null {
 }
 
 export async function launchReportBrowser(): Promise<BrowserInstance> {
-  const options: puppeteer.PuppeteerLaunchOptions = {
+  const options: any = {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   };
@@ -188,7 +188,7 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     const activeBrowser = browser ?? await getReportBrowser();
     const page = await activeBrowser.newPage();
     try {
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.setContent(html, { waitUntil: 'load' });
 
       const pdf = await page.pdf({
         format: 'A4',
@@ -295,7 +295,7 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
   const activeBrowser = browser ?? await getReportBrowser();
   const page = await activeBrowser.newPage();
   try {
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load' });
 
     const pdf = await page.pdf({
       format: 'A4',
