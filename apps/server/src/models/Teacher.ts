@@ -3,12 +3,14 @@ import { Schema, model, Document } from 'mongoose';
 export interface ITeacher extends Document {
   name: string;
   classId?: Schema.Types.ObjectId;
+  pin?: string;
 }
 
 const TeacherSchema = new Schema<ITeacher>(
   {
     name: { type: String, required: true, trim: true },
     classId: { type: Schema.Types.ObjectId, ref: 'Class' },
+    pin: { type: String }, // Hashed PIN
   },
   { timestamps: true }
 );

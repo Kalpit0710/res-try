@@ -13,6 +13,7 @@ const nav = [
   { to: '/admin/reports', label: 'Reports', icon: ReportsIcon },
   { to: '/admin/logs', label: 'Logs', icon: LogsIcon },
   { to: '/admin/settings', label: 'Settings', icon: SettingsIcon },
+  { to: '/admin/security', label: 'Security', icon: SecurityIcon },
 ];
 
 const mobileNav = [nav[0], nav[6], nav[8]];
@@ -119,6 +120,15 @@ function SettingsIcon({ className = '' }: { className?: string }) {
     <IconShell className={className}>
       <circle cx="12" cy="12" r="2.5" />
       <path d="M19 12a7 7 0 0 0-.1-1l2-1.2-1.8-3.1-2.2.8a7 7 0 0 0-1.7-1l-.3-2.3H9.1l-.3 2.3a7 7 0 0 0-1.7 1l-2.2-.8-1.8 3.1 2 1.2A7 7 0 0 0 5 12c0 .3 0 .7.1 1l-2 1.2 1.8 3.1 2.2-.8a7 7 0 0 0 1.7 1l.3 2.3h5.8l.3-2.3a7 7 0 0 0 1.7-1l2.2.8 1.8-3.1-2-1.2c.1-.3.1-.7.1-1Z" />
+    </IconShell>
+  );
+}
+
+function SecurityIcon({ className = '' }: { className?: string }) {
+  return (
+    <IconShell className={className}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </IconShell>
   );
 }

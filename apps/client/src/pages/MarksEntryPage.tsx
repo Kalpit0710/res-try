@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 import { extractClassId, isObjectId } from '../lib/utils';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
+import { getToken } from '../lib/auth';
+import { SessionTimer } from '../components/SessionTimer';
 import { FullScreenLoader } from '../components/FullScreenLoader';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
@@ -84,6 +86,18 @@ export function MarksEntryPage() {
   const defaultTermRemark: TermRemark = { attendanceAttended: '', attendanceTotal: '' };
   const [remarkState, setRemarkState] = useState<RemarkState>({ term1: defaultTermRemark, term2: defaultTermRemark, remark: '', teacherName: '', saving: false, saved: false, error: null });
   const initialStudentId = searchParams.get('studentId') ?? '';
+
+  useEffect(() => {
+    // Session protection for teachers
+    const adminToken = getToken();
+    const teacherToken = sessionStorage.getItem('srms_teacher_token');
+    if (!adminToken && !teacherToken) {
+      toast.error('Session expired. Please log in again.');
+      navigate('/teacher-portal');
+    }
+    
+    // Inactivity timer handled by SessionTimer
+  }, [navigate]);
 
   // Load classes on mount
   useEffect(() => {
@@ -807,6 +821,8 @@ export function MarksEntryPage() {
           </div>
         </div>
       )}
+      
+      <SessionTimer />
     </div>
   );
 }

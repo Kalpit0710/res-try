@@ -2,6 +2,8 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../lib/clientApi';
 import { extractClassId, useDebounce } from '../lib/utils';
+import { toast } from 'react-hot-toast';
+import { SessionTimer } from '../components/SessionTimer';
 
 type StudentSearchMode = 'name' | 'regNo' | 'class';
 const ITEMS_PER_PAGE = 6;
@@ -23,6 +25,27 @@ export function TeacherPortalPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const debouncedSearchText = useDebounce(searchText, 400);
 
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isChangePinModalOpen, setIsChangePinModalOpen] = useState(false);
+  const [oldPin, setOldPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [isResettingPin, setIsResettingPin] = useState(false);
+  const [resetPinError, setResetPinError] = useState('');
+
+  // Auto-logout handled by SessionTimer
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('srms_teacher_token');
+    const tid = sessionStorage.getItem('srms_teacher_id');
+    if (token && tid) {
+      setTeacherId(tid);
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   useEffect(() => {
     Promise.all([apiClient.publicGetTeachers(), apiClient.publicGetClasses()]).then(([teachersRes, classesRes]) => {
       setTeachers(teachersRes.data ?? teachersRes);
@@ -34,7 +57,7 @@ export function TeacherPortalPage() {
   useEffect(() => {
     let active = true;
 
-    if (!teacherId) {
+    if (!isLoggedIn) {
       setAllStudents([]);
       setDisplayedStudents([]);
       setCurrentPage(1);
@@ -102,7 +125,7 @@ export function TeacherPortalPage() {
     return () => {
       active = false;
     };
-  }, [classId, searchMode, debouncedSearchText, teacherId]);
+  }, [classId, searchMode, debouncedSearchText, isLoggedIn]);
 
   // Update displayed students based on current page
   useEffect(() => {
@@ -113,17 +136,18 @@ export function TeacherPortalPage() {
 
   useEffect(() => {
     setSelectedStudentId('');
-  }, [classId, searchMode, debouncedSearchText, teacherId]);
+  }, [classId, searchMode, debouncedSearchText, isLoggedIn]);
 
   const selectedTeacher = useMemo(() => teachers.find((t) => t._id === teacherId), [teachers, teacherId]);
   const selectedStudent = useMemo(() => allStudents.find((s) => s._id === selectedStudentId), [allStudents, selectedStudentId]);
-  const currentStep = selectedStudent ? 3 : teacherId ? 2 : 1;
+  const currentStep = selectedStudent ? 3 : isLoggedIn ? 2 : 1;
   const hasStudentCriteria = searchMode === 'class' ? Boolean(classId) : Boolean(searchText.trim());
   const totalPages = Math.ceil(allStudents.length / ITEMS_PER_PAGE);
   const hasMoreStudents = currentPage < totalPages;
 
   // Auto-select teacher's linked class when teacher is selected
   useEffect(() => {
+    if (!isLoggedIn) return; // Wait until logged in to auto-select
     if (selectedTeacher && selectedTeacher.classId) {
       const linkedClassId = extractClassId(selectedTeacher.classId);
       if (linkedClassId) {
@@ -142,7 +166,82 @@ export function TeacherPortalPage() {
         setClassId('');
       }
     }
-  }, [selectedTeacher, teacherId]);
+  }, [selectedTeacher, teacherId, isLoggedIn]);
+
+  async function handleLogin() {
+    if (!teacherId) return;
+    if (!pin) { setPinError('PIN is required'); return; }
+    
+    setIsLoggingIn(true);
+    setPinError('');
+    try {
+      const res = await fetch(`${(import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:5000/api/v1'}/auth/teacher/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherId, pin: btoa(pin) })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('srms_teacher_token', data.data.token);
+        sessionStorage.setItem('srms_teacher_id', teacherId);
+        setIsLoggedIn(true);
+        setPin('');
+      } else {
+        setPinError(data.message || 'Invalid PIN');
+      }
+    } catch (err: any) {
+      setPinError('Failed to login. Check connection.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
+
+  async function handleResetPin() {
+    if (!oldPin || !newPin || newPin.length < 4 || newPin.length > 6) {
+      setResetPinError('Both old and new valid PIN (4-6 digits) are required');
+      return;
+    }
+    setIsResettingPin(true);
+    setResetPinError('');
+    try {
+      if (oldPin === newPin) {
+        setResetPinError('new pin cant be same as old one');
+        return;
+      }
+      
+      const token = sessionStorage.getItem('srms_teacher_token');
+      const payload = {
+        oldPin: btoa(oldPin),
+        newPin: btoa(newPin)
+      };
+      
+      const res = await fetch(`${(import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:5000/api/v1'}/auth/teacher/reset-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('PIN changed successfully');
+        setOldPin('');
+        setNewPin('');
+        setIsChangePinModalOpen(false);
+      } else {
+        setResetPinError(data.message || 'Failed to change PIN');
+      }
+    } catch (err: any) {
+      setResetPinError('Failed to change PIN');
+    } finally {
+      setIsResettingPin(false);
+    }
+  }
+
+  function handleLogout() {
+    setIsLoggedIn(false);
+    setTeacherId('');
+    sessionStorage.removeItem('srms_teacher_token');
+    sessionStorage.removeItem('srms_teacher_id');
+  }
 
   function changeSearchMode(mode: StudentSearchMode) {
     setSearchMode(mode);
@@ -196,20 +295,77 @@ export function TeacherPortalPage() {
             </div>
 
             <div className="mt-5 space-y-4">
-              <label className="block">
-                <div className="mb-1 text-sm font-medium">Teacher</div>
-                <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)} className="w-full rounded-xl border border-black/15 bg-white px-3 py-3 text-sm shadow-[0_1px_0_rgba(0,0,0,0.02)]">
-                  <option value="">Select teacher</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher._id} value={teacher._id}>
-                      {teacher.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {!isLoggedIn ? (
+                <div className="space-y-4 rounded-[1.25rem] border border-orange-200/60 bg-gradient-to-b from-orange-50/50 to-orange-100/30 p-5 shadow-[0_4px_20px_rgba(249,115,22,0.05)]">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                      Teacher Authentication
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Please verify your identity to access marks entry.</p>
+                  </div>
+                  <label className="block mt-4">
+                    <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Select your name</div>
+                    <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm outline-none transition hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10">
+                      <option value="">Select teacher</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher._id} value={teacher._id}>
+                          {teacher.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {teacherId && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="block">
+                        <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Enter PIN</div>
+                        <input
+                          type="password"
+                          value={pin}
+                          onChange={(e) => setPin(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
+                          placeholder="••••"
+                          maxLength={6}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium tracking-widest text-slate-700 shadow-sm outline-none transition placeholder:tracking-normal hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                        />
+                      </label>
+                      {pinError && (
+                        <div className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                          {pinError}
+                        </div>
+                      )}
+                      <button onClick={handleLogin} disabled={isLoggingIn} className="w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-bold text-white shadow-[0_4px_14px_rgba(234,88,12,0.3)] transition hover:bg-orange-500 hover:shadow-[0_6px_20px_rgba(234,88,12,0.4)] disabled:pointer-events-none disabled:opacity-50">
+                        {isLoggingIn ? 'Verifying...' : 'Login Securely'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between rounded-[1.25rem] border border-green-200 bg-green-50/50 p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-green-700">Authenticated as</div>
+                      <div className="text-sm font-bold text-green-900">{selectedTeacher?.name}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setIsChangePinModalOpen(true)} className="rounded-lg border border-green-300 bg-white px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-50">
+                      Change PIN
+                    </button>
+                    <button onClick={handleLogout} className="rounded-lg px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-100">
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
 
-              <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff,#fff7ed)] p-3 sm:p-4 shadow-[0_8px_20px_rgba(0,0,0,0.03)]">
-                <div className="text-sm font-semibold text-slate-900">Search student</div>
+              {isLoggedIn && (
+                <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff,#fff7ed)] p-3 sm:p-4 shadow-[0_8px_20px_rgba(0,0,0,0.03)]">
+                  <div className="text-sm font-semibold text-slate-900">Search student</div>
                 <div className="mt-1 text-xs leading-5 text-slate-600">Search by name, reg. no, or filter by class. Use one path at a time.</div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] sm:flex sm:flex-wrap sm:items-center sm:gap-2">
@@ -288,6 +444,7 @@ export function TeacherPortalPage() {
                   )}
                 </div>
               </div>
+              )}
             </div>
           </section>
 
@@ -298,13 +455,13 @@ export function TeacherPortalPage() {
                 <p className="text-sm text-black/55">Search one student by name, reg. no, or class before continuing.</p>
               </div>
               <div className="text-sm text-black/50">
-                {loading ? 'Loading…' : hasStudentCriteria ? `${displayedStudents.length} of ${allStudents.length} result(s)` : 'Waiting for search'}
+                {loading ? 'Loading…' : (isLoggedIn && hasStudentCriteria) ? `${displayedStudents.length} of ${allStudents.length} result(s)` : 'Waiting for search'}
               </div>
             </div>
 
-            {!teacherId ? (
+            {!isLoggedIn ? (
               <div className="mt-4 rounded-2xl border border-dashed border-black/15 px-4 py-10 text-center text-sm text-black/45">
-                Select a teacher to unlock the student search.
+                Please log in to unlock the student search.
               </div>
             ) : !hasStudentCriteria ? (
               <div className="mt-4 rounded-2xl border border-dashed border-black/15 px-4 py-10 text-center text-sm text-black/45">
@@ -387,6 +544,62 @@ export function TeacherPortalPage() {
           </section>
         </div>
       </div>
+      
+      {isLoggedIn && <SessionTimer onLogout={() => {
+        setIsLoggedIn(false);
+        setTeacherId('');
+      }} />}
+      
+      {/* Change PIN Modal */}
+      {isChangePinModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity">
+          <div className="w-full max-w-sm rounded-[1.5rem] bg-white p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)]">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Change PIN</h3>
+              <button onClick={() => { setIsChangePinModalOpen(false); setResetPinError(''); setOldPin(''); setNewPin(''); }} className="rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <label className="block">
+                <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Old PIN</div>
+                <input
+                  type="password"
+                  value={oldPin}
+                  onChange={(e) => setOldPin(e.target.value)}
+                  placeholder="••••"
+                  maxLength={6}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium tracking-widest text-slate-700 shadow-sm outline-none transition placeholder:tracking-normal hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                />
+              </label>
+              
+              <label className="block">
+                <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">New PIN</div>
+                <input
+                  type="password"
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value)}
+                  placeholder="••••"
+                  maxLength={6}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium tracking-widest text-slate-700 shadow-sm outline-none transition placeholder:tracking-normal hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                />
+              </label>
+              
+              {resetPinError && (
+                <div className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                  {resetPinError}
+                </div>
+              )}
+              
+              <button onClick={handleResetPin} disabled={isResettingPin} className="mt-2 w-full rounded-xl bg-orange-600 px-4 py-3 text-sm font-bold text-white shadow-[0_4px_14px_rgba(234,88,12,0.3)] transition hover:bg-orange-500 disabled:pointer-events-none disabled:opacity-50">
+                {isResettingPin ? 'Saving...' : 'Update PIN'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
