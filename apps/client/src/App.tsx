@@ -9,6 +9,7 @@ import { SubjectsPage } from './pages/SubjectsPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { LogsPage } from './pages/LogsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SecurityPage } from './pages/SecurityPage'
 import { MarksEntryPage } from './pages/MarksEntryPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="logs" element={<LogsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="security" element={<SecurityPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

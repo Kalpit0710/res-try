@@ -250,6 +250,8 @@ export const apiClient = {
     request(`/co-scholastic-marks`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   deleteCoScholasticMarks: (id: string) =>
     request(`/co-scholastic-marks/${id}`, { method: 'DELETE', headers: headers() }),
+  updateAdminCredentials: (body: any) =>
+    request(`/admin/credentials`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
 };
 
 export default apiClient;

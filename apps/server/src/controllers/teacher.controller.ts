@@ -1,15 +1,18 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { Teacher } from '../models/Teacher';
 
 const TeacherCreateSchema = z.object({
   name: z.string().trim().min(1, 'name is required'),
   classId: z.string().min(1, 'classId is required').optional().nullable(),
+  pin: z.string().min(4, 'PIN is required').max(6, 'PIN must be at most 6 characters'),
 });
 
 const TeacherUpdateSchema = z.object({
   name: z.string().trim().min(1, 'name is required').optional(),
   classId: z.string().min(1, 'classId is required').optional().nullable(),
+  pin: z.string().min(4, 'PIN is required').max(6, 'PIN must be at most 6 characters').optional(),
 });
 
 export async function getTeachers(_req: Request, res: Response): Promise<void> {
@@ -33,7 +36,7 @@ export async function createTeacher(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const { name, classId } = parsed.data;
+  const { name, classId, pin } = parsed.data;
   
   // Validate classId if provided
   if (classId) {
@@ -45,8 +48,11 @@ export async function createTeacher(req: Request, res: Response): Promise<void> 
     }
   }
 
+  const hashedPin = await bcrypt.hash(pin, 10);
+
   const teacher = await Teacher.create({
     name,
+    pin: hashedPin,
     ...(classId && { classId }),
   });
   
@@ -61,11 +67,15 @@ export async function updateTeacher(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const { name, classId } = parsed.data;
+  const { name, classId, pin } = parsed.data;
   const updateData: Record<string, any> = {};
   
   if (name !== undefined) {
     updateData.name = name;
+  }
+  
+  if (pin !== undefined) {
+    updateData.pin = await bcrypt.hash(pin, 10);
   }
   
   if (classId !== undefined) {
