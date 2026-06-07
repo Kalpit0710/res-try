@@ -34,6 +34,7 @@ interface SubjectMarksState {
   term2: TermMarks;
   saving: boolean;
   saved: boolean;
+  dirty: boolean;
   error: string | null;
 }
 
@@ -44,6 +45,7 @@ interface CoScholasticMarksState {
   term2: string;
   saving: boolean;
   saved: boolean;
+  dirty: boolean;
   error: string | null;
 }
 
@@ -162,6 +164,11 @@ export function MarksEntryPage() {
     }
   }, [initialStudentApplied, initialStudentId, students]);
 
+  // Reset step to 1 when class, student, or teacher changes
+  useEffect(() => {
+    setCurrentStep(1);
+  }, [classId, studentId, teacherName]);
+
   // Load subjects + existing marks when student changes
   useEffect(() => {
     setSubjectStates([]);
@@ -188,10 +195,10 @@ export function MarksEntryPage() {
             const term1: any = {};
             const term2: any = {};
             sub.components.forEach((c: any) => {
-              const t1 = existing?.term1Marks?.find((x: any) => x.name === c.name);
-              const t2 = existing?.term2Marks?.find((x: any) => x.name === c.name);
-              term1[c.name] = numOrEmpty(t1?.marksObtained);
-              term2[c.name] = numOrEmpty(t2?.marksObtained);
+              const t1Val = existing?.term1?.[c.name];
+              const t2Val = existing?.term2?.[c.name];
+              term1[c.name] = numOrEmpty(t1Val);
+              term2[c.name] = numOrEmpty(t2Val);
             });
             return {
               isLowerClass: true,
@@ -203,7 +210,8 @@ export function MarksEntryPage() {
               term1,
               term2,
               saving: false,
-              saved: false,
+              saved: !!existing,
+              dirty: false,
               error: null,
             };
           }
@@ -230,7 +238,8 @@ export function MarksEntryPage() {
               yearlyExam: numOrEmpty(existing?.term2?.yearlyExam),
             },
             saving: false,
-            saved: false,
+            saved: !!existing,
+            dirty: false,
             error: null,
           };
         });
@@ -243,7 +252,8 @@ export function MarksEntryPage() {
             term1: existing?.term1 ?? '',
             term2: existing?.term2 ?? '',
             saving: false,
-            saved: false,
+            saved: !!existing,
+            dirty: false,
             error: null,
           };
         });
@@ -331,14 +341,20 @@ export function MarksEntryPage() {
     }));
 
     const lowerItems = lowerStates.map(s => {
-       const term1Marks = Object.entries(s.term1).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
-       const term2Marks = Object.entries(s.term2).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
+       const term1: Record<string, number> = {};
+       const term2: Record<string, number> = {};
+       Object.entries(s.term1).forEach(([name, val]) => {
+         if (val !== '') term1[name] = Number(val);
+       });
+       Object.entries(s.term2).forEach(([name, val]) => {
+         if (val !== '') term2[name] = Number(val);
+       });
        return {
           studentId,
           subjectId: s.subjectId,
           teacherName: teacherName.trim(),
-          term1Marks,
-          term2Marks
+          term1,
+          term2
        };
     });
 
@@ -359,7 +375,14 @@ export function MarksEntryPage() {
       setSubjectStates((prev) =>
         prev.map((s) => {
           const r = results.find((x) => x.subjectId === s.subjectId);
-          return { ...s, saving: false, saved: r?.success ?? false, error: r?.message ?? null };
+          const success = r?.success ?? false;
+          return {
+            ...s,
+            saving: false,
+            saved: success,
+            dirty: success ? false : s.dirty,
+            error: r?.message ?? null
+          };
         })
       );
 
@@ -406,6 +429,7 @@ export function MarksEntryPage() {
       const parsed = raw === '' ? '' : Number(raw);
       s[term] = { ...s[term], [field]: parsed };
       s.saved = false;
+      s.dirty = true;
       s.error = null;
       next[idx] = s;
       return next;
@@ -428,14 +452,21 @@ export function MarksEntryPage() {
     try {
       let result: any;
       if (s.isLowerClass) {
-        const term1Marks = Object.entries(s.term1).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
-        const term2Marks = Object.entries(s.term2).filter(([_, v]) => v !== '').map(([name, val]) => ({ name, marksObtained: Number(val) }));
+        const term1: Record<string, number> = {};
+        const term2: Record<string, number> = {};
+        Object.entries(s.term1).forEach(([name, val]) => {
+          if (val !== '') term1[name] = Number(val);
+        });
+        Object.entries(s.term2).forEach(([name, val]) => {
+          if (val !== '') term2[name] = Number(val);
+        });
         const body = {
           studentId,
+          classId,
           subjectId: s.subjectId,
           teacherName: teacherName.trim(),
-          term1Marks,
-          term2Marks
+          term1,
+          term2
         };
         result = await apiClient.upsertLowerClassMarks(body);
       } else {
@@ -471,6 +502,7 @@ export function MarksEntryPage() {
           ...next[idx],
           saving: false,
           saved: true,
+          dirty: false,
           error: null,
           existingId: result?.data?._id ?? next[idx].existingId,
         };
@@ -514,6 +546,7 @@ export function MarksEntryPage() {
           ...next[idx],
           saving: false,
           saved: true,
+          dirty: false,
           error: null,
           existingId: result?.data?._id ?? next[idx].existingId,
         };
@@ -540,6 +573,7 @@ export function MarksEntryPage() {
       const s = { ...next[idx] };
       s[term] = value;
       s.saved = false;
+      s.dirty = true;
       s.error = null;
       next[idx] = s;
       return next;
@@ -550,7 +584,7 @@ export function MarksEntryPage() {
     if (!studentId) { toast.error('Select a student first.'); return; }
 
     // Save only subjects that have unsaved changes (don't re-save already saved ones)
-    const unsavedSubjects = subjectStates.filter((s) => !s.saved);
+    const unsavedSubjects = subjectStates.filter((s) => s.dirty);
     if (unsavedSubjects.length > 0) {
       const ok = await saveAllSubjects();
       if (!ok) return;
@@ -562,11 +596,12 @@ export function MarksEntryPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Report_Card.pdf`;
-      document.body.appendChild(a);
+      const selectedStudent = students.find((s) => s._id === studentId);
+      const name = selectedStudent ? selectedStudent.name : 'Report';
+      const regNo = selectedStudent ? selectedStudent.regNo : 'Card';
+      a.download = `${name}_${regNo}.pdf`;
       a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to generate report');
     } finally {
@@ -664,162 +699,166 @@ export function MarksEntryPage() {
         </div>
       )}
 
-      {/* Progress steps */}
-      <div className="mt-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <StepDot step={1} current={currentStep} onClick={() => setCurrentStep(1)}>Subject</StepDot>
-          <div className="flex-1 h-px bg-black/10" />
-          <StepDot step={2} current={currentStep} onClick={() => setCurrentStep(2)}>Co-Scholastic</StepDot>
-          <div className="flex-1 h-px bg-black/10" />
-          <StepDot step={3} current={currentStep} onClick={() => setCurrentStep(3)}>Remarks</StepDot>
-        </div>
-      </div>
-
-      {/* Loading subjects */}
-      {loadingSubjects && (
-        <div className="mt-8 text-center text-black/50 text-sm">
-          Loading subjects…
-        </div>
-      )}
-
-      {/* No subjects empty state */}
-      {!loadingSubjects && studentId && subjectStates.length === 0 && (
-        <div className="mt-8 rounded-lg border border-dashed border-black/15 p-8 text-center text-sm text-black/50">
-          No subjects found for this class. Add subjects first from the Subjects page.
-        </div>
-      )}
-
-      {/* Subject cards — step 1 */}
-      {currentStep === 1 && subjectStates.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <h3 className="text-base font-semibold">Scholastic Marks</h3>
-          {subjectStates.map((s, idx) => (
-            s.isLowerClass ? (
-              <LowerClassSubjectCard
-                key={s.subjectId}
-                state={s}
-                onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
-                onSave={() => saveSubject(idx)}
-              />
-            ) : (
-              <SubjectCard
-                key={s.subjectId}
-                state={s}
-                onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
-                onSave={() => saveSubject(idx)}
-              />
-            )
-          ))}
-
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <button onClick={async () => { const ok = await saveCurrentStep(); if (ok) setCurrentStep(2); }} className="rounded-md bg-black text-white px-4 py-2">Save &amp; Next</button>
+      {studentId && (
+        <>
+          {/* Progress steps */}
+          <div className="mt-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <StepDot step={1} current={currentStep} onClick={() => setCurrentStep(1)}>Subject</StepDot>
+              <div className="flex-1 h-px bg-black/10" />
+              <StepDot step={2} current={currentStep} onClick={() => setCurrentStep(2)}>Co-Scholastic</StepDot>
+              <div className="flex-1 h-px bg-black/10" />
+              <StepDot step={3} current={currentStep} onClick={() => setCurrentStep(3)}>Remarks</StepDot>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Co-scholastic marks — step 2 */}
-      {currentStep === 2 && coScholasticStates.length > 0 && (
-        <div className="mt-8 space-y-4">
-          <h3 className="text-base font-semibold">Co-Scholastic Marks</h3>
-          {coScholasticStates.map((s, idx) => (
-            <CoScholasticCard
-              key={s.area}
-              state={s}
-              onFieldChange={(term, val) => updateCoScholasticField(idx, term, val)}
-              onSave={() => saveCoScholasticArea(idx)}
-            />
-          ))}
+          {/* Loading subjects */}
+          {loadingSubjects && (
+            <div className="mt-8 text-center text-black/50 text-sm">
+              Loading subjects…
+            </div>
+          )}
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button onClick={() => setCurrentStep(1)} className="rounded-md border px-4 py-2">Previous</button>
-            <button onClick={async () => { const ok = await saveCurrentStep(); if (ok) setCurrentStep(3); }} className="rounded-md bg-black text-white px-4 py-2">Save &amp; Next</button>
-          </div>
-        </div>
-      )}
+          {/* No subjects empty state */}
+          {!loadingSubjects && studentId && subjectStates.length === 0 && (
+            <div className="mt-8 rounded-lg border border-dashed border-black/15 p-8 text-center text-sm text-black/50">
+              No subjects found for this class. Add subjects first from the Subjects page.
+            </div>
+          )}
 
-      {/* Remarks — step 3 */}
-      {currentStep === 3 && (
-        <div className="mt-8 rounded-lg border border-black/10 p-4 bg-white">
-          <h3 className="text-base font-semibold mb-1">Attendance &amp; Remarks</h3>
-          <p className="text-sm text-black/60 mb-5">Enter attendance, remarks, and result status for each term.</p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Term 1 */}
-            <div className="space-y-4">
-              <h4 className="font-medium border-b pb-1">Term 1</h4>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-black/70 font-medium">Attendance</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={remarkState.term1.attendanceAttended}
-                    onChange={(e) => updateRemarkField('term1', 'attendanceAttended', e.target.value)}
-                    className="rounded-md border border-black/15 p-2 w-full text-center"
-                    placeholder="Attended"
+          {/* Subject cards — step 1 */}
+          {currentStep === 1 && subjectStates.length > 0 && (
+            <div className="mt-6 space-y-4">
+              <h3 className="text-base font-semibold">Scholastic Marks</h3>
+              {subjectStates.map((s, idx) => (
+                s.isLowerClass ? (
+                  <LowerClassSubjectCard
+                    key={s.subjectId}
+                    state={s}
+                    onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
+                    onSave={() => saveSubject(idx)}
                   />
-                  <span className="text-black/50 font-medium">/</span>
-                  <input
-                    type="text"
-                    value={remarkState.term1.attendanceTotal}
-                    onChange={(e) => updateRemarkField('term1', 'attendanceTotal', e.target.value)}
-                    className="rounded-md border border-black/15 p-2 w-full text-center"
-                    placeholder="Total"
+                ) : (
+                  <SubjectCard
+                    key={s.subjectId}
+                    state={s}
+                    onFieldChange={(term, field, val) => updateField(idx, term, field, val)}
+                    onSave={() => saveSubject(idx)}
                   />
+                )
+              ))}
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <button onClick={async () => { const ok = await saveCurrentStep(); if (ok) setCurrentStep(2); }} className="rounded-md bg-black text-white px-4 py-2">Save &amp; Next</button>
+              </div>
+            </div>
+          )}
+
+          {/* Co-scholastic marks — step 2 */}
+          {currentStep === 2 && coScholasticStates.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h3 className="text-base font-semibold">Co-Scholastic Marks</h3>
+              {coScholasticStates.map((s, idx) => (
+                <CoScholasticCard
+                  key={s.area}
+                  state={s}
+                  onFieldChange={(term, val) => updateCoScholasticField(idx, term, val)}
+                  onSave={() => saveCoScholasticArea(idx)}
+                />
+              ))}
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button onClick={() => setCurrentStep(1)} className="rounded-md border px-4 py-2">Previous</button>
+                <button onClick={async () => { const ok = await saveCurrentStep(); if (ok) setCurrentStep(3); }} className="rounded-md bg-black text-white px-4 py-2">Save &amp; Next</button>
+              </div>
+            </div>
+          )}
+
+          {/* Remarks — step 3 */}
+          {currentStep === 3 && (
+            <div className="mt-8 rounded-lg border border-black/10 p-4 bg-white">
+              <h3 className="text-base font-semibold mb-1">Attendance &amp; Remarks</h3>
+              <p className="text-sm text-black/60 mb-5">Enter attendance, remarks, and result status for each term.</p>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Term 1 */}
+                <div className="space-y-4">
+                  <h4 className="font-medium border-b pb-1">Term 1</h4>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-black/70 font-medium">Attendance</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={remarkState.term1.attendanceAttended}
+                        onChange={(e) => updateRemarkField('term1', 'attendanceAttended', e.target.value)}
+                        className="rounded-md border border-black/15 p-2 w-full text-center"
+                        placeholder="Attended"
+                      />
+                      <span className="text-black/50 font-medium">/</span>
+                      <input
+                        type="text"
+                        value={remarkState.term1.attendanceTotal}
+                        onChange={(e) => updateRemarkField('term1', 'attendanceTotal', e.target.value)}
+                        className="rounded-md border border-black/15 p-2 w-full text-center"
+                        placeholder="Total"
+                      />
+                    </div>
+                  </label>
                 </div>
-              </label>
-            </div>
 
-            {/* Term 2 */}
-            <div className="space-y-4">
-              <h4 className="font-medium border-b pb-1">Term 2</h4>
-              <label className="flex flex-col gap-1 text-sm">
-                <span className="text-black/70 font-medium">Attendance</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={remarkState.term2.attendanceAttended}
-                    onChange={(e) => updateRemarkField('term2', 'attendanceAttended', e.target.value)}
-                    className="rounded-md border border-black/15 p-2 w-full text-center"
-                    placeholder="Attended"
-                  />
-                  <span className="text-black/50 font-medium">/</span>
-                  <input
-                    type="text"
-                    value={remarkState.term2.attendanceTotal}
-                    onChange={(e) => updateRemarkField('term2', 'attendanceTotal', e.target.value)}
-                    className="rounded-md border border-black/15 p-2 w-full text-center"
-                    placeholder="Total"
-                  />
+                {/* Term 2 */}
+                <div className="space-y-4">
+                  <h4 className="font-medium border-b pb-1">Term 2</h4>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-black/70 font-medium">Attendance</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={remarkState.term2.attendanceAttended}
+                        onChange={(e) => updateRemarkField('term2', 'attendanceAttended', e.target.value)}
+                        className="rounded-md border border-black/15 p-2 w-full text-center"
+                        placeholder="Attended"
+                      />
+                      <span className="text-black/50 font-medium">/</span>
+                      <input
+                        type="text"
+                        value={remarkState.term2.attendanceTotal}
+                        onChange={(e) => updateRemarkField('term2', 'attendanceTotal', e.target.value)}
+                        className="rounded-md border border-black/15 p-2 w-full text-center"
+                        placeholder="Total"
+                      />
+                    </div>
+                  </label>
                 </div>
-              </label>
-            </div>
-          </div>
+              </div>
 
-          <div className="mt-6">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-black/70 font-medium">Class Teacher's Remark</span>
-              <textarea
-                value={remarkState.remark}
-                onChange={(e) => setRemarkState(p => ({ ...p, remark: e.target.value, saved: false, error: null }))}
-                rows={3}
-                className="rounded-md border border-black/15 p-2 w-full"
-                placeholder="e.g. Excellent overall performance..."
-              />
-            </label>
-          </div>
+              <div className="mt-6">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-black/70 font-medium">Class Teacher's Remark</span>
+                  <textarea
+                    value={remarkState.remark}
+                    onChange={(e) => setRemarkState(p => ({ ...p, remark: e.target.value, saved: false, error: null }))}
+                    rows={3}
+                    className="rounded-md border border-black/15 p-2 w-full"
+                    placeholder="e.g. Excellent overall performance..."
+                  />
+                </label>
+              </div>
 
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
-            <div>
-              <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
+                <div>
+                  <button onClick={() => setCurrentStep(2)} className="rounded-md border px-4 py-2">Previous</button>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button onClick={async () => { await saveCurrentStep(); }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
+                  {studentId && (
+                    <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <button onClick={async () => { await saveCurrentStep(); }} disabled={remarkState.saving} className="rounded-md bg-orange-500 text-white px-4 py-2">{remarkState.saving ? 'Saving…' : 'Save All'}</button>
-              {studentId && (
-                <button onClick={generateReport} disabled={reportLoading} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{reportLoading ? 'Generating…' : 'Generate Report'}</button>
-              )}
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
       
       <SessionTimer />
