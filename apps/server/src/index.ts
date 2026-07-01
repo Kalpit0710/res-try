@@ -40,7 +40,7 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
-      const isLocalVite = /^http:\/\/localhost:\d+$/.test(origin);
+      const isLocalVite = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
       if (origin === allowedClientOrigin || isLocalVite) {
         callback(null, true);
         return;
@@ -67,6 +67,18 @@ app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads'), {
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+
+import mongoose from 'mongoose';
+import { Admin } from './models/Admin';
+app.get('/debug', async (_req, res) => {
+  const admin = await Admin.findOne();
+  res.json({
+    dbName: mongoose.connection.db?.databaseName,
+    adminExists: !!admin,
+    adminUsername: admin?.username,
+    adminHash: admin?.passwordHash
+  });
+});
 
 // ── API routes ────────────────────────────────────────────────────────────────
 const API = '/api/v1';

@@ -680,7 +680,7 @@
                 <%= marks?.term1?.halfYearlyExam ?? '' %>
               </td>
               <td class="b">
-                <%= result.term1Total %>
+                <%= result.term1Total == 0 ? '' : result.term1Total %>
               </td>
               <td>
                 <%= marks?.term2?.periodicTest ?? '' %>
@@ -695,13 +695,13 @@
                 <%= marks?.term2?.yearlyExam ?? '' %>
               </td>
               <td class="b">
-                <%= result.term2Total %>
+                <%= result.term2Total == 0 ? '' : result.term2Total %>
               </td>
               <td class="b">
-                <%= result.grandTotal %>
+                <%= result.grandTotal == 0 ? '' : result.grandTotal %>
               </td>
               <td class="b">
-                <%= result.grade %>
+                <%= result.grandTotal == 0 ? '' : result.grade %>
               </td>
             </tr>
             <% }) %>
@@ -732,7 +732,7 @@
                     <!-- <%= t1hy %> -->
                   </td>
                   <td>
-                    <%= t1tot %>
+                    <%= t1tot == 0 ? '' : t1tot %>
                   </td>
                   <td>
                     <!-- <%= t2pt %> -->
@@ -747,13 +747,13 @@
                     <!-- <%= t2ye %> -->
                   </td>
                   <td>
-                    <%= t2tot %>
+                    <%= t2tot == 0 ? '' : t2tot %>
                   </td>
                   <td class="b" style="background:#f5d98b;">
-                    <%= overall.totalObtained %>
+                    <%= overall.totalObtained == 0 ? '' : overall.totalObtained %>
                   </td>
                   <td class="b" style="background:#f5d98b;">
-                    <%= overall.overallGrade %>
+                    <%= overall.totalObtained == 0 ? '' : overall.overallGrade %>
                   </td>
               </tr>
         </tbody>
@@ -778,10 +778,10 @@
                 <%= mark.area %>
               </td>
               <td>
-                <%= mark.term1 ?? '—' %>
+                <%= (mark.term1 && mark.term1 !== '—' && mark.term1 !== '-') ? mark.term1 : '' %>
               </td>
               <td>
-                <%= mark.term2 ?? '—' %>
+                <%= (mark.term2 && mark.term2 !== '—' && mark.term2 !== '-') ? mark.term2 : '' %>
               </td>
             </tr>
             <% }) %>

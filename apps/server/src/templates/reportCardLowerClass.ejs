@@ -355,13 +355,13 @@
                 <% } %>
                 <td class="component-name"><%= comp.name %></td>
                 <td class="marks-max"><%= comp.maxMarks %></td>
-                <td class="marks-obt"><%= comp.term1Marks %></td>
+                <td class="marks-obt"><%= comp.term1Marks == 0 ? '' : comp.term1Marks %></td>
                 <td class="marks-max"><%= comp.maxMarks %></td>
-                <td class="marks-obt"><%= comp.term2Marks %></td>
+                <td class="marks-obt"><%= comp.term2Marks == 0 ? '' : comp.term2Marks %></td>
                 <td class="marks-max"><%= comp.totalMax %></td>
-                <td class="marks-obt"><%= comp.totalMarks %></td>
+                <td class="marks-obt"><%= comp.totalMarks == 0 ? '' : comp.totalMarks %></td>
                 <% if (cIndex === 0) { %>
-                  <td rowspan="<%= sResult.components.length %>"><%= sResult.grade %></td>
+                  <td rowspan="<%= sResult.components.length %>" style="text-align: center !important;"><%= (sResult.subjectTotalObtained == 0 || !sResult.subjectTotalObtained) ? '' : sResult.grade %></td>
                 <% } %>
               </tr>
             <% }); %>
@@ -371,20 +371,20 @@
               <td colspan="2"><%= sResult.subject.name.toUpperCase() %></td>
               <% if (singleComp) { %>
                 <td class="summary-val"><%= singleComp.maxMarks %></td>
-                <td class="summary-val-obt"><%= singleComp.term1Marks %></td>
+                <td class="summary-val-obt"><%= singleComp.term1Marks == 0 ? '' : singleComp.term1Marks %></td>
                 <td class="summary-val"><%= singleComp.maxMarks %></td>
-                <td class="summary-val-obt"><%= singleComp.term2Marks %></td>
+                <td class="summary-val-obt"><%= singleComp.term2Marks == 0 ? '' : singleComp.term2Marks %></td>
                 <td class="summary-val"><%= singleComp.totalMax %></td>
-                <td class="summary-val-obt"><%= singleComp.totalMarks %></td>
+                <td class="summary-val-obt"><%= singleComp.totalMarks == 0 ? '' : singleComp.totalMarks %></td>
               <% } else { %>
                 <td class="summary-val"><%= sResult.term1SubjectMax %></td>
-                <td class="summary-val-obt"><%= sResult.term1SubjectObtained %></td>
+                <td class="summary-val-obt"><%= sResult.term1SubjectObtained == 0 ? '' : sResult.term1SubjectObtained %></td>
                 <td class="summary-val"><%= sResult.term2SubjectMax %></td>
-                <td class="summary-val-obt"><%= sResult.term2SubjectObtained %></td>
+                <td class="summary-val-obt"><%= sResult.term2SubjectObtained == 0 ? '' : sResult.term2SubjectObtained %></td>
                 <td class="summary-val"><%= sResult.subjectTotalMax %></td>
-                <td class="summary-val-obt"><%= sResult.subjectTotalObtained %></td>
+                <td class="summary-val-obt"><%= sResult.subjectTotalObtained == 0 ? '' : sResult.subjectTotalObtained %></td>
               <% } %>
-              <td><%= sResult.grade %></td>
+              <td style="text-align: center !important;"><%= (sResult.subjectTotalObtained == 0 || !sResult.subjectTotalObtained) ? '' : sResult.grade %></td>
             </tr>
           <% } %>
         <% }); %>
@@ -392,14 +392,14 @@
         <tr class="summary-row">
           <td colspan="6" style="text-align: right; padding-right: 15px; font-size: 12px; font-weight: bold;">TOTAL MARKS</td>
           <td class="summary-val" style="font-size: 12px;"><%= overall.totalMax %></td>
-          <td class="summary-val-obt" style="font-size: 12px;"><%= overall.totalObtained %></td>
+          <td class="summary-val-obt" style="font-size: 12px;"><%= overall.totalObtained == 0 ? '' : overall.totalObtained %></td>
           <td style="background: #d9ead3;"></td>
         </tr>
         
         <tr class="summary-row">
           <td colspan="6" style="text-align: right; padding-right: 15px; font-size: 12px; font-weight: bold;">PERCENTAGE</td>
-          <td colspan="2" class="summary-val-obt" style="font-size: 12px; text-align: center;"><%= overall.percentage %> %</td>
-          <td style="font-size: 12px; font-weight: bold; background: #d9ead3; text-align: center;"><%= overall.overallGrade %></td>
+          <td colspan="2" class="summary-val-obt" style="font-size: 12px; text-align: center;"><%= overall.percentage == 0 ? '' : overall.percentage + ' %' %></td>
+          <td style="font-size: 12px; font-weight: bold; background: #d9ead3; text-align: center !important;"><%= overall.totalObtained == 0 ? '' : overall.overallGrade %></td>
         </tr>
       </tbody>
     </table>
