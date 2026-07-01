@@ -112,24 +112,28 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     const marksMap = new Map<string, any>(marks.map(m => [m.subjectId.toString(), m]));
 
     let grandTotalMax = 0;
-    let grandTotalObtained = 0;
+    let grandTotalObtained: number | '' = '';
 
     const subjectResults = subjects.map(s => {
       const m = marksMap.get(s._id.toString());
       
       let term1SubjectMax = 0;
-      let term1SubjectObtained = 0;
+      let term1SubjectObtained: number | '' = '';
       let term2SubjectMax = 0;
-      let term2SubjectObtained = 0;
+      let term2SubjectObtained: number | '' = '';
 
       const components = s.components.map(comp => {
-        const t1Marks = m?.term1?.[comp.name] ?? 0;
-        const t2Marks = m?.term2?.[comp.name] ?? 0;
+        const t1 = m?.term1?.[comp.name];
+        const t2 = m?.term2?.[comp.name];
+
+        const t1Marks = (t1 !== undefined && t1 !== null) ? Number(t1) : '';
+        const t2Marks = (t2 !== undefined && t2 !== null) ? Number(t2) : '';
 
         term1SubjectMax += comp.maxMarks;
-        term1SubjectObtained += t1Marks;
+        if (t1Marks !== '') term1SubjectObtained = (term1SubjectObtained || 0) + t1Marks;
+
         term2SubjectMax += comp.maxMarks;
-        term2SubjectObtained += t2Marks;
+        if (t2Marks !== '') term2SubjectObtained = (term2SubjectObtained || 0) + t2Marks;
 
         return {
           name: comp.name,
@@ -137,17 +141,17 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
           term1Marks: t1Marks,
           term2Marks: t2Marks,
           totalMax: comp.maxMarks * 2,
-          totalMarks: t1Marks + t2Marks,
+          totalMarks: (t1Marks === '' && t2Marks === '') ? '' : ((t1Marks || 0) + (t2Marks || 0)),
         };
       });
 
       const subjectTotalMax = term1SubjectMax + term2SubjectMax;
-      const subjectTotalObtained = term1SubjectObtained + term2SubjectObtained;
+      const subjectTotalObtained = (term1SubjectObtained === '' && term2SubjectObtained === '') ? '' : ((term1SubjectObtained || 0) + (term2SubjectObtained || 0));
       
       grandTotalMax += subjectTotalMax;
-      grandTotalObtained += subjectTotalObtained;
+      if (subjectTotalObtained !== '') grandTotalObtained = (grandTotalObtained || 0) + subjectTotalObtained;
 
-      const percentage = subjectTotalMax > 0 ? (subjectTotalObtained / subjectTotalMax) * 100 : 0;
+      const percentage = (subjectTotalMax > 0 && subjectTotalObtained !== '') ? (subjectTotalObtained as number / subjectTotalMax) * 100 : 0;
 
       return {
         subject: s,
@@ -158,16 +162,16 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
         term2SubjectObtained,
         subjectTotalMax,
         subjectTotalObtained,
-        grade: getGrade(percentage),
+        grade: subjectTotalObtained !== '' ? getGrade(percentage) : '',
       };
     });
 
-    const overallPercentage = grandTotalMax > 0 ? (grandTotalObtained / grandTotalMax) * 100 : 0;
+    const overallPercentage = (grandTotalMax > 0 && grandTotalObtained !== '') ? (grandTotalObtained as number / grandTotalMax) * 100 : 0;
     const overall = {
       totalMax: grandTotalMax,
       totalObtained: grandTotalObtained,
-      percentage: overallPercentage.toFixed(2),
-      overallGrade: getGrade(overallPercentage),
+      percentage: grandTotalObtained !== '' ? overallPercentage.toFixed(2) : '',
+      overallGrade: grandTotalObtained !== '' ? getGrade(overallPercentage) : '',
     };
 
     const templatePath = path.join(__dirname, '../templates/reportCardLowerClass.ejs');

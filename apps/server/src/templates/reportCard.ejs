@@ -662,6 +662,22 @@
           </tr>
         </thead>
         <tbody>
+<%
+  function hasT1Marks(m) {
+    if (!m || !m.term1) return false;
+    return m.term1.periodicTest !== undefined || m.term1.notebook !== undefined || m.term1.subEnrichment !== undefined || m.term1.halfYearlyExam !== undefined;
+  }
+  function hasT2Marks(m) {
+    if (!m || !m.term2) return false;
+    return m.term2.periodicTest !== undefined || m.term2.notebook !== undefined || m.term2.subEnrichment !== undefined || m.term2.yearlyExam !== undefined;
+  }
+  function hasAnyMarks(m) {
+    return hasT1Marks(m) || hasT2Marks(m);
+  }
+  const anyT1Marks = subjectResults.some(r => hasT1Marks(r.marks));
+  const anyT2Marks = subjectResults.some(r => hasT2Marks(r.marks));
+  const anyMarksOverall = subjectResults.some(r => hasAnyMarks(r.marks));
+%>
           <% subjectResults.forEach(({ subject, marks, result })=> { %>
             <tr class="data-row">
               <td class="subj-name">
@@ -680,7 +696,7 @@
                 <%= marks?.term1?.halfYearlyExam ?? '' %>
               </td>
               <td class="b">
-                <%= result.term1Total == 0 ? '' : result.term1Total %>
+                <%= hasT1Marks(marks) ? result.term1Total : '' %>
               </td>
               <td>
                 <%= marks?.term2?.periodicTest ?? '' %>
@@ -695,13 +711,13 @@
                 <%= marks?.term2?.yearlyExam ?? '' %>
               </td>
               <td class="b">
-                <%= result.term2Total == 0 ? '' : result.term2Total %>
+                <%= hasT2Marks(marks) ? result.term2Total : '' %>
               </td>
               <td class="b">
-                <%= result.grandTotal == 0 ? '' : result.grandTotal %>
+                <%= hasAnyMarks(marks) ? result.grandTotal : '' %>
               </td>
               <td class="b">
-                <%= result.grandTotal == 0 ? '' : result.grade %>
+                <%= hasAnyMarks(marks) ? result.grade : '' %>
               </td>
             </tr>
             <% }) %>
@@ -732,7 +748,7 @@
                     <!-- <%= t1hy %> -->
                   </td>
                   <td>
-                    <%= t1tot == 0 ? '' : t1tot %>
+                    <%= anyT1Marks ? t1tot : '' %>
                   </td>
                   <td>
                     <!-- <%= t2pt %> -->
@@ -747,13 +763,13 @@
                     <!-- <%= t2ye %> -->
                   </td>
                   <td>
-                    <%= t2tot == 0 ? '' : t2tot %>
+                    <%= anyT2Marks ? t2tot : '' %>
                   </td>
                   <td class="b" style="background:#f5d98b;">
-                    <%= overall.totalObtained == 0 ? '' : overall.totalObtained %>
+                    <%= anyMarksOverall ? overall.totalObtained : '' %>
                   </td>
                   <td class="b" style="background:#f5d98b;">
-                    <%= overall.totalObtained == 0 ? '' : overall.overallGrade %>
+                    <%= anyMarksOverall ? overall.overallGrade : '' %>
                   </td>
               </tr>
         </tbody>
