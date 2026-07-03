@@ -3,6 +3,16 @@ import { apiClient } from '../lib/clientApi';
 import { StudentForm } from '../components/StudentForm';
 import { BulkUpload } from '../components/BulkUpload';
 
+function formatDob(value: unknown): string {
+  if (!value) return '-';
+  const d = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(d.getTime())) return '-';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
 export function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [page, setPage] = useState(1);
@@ -72,6 +82,7 @@ export function StudentsPage() {
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Class</th>
                 <th className="px-6 py-4">Roll No</th>
+                <th className="px-6 py-4">Date of Birth</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -79,7 +90,7 @@ export function StudentsPage() {
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
+                    {Array.from({ length: 6 }).map((__, j) => (
                       <td key={j} className="px-6 py-4">
                         <div className="h-4 animate-pulse rounded-full bg-slate-100" />
                       </td>
@@ -88,7 +99,7 @@ export function StudentsPage() {
                 ))
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                     No students found. {query && 'Try adjusting your search query.'}
                   </td>
                 </tr>
@@ -102,6 +113,7 @@ export function StudentsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-600">{s.rollNo ?? '-'}</td>
+                  <td className="px-6 py-4 text-slate-600">{formatDob(s.dob)}</td>
                   <td className="px-6 py-4 text-right">
                     <button onClick={() => setEditing(s)} className="inline-flex h-8 items-center justify-center rounded-lg bg-orange-50 px-3 text-xs font-semibold text-orange-700 transition-colors hover:bg-orange-100">
                       Edit

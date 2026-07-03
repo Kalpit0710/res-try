@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/clientApi';
 
+function toDateInputValue(value: unknown): string {
+  if (!value) return '';
+  const d = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export function StudentForm({ student = {}, onClose }: { student?: any; onClose: () => void }) {
-  const [form, setForm] = useState({ regNo: '', name: '', classId: '', rollNo: '', fatherName: '', motherName: '' });
+  const [form, setForm] = useState({ regNo: '', name: '', classId: '', rollNo: '', fatherName: '', motherName: '', dob: '' });
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (student && student._id) setForm({ regNo: student.regNo ?? '', name: student.name ?? '', classId: student.classId?._id ?? student.classId ?? '', rollNo: student.rollNo ?? '', fatherName: student.fatherName ?? '', motherName: student.motherName ?? '' });
+    if (student && student._id) setForm({ regNo: student.regNo ?? '', name: student.name ?? '', classId: student.classId?._id ?? student.classId ?? '', rollNo: student.rollNo ?? '', fatherName: student.fatherName ?? '', motherName: student.motherName ?? '', dob: toDateInputValue(student.dob) });
   }, [student]);
 
   useEffect(() => {
@@ -72,6 +82,10 @@ export function StudentForm({ student = {}, onClose }: { student?: any; onClose:
           <label className="flex flex-col gap-1 text-sm font-medium text-black/80 sm:col-span-2">
             <span>Mother's Name</span>
             <input value={form.motherName} onChange={e => setForm(f=>({...f, motherName: e.target.value}))} placeholder="Enter mother's name" className="border px-2 py-2 rounded font-normal" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-medium text-black/80 sm:col-span-2">
+            <span>Date of Birth</span>
+            <input type="date" value={form.dob} onChange={e => setForm(f=>({...f, dob: e.target.value}))} className="border px-2 py-2 rounded font-normal" />
           </label>
         </div>
 
