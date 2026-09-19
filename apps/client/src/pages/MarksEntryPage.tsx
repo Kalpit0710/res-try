@@ -8,7 +8,7 @@ import { SessionTimer } from '../components/SessionTimer';
 import { FullScreenLoader } from '../components/FullScreenLoader';
 
 // Co-scholastic areas (static) - module scope to keep stable reference
-const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education'];
+const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education', 'Value Education'];
 
 
 interface TermMarks {

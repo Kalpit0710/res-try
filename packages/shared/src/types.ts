@@ -118,6 +118,7 @@ export interface CoScholastic {
   healthPE: { term1: CoScholasticGrade; term2: CoScholasticGrade };
   artEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
   workEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
+  valueEducation: { term1: CoScholasticGrade; term2: CoScholasticGrade };
 }
 
 // ── API response wrapper ──────────────────────────────────────────────────────

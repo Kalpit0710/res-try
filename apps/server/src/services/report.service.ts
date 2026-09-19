@@ -74,7 +74,7 @@ export async function getReportBrowser(): Promise<BrowserInstance> {
   return browserLaunchPromise;
 }
 
-const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education'];
+const CO_SCHOLASTIC_AREAS = ['Health & Physical Education', 'Art Education', 'Work Education', 'Value Education'];
 
 // Removed getCoScholasticGrade since grades are A-C strings directly
 
@@ -217,8 +217,7 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     'social studies',
     'sanskrit',
     'general knowledge',
-    'computer',
-    'value education'
+    'computer'
   ];
 
   subjects.sort((a, b) => {
