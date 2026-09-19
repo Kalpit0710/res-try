@@ -59,14 +59,16 @@ export async function getPublicSubjects(req: Request, res: Response): Promise<vo
     return;
   }
 
-  const directSubjects = await Subject.find({ classId }).sort({ name: 1 }).lean();
+  const filterOutValueEducation = (s: any) => s.name.toLowerCase().trim() !== 'value education';
+
+  const directSubjects = (await Subject.find({ classId }).sort({ name: 1 }).lean()).filter(filterOutValueEducation);
 
   if (!cls?.subjects?.length) {
     res.json({ success: true, data: directSubjects });
     return;
   }
 
-  const linkedSubjects = await Subject.find({ _id: { $in: cls.subjects } }).sort({ name: 1 }).lean();
+  const linkedSubjects = (await Subject.find({ _id: { $in: cls.subjects } }).sort({ name: 1 }).lean()).filter(filterOutValueEducation);
   const mergedById = new Map<string, (typeof linkedSubjects)[number]>();
   for (const subject of directSubjects) mergedById.set(String(subject._id), subject);
   for (const subject of linkedSubjects) mergedById.set(String(subject._id), subject);

@@ -207,7 +207,8 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     }
   }
 
-  const subjects = await Subject.find({ classId: cls._id }).lean();
+  let subjects = await Subject.find({ classId: cls._id }).lean();
+  subjects = subjects.filter(s => s.name.toLowerCase().trim() !== 'value education');
   
   const SUBJECT_ORDER = [
     'english',
