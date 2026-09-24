@@ -6,6 +6,28 @@ import { Teacher } from '../models/Teacher';
 import { Types } from 'mongoose';
 import { LowerClassSubject } from '../models/LowerClassSubject';
 
+const SUBJECT_ORDER = [
+  'english',
+  'hindi',
+  'mathematics',
+  'science',
+  'social studies',
+  'sanskrit',
+  'general knowledge',
+  'computer'
+];
+
+function sortSubjects(a: any, b: any) {
+  const aName = (a.name || '').toLowerCase().trim();
+  const bName = (b.name || '').toLowerCase().trim();
+  let aIndex = SUBJECT_ORDER.indexOf(aName);
+  let bIndex = SUBJECT_ORDER.indexOf(bName);
+  if (aIndex === -1) aIndex = 999;
+  if (bIndex === -1) bIndex = 999;
+  if (aIndex === bIndex) return a.name.localeCompare(b.name);
+  return aIndex - bIndex;
+}
+
 export async function getPublicClasses(_req: Request, res: Response): Promise<void> {
   const classes = await Class.find().sort({ name: 1 }).lean();
   res.json({ success: true, data: classes });
@@ -41,7 +63,7 @@ export async function getPublicSubjects(req: Request, res: Response): Promise<vo
       Subject.find().sort({ name: 1 }).lean(),
       LowerClassSubject.find().sort({ order: 1, name: 1 }).lean()
     ]);
-    const subjects = [...standardSubjects, ...lowerSubjects].sort((a, b) => a.name.localeCompare(b.name));
+    const subjects = [...standardSubjects, ...lowerSubjects].sort(sortSubjects);
     res.json({ success: true, data: subjects });
     return;
   }
@@ -73,7 +95,7 @@ export async function getPublicSubjects(req: Request, res: Response): Promise<vo
   for (const subject of directSubjects) mergedById.set(String(subject._id), subject);
   for (const subject of linkedSubjects) mergedById.set(String(subject._id), subject);
 
-  const subjects = Array.from(mergedById.values()).sort((a, b) => a.name.localeCompare(b.name));
+  const subjects = Array.from(mergedById.values()).sort(sortSubjects);
   res.json({ success: true, data: subjects });
 }
 
