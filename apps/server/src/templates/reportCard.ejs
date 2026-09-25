@@ -684,31 +684,31 @@
                 <%= subject.name %>
               </td>
               <td>
-                <%= marks?.term1?.periodicTest ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term1?.periodicTest ?? '') %>
               </td>
               <td>
-                <%= marks?.term1?.notebook ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term1?.notebook ?? '') %>
               </td>
               <td>
-                <%= marks?.term1?.subEnrichment ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term1?.subEnrichment ?? '') %>
               </td>
               <td>
-                <%= marks?.term1?.halfYearlyExam ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term1?.halfYearlyExam ?? '') %>
               </td>
               <td class="b">
                 <%= hasT1Marks(marks) ? result.term1Total : '' %>
               </td>
               <td>
-                <%= marks?.term2?.periodicTest ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term2?.periodicTest ?? '') %>
               </td>
               <td>
-                <%= marks?.term2?.notebook ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term2?.notebook ?? '') %>
               </td>
               <td>
-                <%= marks?.term2?.subEnrichment ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term2?.subEnrichment ?? '') %>
               </td>
               <td>
-                <%= marks?.term2?.yearlyExam ?? '' %>
+                <%= subject.isExamOnly ? '-' : (marks?.term2?.yearlyExam ?? '') %>
               </td>
               <td class="b">
                 <%= hasT2Marks(marks) ? result.term2Total : '' %>

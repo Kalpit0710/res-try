@@ -176,6 +176,7 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
   const [maxT1, setMaxT1] = useState({ periodicTest: subject.maxMarks?.term1?.periodicTest ?? 10, notebook: subject.maxMarks?.term1?.notebook ?? 5, subEnrichment: subject.maxMarks?.term1?.subEnrichment ?? 5, halfYearlyExam: subject.maxMarks?.term1?.halfYearlyExam ?? 30 });
   const [maxT2, setMaxT2] = useState({ periodicTest: subject.maxMarks?.term2?.periodicTest ?? 10, notebook: subject.maxMarks?.term2?.notebook ?? 5, subEnrichment: subject.maxMarks?.term2?.subEnrichment ?? 5, yearlyExam: subject.maxMarks?.term2?.yearlyExam ?? 30 });
   const [components, setComponents] = useState<{name: string, maxMarks: number}[]>(subject.components ?? []);
+  const [isExamOnly, setIsExamOnly] = useState(subject.isExamOnly ?? false);
   const [loading, setLoading] = useState(false);
 
   const selectedClass = classes.find(c => c._id === classId);
@@ -189,7 +190,7 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
         if (subject && subject._id) await apiClient.updateLowerClassSubject(subject._id, body); 
         else await apiClient.createLowerClassSubject(body);
       } else {
-        const body = { name, classId, maxMarks: { term1: maxT1, term2: maxT2 } };
+        const body = { name, classId, maxMarks: { term1: maxT1, term2: maxT2 }, isExamOnly };
         if (subject && subject._id) await apiClient.updateSubject(subject._id, body); 
         else await apiClient.createSubject(body);
       }
@@ -214,6 +215,15 @@ function SubjectForm({ subject = {}, classes = [], onClose }: { subject?: any; c
             </select>
           </label>
         </div>
+
+        {!isLowerClass && (
+          <div className="mt-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-black/80">
+              <input type="checkbox" checked={isExamOnly} onChange={e => setIsExamOnly(e.target.checked)} className="w-4 h-4" />
+              <span>Is Exam Only (Only Half-Yearly/Yearly out of 100, No CA)</span>
+            </label>
+          </div>
+        )}
 
         {isLowerClass ? (
           <div className="mt-4 border border-black/10 rounded-lg p-4">

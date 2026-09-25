@@ -36,6 +36,7 @@ interface SubjectMarksState {
   saved: boolean;
   dirty: boolean;
   error: string | null;
+  isExamOnly?: boolean;
 }
 
 interface CoScholasticMarksState {
@@ -241,6 +242,7 @@ export function MarksEntryPage() {
             saved: !!existing,
             dirty: false,
             error: null,
+            isExamOnly: sub.isExamOnly,
           };
         });
 
@@ -916,18 +918,21 @@ function SubjectCard({
               max={maxMarks?.term1?.periodicTest}
               value={term1.periodicTest ?? ''}
               onChange={(v) => onFieldChange('term1', 'periodicTest', v)}
+              disabled={state.isExamOnly}
             />
             <MarksInput
               label="Notebook"
               max={maxMarks?.term1?.notebook}
               value={term1.notebook ?? ''}
               onChange={(v) => onFieldChange('term1', 'notebook', v)}
+              disabled={state.isExamOnly}
             />
             <MarksInput
               label="Sub Enrichment"
               max={maxMarks?.term1?.subEnrichment}
               value={term1.subEnrichment ?? ''}
               onChange={(v) => onFieldChange('term1', 'subEnrichment', v)}
+              disabled={state.isExamOnly}
             />
             <MarksInput
               label="Half Yearly Exam"
@@ -949,18 +954,21 @@ function SubjectCard({
               max={maxMarks?.term2?.periodicTest}
               value={term2.periodicTest ?? ''}
               onChange={(v) => onFieldChange('term2', 'periodicTest', v)}
+              disabled={state.isExamOnly}
             />
             <MarksInput
               label="Notebook"
               max={maxMarks?.term2?.notebook}
               value={term2.notebook ?? ''}
               onChange={(v) => onFieldChange('term2', 'notebook', v)}
+              disabled={state.isExamOnly}
             />
             <MarksInput
               label="Sub Enrichment"
               max={maxMarks?.term2?.subEnrichment}
               value={term2.subEnrichment ?? ''}
               onChange={(v) => onFieldChange('term2', 'subEnrichment', v)}
+              disabled={state.isExamOnly}
             />
             <MarksInput
               label="Yearly Exam"
@@ -983,14 +991,29 @@ function MarksInput({
   max,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   max?: number;
   value: number | '';
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   const overMax =
     max !== undefined && value !== '' && Number(value) > max;
+
+  if (disabled) {
+    return (
+      <label className="flex flex-col gap-1 text-sm opacity-50 cursor-not-allowed">
+        <span className="font-medium text-black/70">
+          {label}
+        </span>
+        <div className="rounded-md border border-black/15 bg-black/5 px-3 py-1.5 font-normal w-full text-black/50">
+          -
+        </div>
+      </label>
+    );
+  }
 
   return (
     <label className="flex flex-col gap-1 text-sm">

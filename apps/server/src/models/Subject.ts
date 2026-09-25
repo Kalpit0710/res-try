@@ -13,6 +13,7 @@ export interface ISubject extends Document {
     term1: { periodicTest: number; notebook: number; subEnrichment: number; halfYearlyExam: number };
     term2: { periodicTest: number; notebook: number; subEnrichment: number; yearlyExam: number };
   };
+  isExamOnly?: boolean;
 }
 
 const SubjectSchema = new Schema<ISubject>(
@@ -29,6 +30,7 @@ const SubjectSchema = new Schema<ISubject>(
         yearlyExam: { type: Number, default: 80 },
       },
     },
+    isExamOnly: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

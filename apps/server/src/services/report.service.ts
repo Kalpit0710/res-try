@@ -248,7 +248,8 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
         m?.term1 ?? {},
         m?.term2 ?? {},
         s.maxMarks.term1,
-        s.maxMarks.term2
+        s.maxMarks.term2,
+        s.isExamOnly
       ),
     };
   });

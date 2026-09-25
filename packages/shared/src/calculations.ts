@@ -46,20 +46,37 @@ export function calcSubjectResult(
   term1Marks: Partial<Term1Marks>,
   term2Marks: Partial<Term2Marks>,
   term1Max: Term1MaxMarks,
-  term2Max: Term2MaxMarks
+  term2Max: Term2MaxMarks,
+  isExamOnly?: boolean
 ): SubjectResult {
-  const term1Total = calcTerm1Total(term1Marks);
-  const term2Total = calcTerm2Total(term2Marks);
-  const grandTotal = (term1Total / 2) + (term2Total / 2);
-  const maxGrandTotal = (calcTerm1Max(term1Max) / 2) + (calcTerm2Max(term2Max) / 2);
-  const pct = maxGrandTotal > 0 ? (grandTotal / maxGrandTotal) * 100 : 0;
+  const term1Total = isExamOnly 
+    ? (term1Marks.halfYearlyExam ?? 0)
+    : calcTerm1Total(term1Marks);
+  
+  const term2Total = isExamOnly
+    ? (term2Marks.yearlyExam ?? 0)
+    : calcTerm2Total(term2Marks);
+  
+  const grandTotal = (term1Total / (isExamOnly ? 1 : 2)) + (term2Total / (isExamOnly ? 1 : 2));
+  
+  const term1MaxVal = isExamOnly ? term1Max.halfYearlyExam : calcTerm1Max(term1Max);
+  const term2MaxVal = isExamOnly ? term2Max.yearlyExam : calcTerm2Max(term2Max);
+  
+  // Wait, grandTotal is /2 ?
+  // In original code: const grandTotal = (term1Total / 2) + (term2Total / 2);
+  // This means the overall grand total is average of terms. 
+  // If isExamOnly, should it be average of exams? Yes, the same.
+  const scaledGrandTotal = (term1Total / 2) + (term2Total / 2);
+  const maxGrandTotal = (term1MaxVal / 2) + (term2MaxVal / 2);
+  
+  const pct = maxGrandTotal > 0 ? (scaledGrandTotal / maxGrandTotal) * 100 : 0;
 
   return {
     subjectId,
     subjectName,
     term1Total,
     term2Total,
-    grandTotal,
+    grandTotal: scaledGrandTotal,
     maxGrandTotal,
     grade: calcGrade(pct),
   };
