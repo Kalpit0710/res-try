@@ -95,7 +95,15 @@ export async function getPublicSubjects(req: Request, res: Response): Promise<vo
   for (const subject of directSubjects) mergedById.set(String(subject._id), subject);
   for (const subject of linkedSubjects) mergedById.set(String(subject._id), subject);
 
-  const subjects = Array.from(mergedById.values()).sort(sortSubjects);
+  const uniqueByName = new Map<string, (typeof linkedSubjects)[number]>();
+  for (const subject of mergedById.values()) {
+    const nameKey = (subject.name || '').toLowerCase().trim();
+    if (!uniqueByName.has(nameKey)) {
+      uniqueByName.set(nameKey, subject);
+    }
+  }
+
+  const subjects = Array.from(uniqueByName.values()).sort(sortSubjects);
   res.json({ success: true, data: subjects });
 }
 

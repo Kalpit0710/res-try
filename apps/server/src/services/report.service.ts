@@ -207,8 +207,26 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     }
   }
 
-  let subjects = await Subject.find({ classId: cls._id }).lean();
-  subjects = subjects.filter(s => s.name.toLowerCase().trim() !== 'value education');
+  let directSubjects = await Subject.find({ classId: cls._id }).lean();
+  let linkedSubjects: any[] = [];
+  if (cls.subjects && cls.subjects.length > 0) {
+    linkedSubjects = await Subject.find({ _id: { $in: cls.subjects } }).lean();
+  }
+
+  const mergedById = new Map<string, any>();
+  for (const subject of directSubjects) mergedById.set(String(subject._id), subject);
+  for (const subject of linkedSubjects) mergedById.set(String(subject._id), subject);
+
+  const uniqueByName = new Map<string, any>();
+  for (const subject of mergedById.values()) {
+    const nameKey = (subject.name || '').toLowerCase().trim();
+    if (!uniqueByName.has(nameKey)) {
+      uniqueByName.set(nameKey, subject);
+    }
+  }
+
+  let subjects = Array.from(uniqueByName.values());
+  subjects = subjects.filter(s => (s.name || '').toLowerCase().trim() !== 'value education');
   
   const SUBJECT_ORDER = [
     'english',
