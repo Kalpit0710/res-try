@@ -234,9 +234,9 @@ export async function generateStudentReportPdf(studentId: string, browser?: Brow
     'mathematics',
     'science',
     'social studies',
-    'sanskrit',
     'general knowledge',
-    'computer'
+    'computer',
+    'sanskrit'
   ];
 
   subjects.sort((a, b) => {

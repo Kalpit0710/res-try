@@ -12,9 +12,9 @@ const SUBJECT_ORDER = [
   'mathematics',
   'science',
   'social studies',
-  'sanskrit',
   'general knowledge',
-  'computer'
+  'computer',
+  'sanskrit'
 ];
 
 function sortSubjects(a: any, b: any) {
